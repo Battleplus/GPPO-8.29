@@ -1,0 +1,122 @@
+{
+  "scenario_name": "默认场景: AOI A_3_4, 5 UAV + 2 HELI + 4 目标",
+  "aoi": {
+    "row": 3,
+    "col": 4
+  },
+  "staging_position": [
+    150,
+    -50
+  ],
+  "commander_AOI": [
+    "A_3_4"
+  ],
+  "grid_weather": {
+    "c0": 1.0,
+    "c1": 0.6958,
+    "c2": 0.9254,
+    "c3": 0.8388,
+    "c4": 0.8493
+  },
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "sensors": [
+        "EO",
+        "SAR",
+        "ESM"
+      ],
+      "munitions": {
+        "HF": 0,
+        "RKT": 0,
+        "GUN": 0
+      }
+    },
+    "HELI": {
+      "count": 2,
+      "sensors": [
+        "MMW",
+        "EOIR"
+      ],
+      "munitions": {
+        "HF": 16,
+        "RKT": 76,
+        "GUN": 1200
+      }
+    }
+  },
+  "targets": [
+    {
+      "tid": "g1",
+      "type": "RADAR",
+      "pos": [
+        270,
+        260
+      ],
+      "value": 1.0,
+      "threat": 0.9,
+      "confirmed": false
+    },
+    {
+      "tid": "g2",
+      "type": "CP",
+      "pos": [
+        35,
+        230
+      ],
+      "value": 0.85,
+      "threat": 0.6,
+      "confirmed": false
+    },
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [
+        220,
+        45
+      ],
+      "value": 0.7,
+      "threat": 0.5,
+      "velocity": [
+        0.02,
+        0.01
+      ],
+      "pos_cov": [
+        [
+          0.2,
+          0
+        ],
+        [
+          0,
+          0.2
+        ]
+      ],
+      "confirmed": false
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [
+        60,
+        80
+      ],
+      "value": 0.7,
+      "threat": 0.5,
+      "velocity": [
+        -0.01,
+        0.02
+      ],
+      "pos_cov": [
+        [
+          0.2,
+          0
+        ],
+        [
+          0,
+          0.2
+        ]
+      ],
+      "confirmed": false
+    }
+  ]
+}

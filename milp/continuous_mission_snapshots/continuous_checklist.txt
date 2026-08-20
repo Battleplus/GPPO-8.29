@@ -1,0 +1,40 @@
+连续性检查清单
+
+1. 快照目标保留情况
+- MISSION_00: g1, g2, g3, g4 全部存在，confirmed 均为 false。
+- MISSION_01: g1, g2, g3, g4 全部存在，confirmed 均为 true。
+- MISSION_02: g1 RADAR 和 g2 CP 已被第一轮直升机打击移除，仅保留 g3、g4。
+- MISSION_03: 继续保留 g3、g4，用于测试移动目标连续跟踪。
+- MISSION_04: g3 和 g4 已被第二轮直升机打击移除，targets 为空数组。
+- MISSION_05: 任务完成快照，targets 为空数组，用于测试无目标时是否清空上一轮打击结果。
+
+2. AV 匀速移动轨迹
+- g3 velocity = [6, 3]
+  - MISSION_00: [214, 62]
+  - MISSION_01: [220, 65]
+  - MISSION_02: [226, 68]
+  - MISSION_03: [232, 71]
+  - MISSION_04 后已移除，不再更新。
+- g4 velocity = [-4, 5]
+  - MISSION_00: [78, 91]
+  - MISSION_01: [74, 96]
+  - MISSION_02: [70, 101]
+  - MISSION_03: [66, 106]
+  - MISSION_04 后已移除，不再更新。
+
+3. 打击完成节点
+- MISSION_02: 完成 g1 RADAR 和 g2 CP 的第一轮打击并移除。
+- MISSION_04: 完成 g3 AV 和 g4 AV 的第二轮打击并移除。
+
+4. 字段约束检查
+- 6 个 JSON 文件均只包含 scenario_name、aoi、staging_position、commander_AOI、grid_weather、platforms、targets 七个顶层字段。
+- 所有目标都包含 confirmed 字段。
+- AV 目标额外包含 velocity 和 pos_cov 字段。
+- 未添加 time_step、alive、lost、assigned、destroyed、expected_result、notes、description、events、mission_phase、heli_position、strike_result 等禁用字段。
+- 所有 JSON 文件均可被 json.loads() 直接解析。
+
+5. 数值设计检查
+- staging_position 使用 [142, -38]，未照抄模板值 [150, -50]。
+- grid_weather 使用 0.1765、0.2637、0.3812、0.4879、0.6134，未照抄模板天气值。
+- RADAR、CP、AV 的位置、价值、威胁、速度、协方差均重新设计。
+- HELI 弹药数量随打击阶段不增加：16/76/1200 -> 12/60/1000 -> 8/44/820。

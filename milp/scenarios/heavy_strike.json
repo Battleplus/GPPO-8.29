@@ -1,0 +1,83 @@
+{
+  "scenario_name": "打击为主: AOI A_5_5, 5 UAV + 4 HELI + 3 高价值目标",
+  "aoi": {
+    "row": 5,
+    "col": 5
+  },
+  "staging_position": [
+    150,
+    -50
+  ],
+  "commander_AOI": [
+    "A_5_5"
+  ],
+  "grid_weather": {
+    "c0": 0.7963,
+    "c1": 1.0,
+    "c2": 1.0,
+    "c3": 0.9816,
+    "c4": 0.9423
+  },
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "sensors": [
+        "EO",
+        "SAR",
+        "ESM"
+      ],
+      "munitions": {
+        "HF": 0,
+        "RKT": 0,
+        "GUN": 0
+      }
+    },
+    "HELI": {
+      "count": 4,
+      "sensors": [
+        "MMW",
+        "EOIR"
+      ],
+      "munitions": {
+        "HF": 16,
+        "RKT": 76,
+        "GUN": 1200
+      }
+    }
+  },
+  "targets": [
+    {
+      "tid": "g1",
+      "type": "RADAR",
+      "pos": [
+        270,
+        270
+      ],
+      "value": 1.0,
+      "threat": 0.95,
+      "confirmed": false
+    },
+    {
+      "tid": "g2",
+      "type": "CP",
+      "pos": [
+        250,
+        230
+      ],
+      "value": 0.9,
+      "threat": 0.8,
+      "confirmed": false
+    },
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [
+        280,
+        250
+      ],
+      "value": 0.75,
+      "threat": 0.7,
+      "confirmed": false
+    }
+  ]
+}

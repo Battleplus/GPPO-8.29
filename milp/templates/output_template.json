@@ -1,0 +1,126 @@
+{
+  "_schema_version": "1.0",
+  "_说明": "任务分配算法 —— 标准输出模板。算法求解完成后输出此 JSON，下层规控模块读取执行。",
+
+  "cycle_id": 0,
+  "_cycle_id说明": "当前分配轮次编号，每轮递增",
+
+  "timestamp": 0.0,
+  "_timestamp说明": "仿真时间戳（秒）",
+
+  "aoi_id": "A_3_4",
+  "_aoi_id说明": "当前求解的 AOI 标识",
+
+  "solve_status": "OPTIMAL",
+  "_solve_status说明": "MILP 求解状态: OPTIMAL(最优解) / FEASIBLE(可行解) / TIME_LIMIT(超时截断) / INFEASIBLE(无解)",
+
+  "objective": 961.56,
+  "_objective说明": "MILP 目标函数值。正值越大越好（价值-代价）。",
+
+  "solve_time_ms": 148.3,
+  "_solve_time_ms说明": "求解耗时，单位毫秒",
+
+  "tasks": [
+    {
+      "_说明": "侦察任务 —— UAV 用指定传感器搜索指定栅格。sensors_mounted=搭载的全部传感器, sensor_used=本任务使用的传感器",
+
+      "platform": "U1",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["EO", "SAR"],
+      "sensor_used": "SAR",
+      "cell": "c0",
+      "role": "area_scan"
+    },
+    {
+      "platform": "U2",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["EO", "SAR"],
+      "sensor_used": "EO",
+      "cell": "c1",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "U3",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["ESM", "SAR"],
+      "sensor_used": "SAR",
+      "cell": "c2",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "U4",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["EO", "SAR"],
+      "sensor_used": "SAR",
+      "cell": "c3",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "U5",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["EO", "SAR"],
+      "sensor_used": "ESM",
+      "cell": "c4",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "U3",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["ESM", "SAR"],
+      "sensor_used": "ESM",
+      "cell": "c0",
+      "role": "esm_patrol"
+    },
+
+    {
+      "_说明": "打击任务 —— HELI 用指定弹药打击指定目标。sensors_mounted=该直升机搭载的全部传感器",
+
+      "platform": "H1",
+      "task_type": "strike",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["MMW", "EOIR"],
+      "target": "g1",
+      "munition": "",
+      "qty": 0,
+      "role": "wing_support"
+    },
+    {
+      "platform": "H2",
+      "task_type": "strike",
+      "aoi": "A_3_4",
+      "sensors_mounted": ["MMW", "EOIR"],
+      "target": "g1",
+      "munition": "HF",
+      "qty": 2,
+      "role": "lead"
+    }
+  ],
+
+  "_tasks字段说明": {
+    "_排序规则": "任务已按依赖关系排序，遍历执行即可：同一 AOI 内侦察在前、打击在后。",
+
+    "platform": "执行平台编号。UAV: U1~U10, HELI: H1~H6",
+    "task_type": "recon(侦察) 或 strike(打击)",
+    "aoi": "所属 AOI 标识",
+
+    "_recon专用字段": {
+      "sensors_mounted": "该平台搭载的全部传感器列表，如 [\"EO\",\"SAR\"]",
+      "sensor_used": "本任务使用的传感器: EO / SAR / ESM / MMW / EOIR",
+      "cell": "目标栅格: c0(巡逻区50×50km) / c1~c4(子区各25×25km)",
+      "role": "侦察角色: area_scan(广域扫描) / subarea_search(子区搜索) / esm_patrol(ESM巡逻)"
+    },
+
+    "_strike专用字段": {
+      "target": "目标标识，如 g1, g2",
+      "munition": "弹药类型: HF(地狱火) / RKT(火箭弹) / GUN(机炮)。空字符串表示支援不发射",
+      "qty": "弹药数量。0 表示编队支援角色，不实际发射",
+      "role": "打击角色: lead(长机主攻) / striker(独立打击) / wing(僚机) / wing_support(僚机支援) / striker_support(打击支援)"
+    }
+  }
+}

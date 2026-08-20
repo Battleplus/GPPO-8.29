@@ -1,0 +1,95 @@
+{
+  "_说明": "态势输入接口模板 —— 上层态势理解模块 → 任务分配模块",
+  "_字段速查": {
+    "scenario_name":    "场景名称（仅备注，不参与计算）",
+    "aoi":             "AOI 大区行列号，row 1-6, col 1-6，对应 300×300km 任务区的 6×6 划分",
+    "staging_position": "集结区坐标 [x_km, y_km]，所有平台的初始出发位置",
+    "commander_AOI":    "指挥官关注的 AOI 编号列表，如 [\"A_3_4\"]",
+    "grid_weather":     "5 个栅格的天气系数，c0 巡逻区 + c1~c4 子区，w ∈ [0,1]，越大越不利",
+    "platforms":        "平台兵力配置，按类型 UAV / HELI 分别指定数量、传感器、弹药",
+    "targets":          "目标列表，可为空数组 []（纯侦察模式）",
+    "sensor_params":    "可选，传感器固有参数，不填则使用默认值"
+  },
+
+  "scenario_name": "示例场景: AOI A_3_4, 5 UAV + 2 HELI + 4 目标",
+  "aoi": {
+    "row": 3,
+    "col": 4
+  },
+  "staging_position": [150, -50],
+  "commander_AOI": ["A_3_4"],
+
+  "grid_weather": {
+    "c0": 0.20,
+    "c1": 0.15,
+    "c2": 0.40,
+    "c3": 0.55,
+    "c4": 0.70
+  },
+
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "pos": [150, -50],
+      "sensors": ["EO", "SAR", "ESM"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0
+    },
+    "HELI": {
+      "count": 2,
+      "pos": [150, -50],
+      "sensors": ["MMW", "EOIR"],
+      "munitions": { "HF": 16, "RKT": 76, "GUN": 1200 },
+      "alt": 3.0
+    }
+  },
+
+  "targets": [
+    {
+      "tid": "g1",
+      "type": "RADAR",
+      "pos": [270, 260],
+      "value": 1.0,
+      "threat": 0.9,
+      "confirmed": false,
+      "alive": true
+    },
+    {
+      "tid": "g2",
+      "type": "CP",
+      "pos": [35, 230],
+      "value": 0.85,
+      "threat": 0.6,
+      "confirmed": false,
+      "alive": true
+    },
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [220, 45],
+      "value": 0.7,
+      "threat": 0.5,
+      "velocity": [0.02, 0.01],
+      "pos_cov": [[0.2, 0], [0, 0.2]],
+      "confirmed": false,
+      "alive": true
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [60, 80],
+      "value": 0.7,
+      "threat": 0.5,
+      "velocity": [-0.01, 0.02],
+      "pos_cov": [[0.2, 0], [0, 0.2]],
+      "confirmed": false,
+      "alive": true
+    }
+  ],
+
+  "sensor_params": [
+    { "name": "EO",  "P0": 0.85, "R": 15.0,  "weather_sensitive": true  },
+    { "name": "SAR", "P0": 0.90, "R": 50.0,  "weather_sensitive": false },
+    { "name": "ESM", "P0": 0.80, "R": 100.0, "weather_sensitive": false }
+  ]
+}

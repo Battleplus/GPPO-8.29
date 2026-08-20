@@ -1,0 +1,190 @@
+{
+  "_schema_version": "1.0",
+  "_说明": "任务分配算法 —— 标准输入模板。大脑模块按此格式填写态势数据。",
+
+  "scenario_name": "示例场景: AOI A_3_4, 5 UAV + 2 HELI + 4 目标",
+
+  "aoi": {
+    "_说明": "AOI 大区。300×300km 战场划分为 6×6 个 AOI，行列号范围 1~6。",
+    "row": 3,
+    "col": 4
+  },
+
+  "staging_position": [150, -50],
+  "_staging_position说明": "集结区坐标 [x_km, y_km]，所有平台初始位置。",
+
+  "commander_AOI": ["A_3_4"],
+  "_commander_AOI说明": "指挥官关注的 AOI 列表。通常为 [\"A_{row}_{col}\"]。",
+
+  "grid_weather": {
+    "_说明": "5 个栅格的天气系数，w ∈ [0, 1]。0=晴好，≥0.80 时 EO 传感器禁用。",
+    "_栅格布局": "c0 巡逻区(50×50km) + c1~c4 四个子区(各25×25km)",
+    "c0": 0.20,
+    "c1": 0.15,
+    "c2": 0.40,
+    "c3": 0.55,
+    "c4": 0.70
+  },
+
+  "grid_terrain": {
+    "_说明": "5 个栅格的地形等级（可选，不填则默认全 0）。0=平原, 1=丘陵, 2=山地。",
+    "c0": 0,
+    "c1": 0,
+    "c2": 1,
+    "c3": 0,
+    "c4": 2
+  },
+
+  "platforms": [
+    {
+      "pid": "U1",
+      "type": "UAV",
+      "pos": [150, -50],
+      "sensors_mounted": ["EO", "SAR"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0,
+      "lost": false
+    },
+    {
+      "pid": "U2",
+      "type": "UAV",
+      "pos": [150, -50],
+      "sensors_mounted": ["EO", "SAR"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0,
+      "lost": false
+    },
+    {
+      "pid": "U3",
+      "type": "UAV",
+      "pos": [150, -50],
+      "sensors_mounted": ["SAR", "ESM"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0,
+      "lost": false
+    },
+    {
+      "pid": "U4",
+      "type": "UAV",
+      "pos": [150, -50],
+      "sensors_mounted": ["EO", "SAR"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0,
+      "lost": false
+    },
+    {
+      "pid": "U5",
+      "type": "UAV",
+      "pos": [150, -50],
+      "sensors_mounted": ["EO", "SAR"],
+      "munitions": { "HF": 0, "RKT": 0, "GUN": 0 },
+      "alt": 2.0,
+      "lost": false
+    },
+    {
+      "_说明": "直升机 H1~H2：负责打击，挂载 MMW/EOIR，携带地狱火/火箭弹/机炮。",
+      "pid": "H1",
+      "type": "HELI",
+      "pos": [150, -50],
+      "sensors_mounted": ["MMW", "EOIR"],
+      "munitions": { "HF": 16, "RKT": 76, "GUN": 1200 },
+      "alt": 3.0,
+      "lost": false
+    },
+    {
+      "pid": "H2",
+      "type": "HELI",
+      "pos": [150, -50],
+      "sensors_mounted": ["MMW", "EOIR"],
+      "munitions": { "HF": 16, "RKT": 76, "GUN": 1200 },
+      "alt": 3.0,
+      "lost": false
+    }
+  ],
+  "_platforms字段说明": {
+    "pid": "平台唯一标识，UAV: U1~U10, HELI: H1~H6",
+    "type": "UAV(无人机,侦察) 或 HELI(直升机,打击)",
+    "pos": "当前位置 [x_km, y_km]",
+    "sensors_mounted": "挂载传感器列表: UAV 默认 EO/SAR/ESM, HELI 默认 MMW/EOIR",
+    "munitions": "弹药数量: HF(地狱火), RKT(火箭弹), GUN(机炮)",
+    "alt": "巡航高度 km，UAV=2.0, HELI=3.0",
+    "lost": "战损标志，true 则该平台不参与分配"
+  },
+
+  "targets": [
+    {
+      "tid": "g1",
+      "type": "RADAR",
+      "pos": [270, 260],
+      "value": 1.0,
+      "threat": 0.9,
+      "confirmed": true,
+      "alive": true,
+      "velocity": [0.0, 0.0],
+      "pos_cov": [[0.1, 0.0], [0.0, 0.1]]
+    },
+    {
+      "tid": "g2",
+      "type": "CP",
+      "pos": [35, 230],
+      "value": 0.85,
+      "threat": 0.6,
+      "confirmed": true,
+      "alive": true,
+      "velocity": [0.0, 0.0],
+      "pos_cov": [[0.1, 0.0], [0.0, 0.1]]
+    },
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [220, 45],
+      "value": 0.7,
+      "threat": 0.5,
+      "confirmed": true,
+      "alive": true,
+      "velocity": [0.02, 0.01],
+      "pos_cov": [[0.2, 0.0], [0.0, 0.2]]
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [60, 80],
+      "value": 0.7,
+      "threat": 0.5,
+      "confirmed": true,
+      "alive": true,
+      "velocity": [-0.01, 0.02],
+      "pos_cov": [[0.2, 0.0], [0.0, 0.2]]
+    }
+  ],
+  "_targets字段说明": {
+    "tid": "目标唯一标识",
+    "type": "RADAR(雷达阵地) / CP(指挥所) / AV(装甲车)",
+    "pos": "位置估计 [x_km, y_km]",
+    "value": "归一化作战价值 [0,1]",
+    "threat": "威胁度 [0,1]",
+    "confirmed": "是否已确认。false 时不参与打击，仅作为侦察诱因",
+    "alive": "是否存活。false 时不参与 MILP 优化",
+    "velocity": "速度估计 [vx,vy] km/tick (可选, 默认 [0,0])",
+    "pos_cov": "位置协方差 2×2 矩阵 (可选, 默认 [[0.1,0],[0,0.1]])"
+  },
+
+  "sensor_params": [
+    { "name": "EO",  "P0": 0.85, "R": 15.0,  "weather_sensitive": true  },
+    { "name": "SAR", "P0": 0.90, "R": 50.0,  "weather_sensitive": false },
+    { "name": "ESM", "P0": 0.80, "R": 100.0, "weather_sensitive": false }
+  ],
+  "_sensor_params说明": {
+    "_作用": "传感器固有参数。不填则使用默认值 EO/SAR/ESM。",
+    "name": "EO(光电) / SAR(合成孔径雷达) / ESM(电子支援) / MMW(毫米波) / EOIR(红外)",
+    "P0": "理想条件基础探测概率 [0,1]",
+    "R": "最大作用距离 km",
+    "weather_sensitive": "是否受天气衰减影响"
+  },
+
+  "los_matrix": null,
+  "_los_matrix说明": "直升机-目标通视矩阵 N_HELI×N_TARGET, 值[0,1]。null=默认全1(完全通视)。",
+
+  "occlusion_matrix": null,
+  "_occlusion_matrix说明": "遮挡衰减矩阵 N_HELI×N_TARGET, 值[0,1]。null=默认全1(无遮挡)。"
+}

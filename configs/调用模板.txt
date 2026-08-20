@@ -1,0 +1,220 @@
+================================================================================
+  UAV-HELI 协同侦察打击任务分配算法 —— 调用模板
+================================================================================
+
+环境要求: Python 3.10+, pip install -r requirements.txt
+项目入口: from task_interface import solve, solve_file
+
+
+【方式一】文件式调用（推荐：输入输出都用 JSON）
+================================================================================
+
+这是最简单的调用方式，大脑只需准备输入 JSON 文件，指定输出路径即可。
+
+    from task_interface import solve_file
+
+    result = solve_file(
+        input_path="input.json",     # 输入 JSON 文件路径
+        output_path="output.json",   # 输出 JSON 文件路径（求解结果写入此文件）
+    )
+
+    # 下层代码直接读取 output.json 即可获取任务清单。
+
+输入 JSON 格式 → 参考 templates/input_template.json
+输出 JSON 格式 → 参考 templates/output_template.json
+
+
+【方式二】字典式调用（直接传 dict，不写文件）
+================================================================================
+
+    from task_interface import solve
+
+    result = solve({
+        "aoi": {"row": 3, "col": 4}, 
+        "targets": [
+            {"tid": "g1", "type": "RADAR", "pos": [162, 112], "value": 0.97, "threat": 0.91},
+        ],
+        "platforms_uav": 5,
+        "platforms_heli": 2,
+    })
+
+    # 遍历任务
+    for task in result.tasks:
+        if task.task_type == "recon":
+            print(f"{task.platform}: {task.sensor} -> {task.cell}")
+        else:
+            print(f"{task.platform}: {task.munition}x{task.qty} -> {task.target}")
+
+
+【输入 JSON 字段速查】
+================================================================================
+
+{
+  "scenario_name": "...",          // 场景名（仅备注）
+  "aoi": {"row": 3, "col": 4},     // AOI 行列号 1~6
+  "staging_position": [150, -50],  // 集结区坐标 (可选)
+  "commander_AOI": ["A_3_4"],      // 指挥官关注 AOI (可选)
+  "grid_weather": {                // 天气系数 [0,1] (可选)
+    "c0": 0.2, "c1": 0.15, "c2": 0.4, "c3": 0.55, "c4": 0.7
+  },
+  "grid_terrain": {                // 地形等级 0/1/2 (可选)
+    "c0": 0, "c1": 0, "c2": 1, "c3": 0, "c4": 2
+  },
+  "platforms": [                    // 兵力配置 —— 逐架列出，每架独立属性
+    {
+      "pid": "U1",                 // 平台编号（唯一）
+      "type": "UAV",               // UAV(侦察) / HELI(打击)
+      "pos": [150, -50],           // 位置 [x, y] km
+      "sensors": ["EO","SAR","ESM"],  // 挂载传感器
+      "munitions": {"HF":0,"RKT":0,"GUN":0},  // 弹药（UAV 全 0）
+      "alt": 2.0,                  // 高度 km
+      "lost": false                // 战损标志
+    },
+    { "pid": "U2", "type": "UAV", "pos": [150, -50], "sensors": ["EO","SAR","ESM"], "munitions": {}, "alt": 2.0, "lost": false },
+    { "pid": "U3", "type": "UAV", "pos": [150, -50], "sensors": ["EO","SAR","ESM"], "munitions": {}, "alt": 2.0, "lost": false },
+    { "pid": "U4", "type": "UAV", "pos": [150, -50], "sensors": ["EO","SAR","ESM"], "munitions": {}, "alt": 2.0, "lost": false },
+    { "pid": "U5", "type": "UAV", "pos": [150, -50], "sensors": ["EO","SAR","ESM"], "munitions": {}, "alt": 2.0, "lost": false },
+    { "pid": "H1", "type": "HELI", "pos": [150, -50], "sensors": ["MMW","EOIR"], "munitions": {"HF":16,"RKT":76,"GUN":1200}, "alt": 3.0, "lost": false },
+    { "pid": "H2", "type": "HELI", "pos": [150, -50], "sensors": ["MMW","EOIR"], "munitions": {"HF":16,"RKT":76,"GUN":1200}, "alt": 3.0, "lost": false }
+  ],
+  "targets": [                     // 目标列表（可为空 []）
+    {
+      "tid": "g1",                 // 目标 ID
+      "type": "RADAR",             // RADAR / CP / AV
+      "pos": [270, 260],           // 位置 [x, y] km
+      "value": 1.0,                // 价值 [0,1]
+      "threat": 0.9,               // 威胁 [0,1]
+      "confirmed": false,          // 是否已确认
+      "alive": true,               // 是否存活
+      "velocity": [0, 0],          // 速度 [vx,vy] km/tick (可选)
+      "pos_cov": [[0.1,0],[0,0.1]] // 协方差矩阵 (可选)
+    }
+  ],
+  "sensor_params": [...]           // 传感器参数 (可选，有默认值)
+}
+
+
+【大脑启动时外部传入任务区域】
+================================================================================
+
+任务区域最终会标准化进 world_state["aoi"] / world_state["aois"]，
+MILP 字典输入会收到：
+
+  "aoi": {"row": 3, "col": 4}
+  "commander_AOI": ["A_3_4"]
+
+支持的外部字段别名：
+
+  "aoi": {"row": 3, "col": 4}
+  "aoi": "A_3_4"
+  "task_area": "A_3_4"
+  "commander_AOI": ["A_3_4"]
+  "aois": ["A_3_4", "A_3_5"]
+  "task_areas": ["A_3_4", "A_3_5"]
+
+启动示例：
+
+  python brain/main.py --mission-input input.json
+  python brain/main.py --mission-input input.json --aoi A_3_4
+  python brain/main.py --mission-input input.json --aois A_3_4,A_3_5
+
+Isaac 入口同样支持：
+
+  python brain/isaac_main.py --headless --mission-input input.json --aoi A_3_4
+
+
+【输出 JSON 字段速查】
+================================================================================
+
+{
+  "cycle_id": 0,                   // 分配轮次
+  "timestamp": 0.0,                // 仿真时间戳
+  "aoi_id": "A_3_4",              // AOI 标识
+  "solve_status": "OPTIMAL",      // OPTIMAL / FEASIBLE / TIME_LIMIT / INFEASIBLE
+  "objective": 961.56,            // 目标函数值
+  "solve_time_ms": 148.3,         // 求解耗时 (ms)
+  "tasks": [                       // 有序任务列表（先侦察后打击）
+    // ---- 侦察任务 ----
+    {
+      "platform": "U1",
+      "task_type": "recon",
+      "aoi": "A_3_4",
+      "cell": "c0",                // 栅格: c0 巡逻区 / c1~c4 子区
+      "sensor": "SAR",             // EO / SAR / ESM
+      "role": "area_scan"          // area_scan / subarea_search / esm_patrol
+    },
+    // ---- 打击任务 ----
+    {
+      "platform": "H1",
+      "task_type": "strike",
+      "target": "g1",              // 目标 ID
+      "munition": "HF",            // HF / RKT / GUN (空字符串=支援不发射)
+      "qty": 2,                    // 弹药数量 (0=支援)
+      "role": "lead",              // lead / striker / wing / *_support
+      "aoi": "A_3_4"
+    }
+  ]
+}
+
+下层代码按序读取 tasks 数组，根据 task_type 判断侦察/打击即可执行。
+
+
+【目标类型速查】
+================================================================================
+
+类型    含义          弹药需求
+RADAR   雷达阵地      HF × 2                       (需 2 架直升机)
+CP      指挥所        HF × 1, RKT × 4             (需 2 架直升机)
+AV      装甲车        HF × 1, RKT × 2, GUN × 50   (需 1 架直升机)
+
+
+【传感器说明】
+================================================================================
+
+传感器    挂载平台    受天气影响    作用距离
+EO         UAV        是           15 km
+SAR        UAV        否           50 km
+ESM        UAV        否           100 km
+MMW        HELI       否           50 km (默认)
+EOIR       HELI       是           15 km (默认)
+
+
+【栅格说明】
+================================================================================
+
+c0    巡逻区 (50×50 km)  — 整个 AOI 广域扫描
+c1    左下子区 (25×25 km)
+c2    右下子区 (25×25 km)
+c3    左上子区 (25×25 km)
+c4    右上子区 (25×25 km)
+
+weather_w ∈ [0,1]    0=晴好, >=0.80 时 EO 禁用
+terrain_level ∈ {0,1,2}  0=平原, 1=丘陵, 2=山地
+
+
+【自定义求解参数】
+================================================================================
+
+result = solve_file(
+    "input.json",
+    "output.json",
+    solver="cbc",        # cbc / gurobi / ortools / highs
+    time_limit_s=5.0,    # 求解时间上限 (秒)
+    verbose=0,           # 0=静默 1=摘要 2=详细
+)
+
+
+【错误处理】
+================================================================================
+
+from task_interface import solve_file
+
+try:
+    result = solve_file("input.json", "output.json")
+    print(f"求解成功: {result.summary()}")
+except FileNotFoundError as e:
+    print(f"输入文件不存在: {e}")
+except ValueError as e:
+    print(f"输入校验失败: {e}")
+except Exception as e:
+    print(f"求解异常: {e}")

@@ -1,0 +1,100 @@
+{
+  "scenario_name": "MISSION_02: 第一轮直升机打击完成，g1 RADAR 和 g2 CP 已移除",
+  "aoi": {
+    "row": 3,
+    "col": 4
+  },
+  "staging_position": [
+    142,
+    -38
+  ],
+  "commander_AOI": [
+    "A_3_4"
+  ],
+  "grid_weather": {
+    "c0": 0.1765,
+    "c1": 0.2637,
+    "c2": 0.3812,
+    "c3": 0.4879,
+    "c4": 0.6134
+  },
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "sensors": [
+        "EO",
+        "SAR",
+        "ESM"
+      ],
+      "munitions": {
+        "HF": 0,
+        "RKT": 0,
+        "GUN": 0
+      }
+    },
+    "HELI": {
+      "count": 2,
+      "sensors": [
+        "MMW",
+        "EOIR"
+      ],
+      "munitions": {
+        "HF": 12,
+        "RKT": 60,
+        "GUN": 1000
+      }
+    }
+  },
+  "targets": [
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [
+        226,
+        68
+      ],
+      "value": 0.72,
+      "threat": 0.56,
+      "confirmed": true,
+      "velocity": [
+        6,
+        3
+      ],
+      "pos_cov": [
+        [
+          0.24,
+          0
+        ],
+        [
+          0,
+          0.18
+        ]
+      ]
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [
+        70,
+        101
+      ],
+      "value": 0.68,
+      "threat": 0.49,
+      "confirmed": true,
+      "velocity": [
+        -4,
+        5
+      ],
+      "pos_cov": [
+        [
+          0.16,
+          0
+        ],
+        [
+          0,
+          0.22
+        ]
+      ]
+    }
+  ]
+}

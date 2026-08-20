@@ -1,0 +1,111 @@
+{
+  "scenario_name": "MISSION_02: g1 打击完成移除，UAV 转移至 g2 所在扇区（A_4_2），g2/g3/g4 仍未确认",
+  "aoi": {
+    "row": 4,
+    "col": 2
+  },
+  "staging_position": [
+    142,
+    -38
+  ],
+  "commander_AOI": [
+    "A_4_2"
+  ],
+  "grid_weather": {
+    "c0": 0.1825,
+    "c1": 0.2637,
+    "c2": 0.3479,
+    "c3": 0.5164,
+    "c4": 0.6812
+  },
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "sensors": [
+        "EO",
+        "SAR",
+        "ESM"
+      ],
+      "munitions": {
+        "HF": 0,
+        "RKT": 0,
+        "GUN": 0
+      }
+    },
+    "HELI": {
+      "count": 2,
+      "sensors": [
+        "MMW",
+        "EOIR"
+      ],
+      "munitions": {
+        "HF": 12,
+        "RKT": 68,
+        "GUN": 1100
+      }
+    }
+  },
+  "targets": [
+    {
+      "tid": "g2",
+      "type": "CP",
+      "pos": [
+        72,
+        221
+      ],
+      "value": 0.84,
+      "threat": 0.63,
+      "confirmed": false
+    },
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [
+        220,
+        68
+      ],
+      "value": 0.73,
+      "threat": 0.54,
+      "confirmed": false,
+      "velocity": [
+        6,
+        3
+      ],
+      "pos_cov": [
+        [
+          0.25,
+          0
+        ],
+        [
+          0,
+          0.25
+        ]
+      ]
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [
+        73,
+        112
+      ],
+      "value": 0.69,
+      "threat": 0.5,
+      "confirmed": false,
+      "velocity": [
+        -4,
+        5
+      ],
+      "pos_cov": [
+        [
+          0.3,
+          0
+        ],
+        [
+          0,
+          0.3
+        ]
+      ]
+    }
+  ]
+}

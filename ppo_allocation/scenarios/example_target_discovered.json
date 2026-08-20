@@ -1,0 +1,24 @@
+{
+  "scenario_name": "4机4区合理初始分配",
+  "description": "全部无人机使用SAR传感器（全天候，不受天气影响）。U0(SAR)→R0, U1(SAR)→R1, U2(SAR)→R2, U3(SAR)→R3。3个目标潜伏在区域中，尚未被发现。程序运行时会随机注入一个突发事件（区域空缺/无人机损毁/目标发现/目标摧毁），PPO据此重新分配任务。",
+
+  "regions": {
+    "0": { "center_x": 12.5, "center_y": 37.5, "weather": 0, "assigned_uav": 0, "need_reassign": false, "priority": 1.0 },
+    "1": { "center_x": 37.5, "center_y": 37.5, "weather": 0, "assigned_uav": 1, "need_reassign": false, "priority": 1.0 },
+    "2": { "center_x": 12.5, "center_y": 12.5, "weather": 0, "assigned_uav": 2, "need_reassign": false, "priority": 1.0 },
+    "3": { "center_x": 37.5, "center_y": 12.5, "weather": 1, "assigned_uav": 3, "need_reassign": false, "priority": 1.0 }
+  },
+
+  "uavs": {
+    "0": { "x": 12.5, "y": 37.5, "sensor": 1, "alive": true, "sensor_failed": false, "task": 0, "regions": [0], "target_id": -1 },
+    "1": { "x": 37.5, "y": 37.5, "sensor": 1, "alive": true, "sensor_failed": false, "task": 0, "regions": [1], "target_id": -1 },
+    "2": { "x": 12.5, "y": 12.5, "sensor": 1, "alive": true, "sensor_failed": false, "task": 0, "regions": [2], "target_id": -1 },
+    "3": { "x": 37.5, "y": 12.5, "sensor": 1, "alive": true, "sensor_failed": false, "task": 0, "regions": [3], "target_id": -1 }
+  },
+
+  "targets": {
+    "0": { "x": 15.0, "y": 38.0, "region": 0, "target_type": 1, "movable": false, "discovered": false, "tracked": false, "destroyed": false, "tracker_id": -1 },
+    "1": { "x": 35.0, "y": 33.0, "region": 1, "target_type": 0, "movable": true,  "discovered": false, "tracked": false, "destroyed": false, "tracker_id": -1 },
+    "2": { "x": 15.0, "y": 14.0, "region": 2, "target_type": 0, "movable": true,  "discovered": false, "tracked": false, "destroyed": false, "tracker_id": -1 }
+  }
+}

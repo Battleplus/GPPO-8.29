@@ -1,0 +1,47 @@
+{
+  "cycle_id": 0,
+  "timestamp": 0.0,
+  "status": "OPTIMAL",
+  "tasks": [
+    {
+      "platform": "U1",
+      "task_type": "recon",
+      "aoi": "A_5_6",
+      "cell": "c0",
+      "sensor": "ESM",
+      "role": "area_scan"
+    },
+    {
+      "platform": "U2",
+      "task_type": "recon",
+      "aoi": "A_5_6",
+      "cell": "c1",
+      "sensor": "EO",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "U3",
+      "task_type": "recon",
+      "aoi": "A_5_6",
+      "cell": "c2",
+      "sensor": "SAR",
+      "role": "subarea_search"
+    },
+    {
+      "platform": "H1",
+      "task_type": "strike",
+      "target": "g1",
+      "munition": "HF",
+      "qty": 2,
+      "role": "lead"
+    },
+    {
+      "platform": "H2",
+      "task_type": "strike",
+      "target": "g1",
+      "munition": "",
+      "qty": 0,
+      "role": "wing_support"
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+runtime:
+  width: 1024
+  height: 576
+  headless: false
+  renderer: HydraStorm
+  hold_seconds: -1
+  dt: 0.0166666667
+
+lighting:
+  sun_intensity: 1300
+  sun_angle: 0.55
+
+terrain:
+  map_size: 680
+  height_scale: 26
+  grid: 120
+
+forest:
+  enabled: true
+  tree_count: 160
+  seed: 42
+
+rocks:
+  enabled: true
+  count: 45
+
+water:
+  enabled: true
+  river_width: 26
+  bank_width: 44
+  shore_width: 74
+  sea_width: 90
+  sea_length: 520
+  coastal_enabled: true
+  z: 0.22
+  color: [0.05, 0.20, 0.36]
+  bank_color: [0.31, 0.26, 0.15]
+  shore_color: [0.24, 0.34, 0.18]
+  bridge_color: [0.30, 0.30, 0.27]
+
+battlefield:
+  enabled: true
+  arterial_width: 14
+  road_color: [0.18, 0.19, 0.18]
+  pad_color: [0.24, 0.25, 0.23]
+  earthwork_color: [0.34, 0.27, 0.16]
+  bunker_color: [0.36, 0.39, 0.34]
+
+emitter:
+  position_xy: [18, -8]
+  height_offset: 1.2
+  radius: 1.4
+  light_intensity: 1800
+  light_radius: 2.2
+
+aircraft:
+  uav: false
+  helicopter: false
+  uav_start: [230, -142, 24]
+  helicopter_start: [-230, 142, 28]
+  formations_enabled: true
+  queue_count_each_side: 10
+  queue_spacing: 14
+  queue_columns: 5
+  queue_row_spacing: 16
+  left_queue_origin: [-292, -214, 24]
+  right_queue_origin: [292, 214, 24]
+  uav_asset_path: /home/isaac/ql/asset/NTNU/ARL-Robot-1/arl_robot_1.usd
+  uav_asset_scale: 2.5
+  helicopter_asset_path: /home/isaac/ql/asset/NASA/Ingenuity/ingenuity.usd
+  helicopter_asset_scale: 1
+  uav_motion:
+    type: kinematic
+    max_speed: 30
+    max_accel: 12
+  helicopter_motion:
+    type: dynamic
+    max_speed: 24
+    max_accel: 8
+    position_gain: 1.3
+    velocity_gain: 1.8
+
+ground_units:
+  enabled: true
+  tanks_each_side: 10
+  submarines_each_side: 0
+  uuv_count: 0
+  tank_asset_path:
+  tank_asset_scale: 1
+  uuv_asset_path:
+  uuv_asset_scale: 1
+  tank_motion:
+    enabled: false
+  submarine_motion:
+    enabled: false
+  uuv_motion:
+    enabled: false
+
+camera:
+  eye: [430, -500, 250]
+  target: [0, 0, 18]
+
+weather:
+  preset: clear
+  cloud_cover: 0.05
+  fog_density: 0.02
+  rain_rate: 0.0
+  sea_clutter: 0.10
+  visual_clouds: true
+  visual_rain: false
+
+tracking:
+  enabled: false
+  report_interval: 1.0
+  output_enabled: false
+  sensors:
+    eo:
+      range: 380
+      base_pd: 0.90
+      measurement_noise: 3.5
+      false_alarm_rate: 0.015
+    sar:
+      range: 520
+      base_pd: 0.84
+      measurement_noise: 5.5
+      false_alarm_rate: 0.035
+    arm:
+      range: 680
+      base_pd: 0.92
+      measurement_noise: 4.0
+      false_alarm_rate: 0.010
+  filter:
+    alpha: 0.68
+    beta: 0.22
+    association_gate: 42
+    track_timeout: 6.0
+
+sensors:
+  names: eo,sar,arm
+  capture_enabled: false
+  resolution: 640
+  coverage: 70
+  altitude:
+  capture_seconds: 12
+  capture_interval: 1
+  output_dir:
+  sar:
+    speckle_shape: 3
+    edge_gain: 0.55
+  arm:
+    red_threshold: 135
+    red_ratio: 1.35
+
+weapons:
+  enabled: false
+  uav_missile_time: 20
+  helicopter_missile_time: 30
+  uav_speed: 45
+  helicopter_speed: 38
+  target_offset: [0, 0, 0.6]
+  uav_launch_offset: [0.6, 0, -0.35]
+  helicopter_launch_offset: [1.2, 0, -0.55]

@@ -1,0 +1,61 @@
+{
+  "scenario_name": "多 AOI 示例：仅已探测目标有坐标，未知目标由 AOI 先验指标表达",
+  "aois": [
+    {
+      "id": "A_1_5",
+      "row": 1,
+      "col": 5,
+      "priority": 0.9,
+      "target_prior": 0.5,
+      "target_value": 0.6,
+      "target_threat": 0.55
+    },
+    {
+      "id": "A_3_4",
+      "row": 3,
+      "col": 4,
+      "priority": 0.6,
+      "target_prior": 0.3,
+      "target_value": 0.75,
+      "target_threat": 0.6
+    },
+    {
+      "id": "A_5_6",
+      "row": 5,
+      "col": 6,
+      "priority": 0.8,
+      "target_prior": 0.4,
+      "target_value": 0.9,
+      "target_threat": 0.85
+    }
+  ],
+  "staging_position": [142, -38],
+  "cycle_id": 0,
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "pos": [142, -38],
+      "sensors": ["EO", "SAR", "ESM"],
+      "munitions": {"HF": 0, "RKT": 0, "GUN": 0}
+    },
+    "HELI": {
+      "count": 2,
+      "pos": [142, -38],
+      "sensors": ["MMW", "EOIR"],
+      "munitions": {"HF": 16, "RKT": 76, "GUN": 1200}
+    }
+  },
+  "targets": [
+    {
+      "tid": "g1",
+      "type": "RADAR",
+      "pos": [252, 238],
+      "value": 0.97,
+      "threat": 0.91,
+      "confirmed": true,
+      "alive": true
+    }
+  ],
+  "aoi_route_state": null,
+  "execution_feedback": null
+}

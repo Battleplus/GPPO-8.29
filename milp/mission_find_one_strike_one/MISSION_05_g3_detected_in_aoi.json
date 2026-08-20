@@ -1,0 +1,100 @@
+{
+  "scenario_name": "MISSION_05: UAV 侦察 A_2_4 扇区，发现 g3（AV），confirmed=true，立即指定打击",
+  "aoi": {
+    "row": 2,
+    "col": 4
+  },
+  "staging_position": [
+    142,
+    -38
+  ],
+  "commander_AOI": [
+    "A_2_4"
+  ],
+  "grid_weather": {
+    "c0": 0.1825,
+    "c1": 0.2637,
+    "c2": 0.3479,
+    "c3": 0.5164,
+    "c4": 0.6812
+  },
+  "platforms": {
+    "UAV": {
+      "count": 5,
+      "sensors": [
+        "EO",
+        "SAR",
+        "ESM"
+      ],
+      "munitions": {
+        "HF": 0,
+        "RKT": 0,
+        "GUN": 0
+      }
+    },
+    "HELI": {
+      "count": 2,
+      "sensors": [
+        "MMW",
+        "EOIR"
+      ],
+      "munitions": {
+        "HF": 8,
+        "RKT": 60,
+        "GUN": 1000
+      }
+    }
+  },
+  "targets": [
+    {
+      "tid": "g3",
+      "type": "AV",
+      "pos": [
+        238,
+        77
+      ],
+      "value": 0.73,
+      "threat": 0.54,
+      "confirmed": true,
+      "velocity": [
+        6,
+        3
+      ],
+      "pos_cov": [
+        [
+          0.25,
+          0
+        ],
+        [
+          0,
+          0.25
+        ]
+      ]
+    },
+    {
+      "tid": "g4",
+      "type": "AV",
+      "pos": [
+        61,
+        127
+      ],
+      "value": 0.69,
+      "threat": 0.5,
+      "confirmed": false,
+      "velocity": [
+        -4,
+        5
+      ],
+      "pos_cov": [
+        [
+          0.3,
+          0
+        ],
+        [
+          0,
+          0.3
+        ]
+      ]
+    }
+  ]
+}
