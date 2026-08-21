@@ -531,18 +531,33 @@ class RuntimeBridge:
     def _concurrency_counters(self) -> dict[str, int]:
         return self._cc
 
+    def begin_decision(self, env: Any) -> dict[str, Any]:
+        """Snapshot the current decision context before policy inference.
+
+        Returns a dict with ``graph_version`` and ``action_version`` that the
+        caller must pass back in ``issue_assignment_command``.  This ensures
+        the submission contract carries the version from decision time, not
+        from (potentially stale) execution time.
+        """
+        return {
+            "graph_version": int(env.graph_version),
+            "action_version": int(env.decision_version),
+        }
+
     def issue_assignment_command(
         self,
         env: Any,
         uav_id: int,
         region_id: int,
         now: float,
+        expected_graph_version: int | None = None,
+        expected_action_version: int | None = None,
     ) -> AssignmentCommand | None:
         """Create, validate and commit an assignment command (execution layer).
 
         Guards enforced HERE (not post-hoc):
-        - command.graph_version must EXACTLY match current graph version.
-        - action_version must match the environment's decision version.
+        - ``expected_graph_version`` must EXACTLY match current graph version.
+        - ``expected_action_version`` must match current decision_version.
         - the latest action mask is re-validated before execution.
         - the same region may only ever have one valid lease holder; a new
           holder is only established after the previous lease is revoked or
@@ -550,11 +565,14 @@ class RuntimeBridge:
         - only AFFECTED (pending) regions are re-assigned; a lease for an
           unaffected region is never interrupted.
 
+        When ``expected_graph_version`` / ``expected_action_version`` are
+        ``None``, they fall back to current env values (backward-compatible).
+
         Returns the committed command, or None when rejected.
         """
         cc = self._cc
-        graph_version = int(env.graph_version)
-        action_version = int(env.decision_version)
+        graph_version = int(expected_graph_version) if expected_graph_version is not None else int(env.graph_version)
+        action_version = int(expected_action_version) if expected_action_version is not None else int(env.decision_version)
 
         # 1. Re-validate the LATEST action mask before execution.
         from random_event.graph import build_graph_state, decode_edge_action
@@ -610,13 +628,15 @@ class RuntimeBridge:
         self._cc_seq += 1
 
         # 4. graph_version must EXACTLY match current (not merely "not old").
-        if not concurrency.validate_command(command.command_id, graph_version):
+        current_gv = int(env.graph_version)
+        if command.graph_version != current_gv:
             cc["stale_rejected"] += 1
             return None
-        if command.graph_version != graph_version:
+        if not concurrency.validate_command(command.command_id, current_gv):
             cc["stale_rejected"] += 1
             return None
-        if command.action_version != action_version:
+        current_av = int(env.decision_version)
+        if command.action_version != current_av:
             cc["stale_rejected"] += 1
             return None
         concurrency.commit_command(command.command_id)
@@ -751,9 +771,10 @@ class RuntimeBridge:
     ) -> bool:
         """Submit a deliberately stale command for testing.
 
-        This creates a command with an old graph_version and attempts to
-        execute it.  The execution layer must reject it.  This is the ONLY
-        method that should increment ``injected_stale_submissions``.
+        This creates a command with a potentially stale graph_version and/or
+        action_version, then attempts to execute it.  The execution layer
+        must reject it on ANY mismatch.  This is the ONLY method that should
+        increment ``injected_stale_submissions``.
 
         Returns True if the stale submission was correctly rejected.
         """
@@ -769,14 +790,20 @@ class RuntimeBridge:
             ttl=0.5,
             now=now,
         )
-        # Validate against current (newer) graph version — must reject.
+        # Check 1: graph_version must match current.
         current_gv = int(env.graph_version)
+        if command.graph_version != current_gv:
+            cc["injected_stale_rejected"] += 1
+            cc["stale_rejected"] += 1
+            return True
+        # Check 2: validate via concurrency manager.
         if not concurrency.validate_command(command.command_id, current_gv):
             cc["injected_stale_rejected"] += 1
             cc["stale_rejected"] += 1
             return True
-        # Also try via reject_stale_action for belt-and-suspenders.
-        if concurrency.reject_stale_action(command, current_gv):
+        # Check 3: action_version must match current decision_version.
+        current_av = int(env.decision_version)
+        if command.action_version != current_av:
             cc["injected_stale_rejected"] += 1
             cc["stale_rejected"] += 1
             return True

@@ -281,25 +281,35 @@ def run_invariant_checks() -> dict:
         results["concurrency_exclusive_holder"] = {"passed": exclusive_rejected and cm.get_valid_holder_count("0", 1.0) == 1}
         results["concurrency_duplicate_assignment"] = {"passed": exclusive_rejected}
         results["concurrency_late_ack_resurrection"] = {"passed": late_rejected and cmd.status is CommandStatus.REVOKED}
-        # Real fencing monotonicity: token A → revoke → token B > A →
-        # old token A cannot resurrect.
+        # Real fencing monotonicity: holder A gets T1, revoke, holder B
+        # gets T2 > T1, old T1 cannot create lease / ACK / execute.
         token_a = cmd.fencing_token
         cmd.revoke(token_a + 5, at=1.5)
+        cm.revoke_lease(lease1.lease_id)
         # New command gets a higher token.
         cmd2 = cm.create_command("p0-c2", "0", "0", graph_version=4, action_version=7, now=2.0)
-        # Try to execute with old token A — should fail.
-        old_token_rejected = True
+        lease2 = cm.create_lease("p0-l2b", "0", "0", cmd2.fencing_token, now=2.0, ttl=5.0)
+        # Try to create lease with old token A — must fail.
+        old_lease_rejected = False
         try:
             cm.create_lease("p0-old-tok", "0", "0", token_a, now=2.5, ttl=5.0)
         except ValueError:
-            old_token_rejected = True
-        # Verify new token is strictly higher.
+            old_lease_rejected = True
+        # Try old ACK — must fail (command revoked).
+        old_ack_rejected = False
+        try:
+            cm.receive_ack(cmd.command_id, ACK(cmd.command_id, "0", ACKType.ACCEPTED, 3.0, token_a))
+        except ValueError:
+            old_ack_rejected = True
+        # New token is strictly higher.
         new_higher = cmd2.fencing_token > token_a
         results["concurrency_fencing_monotonicity"] = {
-            "passed": old_token_rejected and new_higher,
+            "passed": old_lease_rejected and old_ack_rejected and new_higher,
             "old_token": token_a,
             "new_token": cmd2.fencing_token,
-            "old_token_rejected": old_token_rejected,
+            "old_lease_rejected": old_lease_rejected,
+            "old_ack_rejected": old_ack_rejected,
+            "new_higher": new_higher,
         }
     except Exception as exc:  # pragma: no cover
         for key in (
@@ -308,6 +318,44 @@ def run_invariant_checks() -> dict:
             "concurrency_fencing_monotonicity",
         ):
             results[key] = {"passed": False, "error": str(exc)}
+
+    # --- Stale injection: N=10 stale submissions, all rejected, rate==1.0 ---
+    try:
+        from ppo_allocation.random_event.runtime_bridge import RuntimeBridge
+        from ppo_allocation.random_event.environment import RandomEventAllocationEnv
+        env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
+        env.reset(seed=42)
+        bridge = RuntimeBridge(detector_seed=42)
+        gv = int(env.graph_version)
+        av = int(env.decision_version)
+        N = 10
+        all_rejected = True
+        for i in range(N):
+            ok = bridge.submit_stale_action(
+                env,
+                command_id=f"p0-injected-{i}",
+                uav_id="0",
+                region_id="0",
+                stale_graph_version=gv - 1,
+                action_version=av,
+                fencing_token=0,
+                now=0.0,
+            )
+            if not ok:
+                all_rejected = False
+        snap = bridge.snapshot_concurrency(0.0)
+        injected = snap["injected_stale_submissions"]
+        rejected = snap["injected_stale_rejected"]
+        rate = snap["stale_rejection_rate"]
+        env.close()
+        results["stale_injection_rate"] = {
+            "passed": injected == N and rejected == N and rate == 1.0 and all_rejected,
+            "injected": injected,
+            "rejected": rejected,
+            "rate": rate,
+        }
+    except Exception as exc:  # pragma: no cover
+        results["stale_injection_rate"] = {"passed": False, "error": str(exc)}
 
     # --- Snapshot identity, overlap delivery order and unseen isolation ---
     try:
@@ -377,8 +425,12 @@ def git_commit_sha() -> str:
         return "UNAVAILABLE"
 
 
-def verify_smoke_evidence() -> dict:
-    """Verify the actual 20 tapes x 4 modes replay evidence exists."""
+def verify_smoke_evidence(attested_commit: str) -> dict:
+    """Verify the actual 20 tapes x 4 modes replay evidence exists.
+
+    ``attested_commit`` is the source commit the gate is attesting.
+    The smoke metadata git_commit must match this exactly.
+    """
     if not SMOKE_SUMMARY_PATH.exists():
         return {"passed": False, "error": f"missing {SMOKE_SUMMARY_PATH.relative_to(ROOT)}"}
     try:
@@ -392,7 +444,19 @@ def verify_smoke_evidence() -> dict:
         replayed_ok = replayed == 80
         manifest_hash = manifest.get("manifest_sha256") or manifest.get("seed_manifest_sha256", "")
 
-        # Verify environment metadata: must be Python 3.11.x, have required packages
+        # Compute file hashes for the smoke evidence artifacts.
+        summary_sha = sha256_file(SMOKE_SUMMARY_PATH)
+        meta_sha = sha256_file(SMOKE_ENV_METADATA_PATH) if SMOKE_ENV_METADATA_PATH.exists() else "MISSING"
+
+        # Verify environment metadata: Python 3.11.x, frozen package versions,
+        # and git_commit == attested source commit.
+        FROZEN_PACKAGES = {
+            "torch": "2.5.0+cpu",
+            "numpy": "2.0.2",
+            "sb3-contrib": "2.9.0",
+            "stable-baselines3": "2.9.0",
+            "gymnasium": "1.3.0",
+        }
         meta_ok = True
         meta_detail = {}
         if SMOKE_ENV_METADATA_PATH.exists():
@@ -400,17 +464,24 @@ def verify_smoke_evidence() -> dict:
             py = meta.get("python", "")
             meta_detail["python"] = py
             meta_detail["python_311"] = py.startswith("3.11")
-            meta_detail["git_commit"] = meta.get("git_commit")
+            smoke_commit = meta.get("git_commit")
+            meta_detail["git_commit"] = smoke_commit
+            meta_detail["git_commit_matches_attested"] = smoke_commit == attested_commit
             packages = meta.get("packages", {})
             meta_detail["torch"] = packages.get("torch")
             meta_detail["numpy"] = packages.get("numpy")
             meta_detail["sb3_contrib"] = packages.get("sb3-contrib")
             meta_detail["stable_baselines3"] = packages.get("stable-baselines3")
             meta_detail["gymnasium"] = packages.get("gymnasium")
+            package_versions_ok = all(
+                packages.get(name) == expected
+                for name, expected in FROZEN_PACKAGES.items()
+            )
+            meta_detail["frozen_packages_ok"] = package_versions_ok
             meta_ok = (
                 meta_detail["python_311"]
-                and meta_detail["sb3_contrib"] is not None
-                and meta_detail["stable_baselines3"] is not None
+                and meta_detail["git_commit_matches_attested"]
+                and package_versions_ok
             )
         else:
             meta_detail["error"] = f"missing {SMOKE_ENV_METADATA_PATH.relative_to(ROOT)}"
@@ -423,8 +494,9 @@ def verify_smoke_evidence() -> dict:
             "replayed_ok": replayed_ok,
             "counts_by_mode": counts,
             "mode_ok": mode_ok,
-            "summary_sha256": sha256_file(SMOKE_SUMMARY_PATH),
-            "manifest_sha256": manifest_hash,
+            "summary_sha256": summary_sha,
+            "manifest_file_sha256": manifest_hash,
+            "environment_metadata_sha256": meta_sha,
             "environment_metadata": meta_detail,
         }
     except (OSError, ValueError, TypeError) as exc:
@@ -453,8 +525,9 @@ def main() -> int:
     isolation = verify_seed_isolation()
     config_contract = verify_config_contract()
     invariants = run_invariant_checks()
-    smoke = verify_smoke_evidence()
     hashes = compute_hashes()
+    attested = hashes["git_commit_sha"]
+    smoke = verify_smoke_evidence(attested)
 
     previous = {}
     if GATE_PATH.exists():
@@ -524,6 +597,10 @@ def main() -> int:
         "concurrency_fencing_monotonicity": {
             "status": "PASS" if invariants.get("concurrency_fencing_monotonicity", {}).get("passed") else "FAIL",
             "details": invariants.get("concurrency_fencing_monotonicity", {}),
+        },
+        "stale_injection_rate": {
+            "status": "PASS" if invariants.get("stale_injection_rate", {}).get("passed") else "FAIL",
+            "details": invariants.get("stale_injection_rate", {}),
         },
         "model_save_load_determinism": {
             "status": "PASS" if invariants.get("model_save_load_determinism", {}).get("passed") else "FAIL",

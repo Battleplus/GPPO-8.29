@@ -211,44 +211,78 @@ class AdapterConcurrencyWiringTests(unittest.TestCase):
 class StaleActionVersionTests(unittest.TestCase):
     """Tests for stale action_version rejection at the bridge level."""
 
-    def test_matching_action_version_accepted(self):
-        """Command with action_version=3 accepted when env has version=3."""
+    def test_begin_decision_returns_correct_versions(self):
+        """begin_decision captures graph_version and action_version."""
         from ppo_allocation.random_event.runtime_bridge import RuntimeBridge
         from ppo_allocation.random_event.environment import RandomEventAllocationEnv
         env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
         env.reset(seed=42)
         bridge = RuntimeBridge(detector_seed=42)
-        # Create a command with the current action_version
-        av = int(env.decision_version)
-        cmd = bridge.adapter.concurrency.create_command(
-            "stale-av-test", "0", "0",
-            graph_version=int(env.graph_version),
-            action_version=av,
-            now=0.0,
-        )
-        # Validate: graph_version matches → validated
-        self.assertTrue(bridge.adapter.concurrency.validate_command(cmd.command_id, int(env.graph_version)))
-        # The bridge-level check: command.action_version == env.decision_version
-        self.assertEqual(cmd.action_version, av)
+        ctx = bridge.begin_decision(env)
+        self.assertEqual(ctx["graph_version"], int(env.graph_version))
+        self.assertEqual(ctx["action_version"], int(env.decision_version))
         env.close()
 
-    def test_mismatched_action_version_rejected_by_bridge(self):
-        """Command with wrong action_version should be rejected."""
+    def test_stale_action_version_rejected_at_env_level(self):
+        """Submit action with old action_version → rejected, no mutation."""
+        import numpy as np
+        from ppo_allocation.random_event.runtime_bridge import RuntimeBridge
+        from ppo_allocation.random_event.environment import RandomEventAllocationEnv
+        env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
+        graph, _ = env.reset(seed=42)
+        bridge = RuntimeBridge(detector_seed=42)
+        # Capture decision context
+        ctx = bridge.begin_decision(env)
+        old_av = ctx["action_version"]
+        # Step the environment to advance decision_version
+        mask = graph.action_mask.cpu().numpy().astype(bool)
+        legal = np.flatnonzero(mask)
+        action = int(legal[0]) if len(legal) > 0 else int(graph.noop_action)
+        graph, _, _, _, _ = env.step(action)
+        # Now submit with the OLD action_version — must be rejected
+        fresh_gv = int(env.graph_version)
+        result = bridge.submit_stale_action(
+            env,
+            command_id="stale-av-env",
+            uav_id="0",
+            region_id="0",
+            stale_graph_version=fresh_gv,
+            action_version=old_av,
+            fencing_token=0,
+            now=float(env.current_time),
+        )
+        # submit_stale_action returns True when correctly rejected
+        self.assertTrue(result)
+        snap = bridge.snapshot_concurrency(float(env.current_time))
+        self.assertEqual(snap["injected_stale_rejected"], 1)
+        env.close()
+
+    def test_matching_versions_accepted(self):
+        """Command with matching graph_version + action_version accepted."""
         from ppo_allocation.random_event.runtime_bridge import RuntimeBridge
         from ppo_allocation.random_event.environment import RandomEventAllocationEnv
         env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
         env.reset(seed=42)
         bridge = RuntimeBridge(detector_seed=42)
-        # Create command with action_version = current + 999 (wrong)
-        wrong_av = int(env.decision_version) + 999
-        cmd = bridge.adapter.concurrency.create_command(
-            "stale-av-wrong", "0", "0",
-            graph_version=int(env.graph_version),
-            action_version=wrong_av,
-            now=0.0,
-        )
-        # At bridge level, the check is: command.action_version != action_version
-        self.assertNotEqual(cmd.action_version, int(env.decision_version))
+        ctx = bridge.begin_decision(env)
+        # Pick a pending region if any
+        pending = list(env.pending_regions)
+        if pending:
+            rid = pending[0]
+            # Find a valid UAV for this region
+            uid = 0
+            for u in env.uavs:
+                if env.uavs[u].alive and not env.uavs[u].sensor_failed:
+                    uid = u
+                    break
+            cmd = bridge.issue_assignment_command(
+                env, uav_id=uid, region_id=rid, now=0.0,
+                expected_graph_version=ctx["graph_version"],
+                expected_action_version=ctx["action_version"],
+            )
+            self.assertIsNotNone(cmd, "Valid assignment with matching versions should be accepted")
+        else:
+            self.skipTest("No pending regions after reset")
         env.close()
 
 
