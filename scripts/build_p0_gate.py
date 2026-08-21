@@ -628,19 +628,18 @@ def verify_smoke_evidence(attested_commit: str) -> dict:
 
 
 def compute_hashes() -> dict:
-    source = {}
-    for relative in SOURCE_FILES:
-        path = ROOT / relative
-        source[relative] = sha256_file(path) if path.exists() else "MISSING"
+    """Hash the committed Git tree, never an uncommitted working copy."""
+    commit = git_commit_sha()
+    source = {relative: git_blob_sha256(commit, relative) for relative in SOURCE_FILES}
     source_tree_hash = hashlib.sha256(
         "".join(f"{key}:{value}\n" for key, value in sorted(source.items())).encode("utf-8")
     ).hexdigest()
     return {
-        "git_commit_sha": git_commit_sha(),
+        "git_commit_sha": commit,
         "source_tree_hash": source_tree_hash,
         "source": source,
-        "protocol": sha256_file(PROTOCOL_PATH),
-        "seed_manifest": sha256_file(SEED_MANIFEST_PATH),
+        "protocol": git_blob_sha256(commit, "configs/random_event_protocol.json"),
+        "seed_manifest": git_blob_sha256(commit, "configs/seed_manifest.json"),
     }
 
 

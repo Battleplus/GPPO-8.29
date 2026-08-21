@@ -1046,25 +1046,45 @@ def _check_p0_gate() -> None:
     # --- Source/config/test hash verification ---
     frozen = gate.get("source_hashes", {})
     frozen_sources = frozen.get("source", {})
-    current_sources = {}
+    if not frozen_sources:
+        raise SystemExit("P0 gate has no protected source hashes")
+    try:
+        status = subprocess.check_output(
+            ["git", "status", "--porcelain", "--", *sorted(frozen_sources)],
+            cwd=root, text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise SystemExit(f"Cannot verify protected working tree: {exc}") from exc
+    if status:
+        raise SystemExit("P0 gate protected working tree is dirty; rerun evidence after source commit.")
+
+    attested_blob_sources = {}
     for relative, expected in frozen_sources.items():
-        path = root / relative
-        if not path.exists():
-            raise SystemExit(f"P0 gate source is missing: {relative}")
-        current_sources[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
-    if current_sources != frozen_sources:
-        raise SystemExit("P0 gate source hash mismatch; protected source changed after attestation.")
+        try:
+            blob = subprocess.check_output(
+                ["git", "show", f"{attested}:{relative}"], cwd=root
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"P0 gate attested source is missing: {relative}") from exc
+        attested_blob_sources[relative] = hashlib.sha256(blob).hexdigest()
+    if attested_blob_sources != frozen_sources:
+        raise SystemExit("P0 gate attested Git tree hash mismatch")
     current_tree_hash = hashlib.sha256(
-        "".join(f"{key}:{value}\n" for key, value in sorted(current_sources.items())).encode("utf-8")
+        "".join(f"{key}:{value}\n" for key, value in sorted(attested_blob_sources.items())).encode("utf-8")
     ).hexdigest()
     if current_tree_hash != gate.get("source_tree_hash"):
-        raise SystemExit("P0 gate source_tree_hash mismatch; rerun the complete gate.")
+        raise SystemExit("P0 gate source_tree_hash mismatch; protected source changed after attestation.")
 
     for relative, key, field in (
         ("configs/random_event_protocol.json", "protocol", "protocol_sha256"),
         ("configs/seed_manifest.json", "seed_manifest", "seed_manifest_sha256"),
     ):
-        current_hash = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+        try:
+            current_hash = hashlib.sha256(
+                subprocess.check_output(["git", "show", f"{attested}:{relative}"], cwd=root)
+            ).hexdigest()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"P0 gate {key} is missing from attested tree") from exc
         expected = gate.get(field) or frozen.get(key)
         if current_hash != expected:
             raise SystemExit(f"P0 gate {key} hash mismatch; configuration changed after attestation.")
