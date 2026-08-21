@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "audit_date": "2026-08-21",
+  "project_root": "E:\\Z博士\\8.20\\54_20-master",
+  "git_head": "0cd2aeb",
+  "git_status": {
+    "modified_files": [
+      ".gitignore",
+      "ppo_allocation/policy/ppo_agent.py",
+      "ppo_allocation/reallocation_service.py",
+      "ppo_allocation/tests/test_cpp_interface.py"
+    ],
+    "untracked_directories": [
+      "event_runtime/",
+      "configs/",
+      "docs/",
+      "handoff/",
+      "ppo_allocation/random_event/",
+      "ppo_allocation/tests_random_event/",
+      "ppo_allocation/results/random_event/",
+      "references/"
+    ]
+  },
+  "event_runtime_status": {
+    "implemented": [
+      "events.py",
+      "observation.py",
+      "detector.py",
+      "state_machine.py",
+      "queue.py",
+      "scheduler.py"
+    ],
+    "missing": [
+      "concurrency.py",
+      "adapter.py",
+      "metrics.py",
+      "replay.py"
+    ]
+  },
+  "ppo_allocation_random_event_status": {
+    "implemented": [
+      "baselines.py",
+      "environment.py",
+      "events.py",
+      "experiment.py",
+      "graph.py",
+      "legacy_adapter.py",
+      "metrics.py",
+      "models.py",
+      "plotting.py",
+      "reward.py",
+      "scheduler.py",
+      "trainer.py"
+    ]
+  },
+  "configs_status": {
+    "implemented": [
+      "random_event_protocol.json",
+      "seed_manifest.json",
+      "random_event_train.json",
+      "random_event_validation.json",
+      "random_event_test.json"
+    ]
+  },
+  "p0_defects": {
+    "missing_components": [
+      "concurrency.py (Command, ACK, Lease, FencingToken)",
+      "adapter.py (integration adapter)",
+      "metrics.py (metrics tracking)",
+      "replay.py (tape replay)"
+    ],
+    "protocol_issues": [
+      "Version validation, ACK, lease, fencing token concurrency not implemented",
+      "Episode reward may be double-counted",
+      "Oracle needs rename to 'Current-Pending Exact Planner'"
+    ],
+    "experiment_issues": [
+      "Fair PPO-MLP baseline not established",
+      "Train/Validation/Test freeze protocol incomplete",
+      "Deterministic tests and P0 gate missing"
+    ]
+  },
+  "training_allowed": false,
+  "next_actions": [
+    "Complete workspace audit documentation",
+    "Implement missing event_runtime components",
+    "Verify protocol consistency",
+    "Run deterministic tests",
+    "Generate P0 gate"
+  ]
+}

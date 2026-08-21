@@ -1,0 +1,159 @@
+{
+  "event_seed": 311034,
+  "events": [
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "E0000",
+      "event_seed": 2481329756596160752,
+      "observed_at": 0.4111532875326869,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "damaged_uav": 1,
+        "released_regions": [
+          1
+        ]
+      },
+      "severity": 0.600847,
+      "source_event": "external_random_scheduler",
+      "state_version": 0,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "E0001",
+      "event_seed": 6668741688486557045,
+      "observed_at": 10.597593103871285,
+      "occurred_at": 10.313689697901562,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "damaged_uav": 2,
+        "released_regions": [
+          2
+        ]
+      },
+      "severity": 0.798114,
+      "source_event": "external_random_scheduler",
+      "state_version": 1,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "E0002",
+      "event_seed": 7450685519312939262,
+      "observed_at": 20.364943456468474,
+      "occurred_at": 20.15172414531,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "previous_uav": 3,
+        "vacant_region": 2
+      },
+      "severity": 0.532175,
+      "source_event": "direct_region_vacancy",
+      "state_version": 2,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [
+        0,
+        1
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0003",
+      "event_seed": 6381414013843769647,
+      "observed_at": 28.637735057577977,
+      "occurred_at": 28.538463867859946,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 2,
+        "generated_region_vacancy": [
+          0,
+          1
+        ],
+        "target_region": 1,
+        "tracker_uav": 0
+      },
+      "severity": 0.584995,
+      "source_event": "target_sensor_detection",
+      "state_version": 3,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "E0004",
+      "event_seed": 6683741322749845155,
+      "observed_at": 37.817543840035256,
+      "occurred_at": 37.45705763171312,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "damaged_uav": 3,
+        "released_regions": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "severity": 0.942914,
+      "source_event": "external_random_scheduler",
+      "state_version": 4,
+      "type": "UAV_DAMAGE"
+    }
+  ],
+  "initial_seed": 310034,
+  "mode": "single",
+  "schema_version": 1
+}

@@ -1,0 +1,165 @@
+{
+  "event_seed": 331009,
+  "events": [
+    {
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "E0000",
+      "event_seed": 1107154498280930741,
+      "observed_at": 1.7081929723201965,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 0,
+        "generated_region_vacancy": [
+          2
+        ],
+        "target_region": 2,
+        "tracker_uav": 2
+      },
+      "severity": 0.401505,
+      "source_event": "target_sensor_detection",
+      "state_version": 0,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "E0001",
+      "event_seed": 5743010576607968347,
+      "observed_at": 2.958340495885295,
+      "occurred_at": 0.25275191184435297,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "damaged_uav": 3,
+        "released_regions": [
+          3
+        ]
+      },
+      "severity": 0.501223,
+      "source_event": "external_random_scheduler",
+      "state_version": 1,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "E0002",
+      "event_seed": 5919370057722391566,
+      "observed_at": 2.7158761103894338,
+      "occurred_at": 0.7703172764268528,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "destroyed_target": 0,
+        "released_uav": 2
+      },
+      "severity": 0.703788,
+      "source_event": "target_status_update",
+      "state_version": 2,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        0,
+        2
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0003",
+      "event_seed": 2900934060222066577,
+      "observed_at": 3.2411337872619974,
+      "occurred_at": 1.3593358033410379,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 2,
+        "generated_region_vacancy": [
+          0,
+          2
+        ],
+        "target_region": 2,
+        "tracker_uav": 0
+      },
+      "severity": 0.734474,
+      "source_event": "target_sensor_detection",
+      "state_version": 3,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        0,
+        2
+      ],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "E0004",
+      "event_seed": 4124484279505622446,
+      "observed_at": 3.7855082825994915,
+      "occurred_at": 2.0818391832597545,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "discovered_target": 1,
+        "generated_region_vacancy": [
+          0,
+          2
+        ],
+        "target_region": 2,
+        "tracker_uav": 2
+      },
+      "severity": 0.984588,
+      "source_event": "target_sensor_detection",
+      "state_version": 4,
+      "type": "TARGET_DISCOVERED"
+    }
+  ],
+  "initial_seed": 330009,
+  "mode": "overlap",
+  "schema_version": 1
+}

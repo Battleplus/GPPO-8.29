@@ -50,6 +50,7 @@ def test_cli_bridge_smoke(tmp_path):
         cwd=Path(__file__).resolve().parents[2],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=True,
     )
 

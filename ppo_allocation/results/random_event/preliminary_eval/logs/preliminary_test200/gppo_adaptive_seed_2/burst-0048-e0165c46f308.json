@@ -1,0 +1,1387 @@
+{
+  "algorithm": "GPPO-Adaptive seed=2",
+  "communication_counter_check": {
+    "bytes": 2513,
+    "last_step_bytes_delta": 0,
+    "last_step_trigger_delta": 0,
+    "trigger_count": 5
+  },
+  "decisions": [
+    {
+      "active_events_before": [
+        "E0000"
+      ],
+      "algorithm": "GPPO-Adaptive seed=2",
+      "decision_index": 1,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.5104093551635742,
+          "layer0/target": 0.4913945198059082,
+          "layer0/uav": 0.4871472716331482,
+          "layer1/region": 0.49356603622436523,
+          "layer1/target": 0.5050811171531677,
+          "layer1/uav": 0.49348121881484985
+        },
+        "inference_latency_ms": 13.0008,
+        "log_probability": -1.0896928310394287,
+        "pre_mask_invalid_probability": 0.8242151737213135,
+        "predicted_value": 1.1953212022781372
+      },
+      "final_infeasible": false,
+      "graph_version_after": 4,
+      "graph_version_before": 1,
+      "invalid_action": false,
+      "mask_rate": 0.8235294117647058,
+      "new_events_after": [
+        "E0002",
+        "E0001"
+      ],
+      "pending_regions_after": [
+        1
+      ],
+      "raw_action": 2,
+      "repaired_action": 2,
+      "reward": 16.734834957055046,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 3.2651650429449552,
+          "uncovered": 0.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.2651650429449553,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 1.0,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.0,
+          "load_gap": 0.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 20.0,
+          "uncovered": 1.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.0,
+            "load_gap": 0.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 20.0
+          }
+        },
+        "definition": "J(before)-J(after)",
+        "reward": 16.734834957055046,
+        "reward_components": {
+          "constraint_violation": 0.0,
+          "distance": -0.2651650429449553,
+          "load_gap": -2.0,
+          "recovery_delay": 0.0,
+          "switches": -1.0,
+          "uncovered": 20.0
+        }
+      },
+      "simulation_time_after": 1.6735052188841864,
+      "simulation_time_before": 0.6735052188841864,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "E0002"
+      ],
+      "algorithm": "GPPO-Adaptive seed=2",
+      "decision_index": 2,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.5097167491912842,
+          "layer0/target": 0.4902019798755646,
+          "layer0/uav": 0.48593100905418396,
+          "layer1/region": 0.49372100830078125,
+          "layer1/target": 0.5053231716156006,
+          "layer1/uav": 0.49414992332458496
+        },
+        "inference_latency_ms": 16.2393,
+        "log_probability": -1.06126868724823,
+        "pre_mask_invalid_probability": 0.8206126689910889,
+        "predicted_value": 1.2361785173416138
+      },
+      "final_infeasible": false,
+      "graph_version_after": 6,
+      "graph_version_before": 4,
+      "invalid_action": false,
+      "mask_rate": 0.8235294117647058,
+      "new_events_after": [
+        "E0004"
+      ],
+      "pending_regions_after": [
+        1
+      ],
+      "raw_action": 9,
+      "repaired_action": 9,
+      "reward": 21.08838834764832,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 3.2651650429449552,
+          "uncovered": 0.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.2651650429449553,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 1.0,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 24.353553390593273,
+          "uncovered": 1.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.35355339059327373,
+            "load_gap": 4.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 20.0
+          }
+        },
+        "definition": "J(before)-J(after)",
+        "reward": 21.08838834764832,
+        "reward_components": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": -1.0,
+          "uncovered": 20.0
+        }
+      },
+      "simulation_time_after": 3.8992914204303855,
+      "simulation_time_before": 1.6735052188841864,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "E0004"
+      ],
+      "algorithm": "GPPO-Adaptive seed=2",
+      "decision_index": 3,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.5096561908721924,
+          "layer0/target": 0.4902125895023346,
+          "layer0/uav": 0.48568862676620483,
+          "layer1/region": 0.49386391043663025,
+          "layer1/target": 0.5053900480270386,
+          "layer1/uav": 0.4938182830810547
+        },
+        "inference_latency_ms": 16.5009,
+        "log_probability": -1.0566881895065308,
+        "pre_mask_invalid_probability": 0.8200350403785706,
+        "predicted_value": 1.2458027601242065
+      },
+      "final_infeasible": false,
+      "graph_version_after": 8,
+      "graph_version_before": 6,
+      "invalid_action": false,
+      "mask_rate": 0.8235294117647058,
+      "new_events_after": [
+        "E0003"
+      ],
+      "pending_regions_after": [
+        3
+      ],
+      "raw_action": 9,
+      "repaired_action": 9,
+      "reward": 23.08838834764832,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 3.2651650429449552,
+          "uncovered": 0.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.2651650429449553,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 1.0,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 2.0,
+          "recovery_delay": 1.0,
+          "switches": 0.0,
+          "total": 26.353553390593273,
+          "uncovered": 1.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.35355339059327373,
+            "load_gap": 4.0,
+            "recovery_delay": 2.0,
+            "switches": 0.0,
+            "uncovered": 20.0
+          }
+        },
+        "definition": "J(before)-J(after)",
+        "reward": 23.08838834764832,
+        "reward_components": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 2.0,
+          "recovery_delay": 2.0,
+          "switches": -1.0,
+          "uncovered": 20.0
+        }
+      },
+      "simulation_time_after": 4.8992914204303855,
+      "simulation_time_before": 3.8992914204303855,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "E0003"
+      ],
+      "algorithm": "GPPO-Adaptive seed=2",
+      "decision_index": 4,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.5098168849945068,
+          "layer0/target": 0.4899752140045166,
+          "layer0/uav": 0.485685259103775,
+          "layer1/region": 0.49455124139785767,
+          "layer1/target": 0.5052092671394348,
+          "layer1/uav": 0.4938400089740753
+        },
+        "inference_latency_ms": 13.7192,
+        "log_probability": -0.6876309514045715,
+        "pre_mask_invalid_probability": 0.8814237117767334,
+        "predicted_value": 1.242965579032898
+      },
+      "final_infeasible": false,
+      "graph_version_after": 9,
+      "graph_version_before": 8,
+      "invalid_action": false,
+      "mask_rate": 0.8823529411764706,
+      "new_events_after": [],
+      "pending_regions_after": [],
+      "raw_action": 3,
+      "repaired_action": 3,
+      "reward": 16.71338834764832,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.21338834764831843,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 5.640165042944956,
+          "uncovered": 0.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.6401650429449552,
+            "load_gap": 4.0,
+            "recovery_delay": 0.0,
+            "switches": 1.0,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 22.353553390593273,
+          "uncovered": 1.0,
+          "weighted": {
+            "constraint_violation": 0.0,
+            "distance": 0.35355339059327373,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 20.0
+          }
+        },
+        "definition": "J(before)-J(after)",
+        "reward": 16.71338834764832,
+        "reward_components": {
+          "constraint_violation": 0.0,
+          "distance": -0.2866116523516815,
+          "load_gap": -2.0,
+          "recovery_delay": 0.0,
+          "switches": -1.0,
+          "uncovered": 20.0
+        }
+      },
+      "simulation_time_after": 5.8992914204303855,
+      "simulation_time_before": 4.8992914204303855,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false
+    }
+  ],
+  "episode": {
+    "algorithm": "GPPO-Adaptive seed=2",
+    "avg_reward": 19.40625,
+    "communication_bytes": 2042,
+    "communication_opportunities": 4,
+    "communication_suppressed": 0,
+    "communication_suppression_rate": 0.0,
+    "communication_trigger_count": 4,
+    "cumulative_uncovered_time": 0.0,
+    "decision_count": 4,
+    "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+    "episode_return": 77.625,
+    "event_count": 5,
+    "event_success_count": 5,
+    "event_success_rate": 1.0,
+    "event_to_action_latency_ms": 415.41746919313016,
+    "final_infeasible_count": 0,
+    "final_infeasible_rate": 0.0,
+    "gate_mean": 0.49657628685235977,
+    "gate_variance": 6.923514298586471e-05,
+    "inference_latency_ms": 14.86505,
+    "legal_coverage_rate": 1.0,
+    "load_gap": 1.25,
+    "mask_rate": 0.838235294117647,
+    "normalized_distance": 0.11963834764831843,
+    "pre_mask_invalid_probability": 0.8365716487169266,
+    "recovery_delay": 1.1500926905451156,
+    "recovery_delay_observed_count": 5,
+    "repair_count": 0,
+    "switch_count": 4,
+    "tape_id": "burst-0048-e0165c46f308",
+    "temporary_infeasible_count": 0,
+    "temporary_infeasible_rate": 0.0,
+    "value_error": 18.176182985305786,
+    "value_squared_error": 338.0048121673594,
+    "weighted_uncovered": 0.0
+  },
+  "event_runtime": {
+    "E0000": {
+      "actual_affected_regions": [
+        2
+      ],
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        2
+      ],
+      "application_note": "applied",
+      "applied_at": 0.6735052188841864,
+      "event_id": "E0000",
+      "event_seed": 5420564166281174749,
+      "observed_at": 0.6735052188841864,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 0,
+        "generated_region_vacancy": [
+          2
+        ],
+        "target_region": 2,
+        "tracker_uav": 2
+      },
+      "recovery_delay": 1.0,
+      "resolved_at": 1.6735052188841864,
+      "severity": 0.973862,
+      "source_event": "target_sensor_detection",
+      "state_version": 0,
+      "status": "resolved",
+      "type": "TARGET_DISCOVERED"
+    },
+    "E0001": {
+      "actual_affected_regions": [],
+      "affected_regions": [],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        2
+      ],
+      "application_note": "applied",
+      "applied_at": 1.6735052188841864,
+      "event_id": "E0001",
+      "event_seed": 9117425105401422137,
+      "observed_at": 1.5847116429311285,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "destroyed_target": 0,
+        "released_uav": 2
+      },
+      "recovery_delay": 0.08879357595305781,
+      "resolved_at": 1.6735052188841864,
+      "severity": 0.623076,
+      "source_event": "target_status_update",
+      "state_version": 1,
+      "status": "resolved",
+      "type": "TARGET_DESTROYED"
+    },
+    "E0002": {
+      "actual_affected_regions": [
+        1
+      ],
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "application_note": "applied",
+      "applied_at": 1.6735052188841864,
+      "event_id": "E0002",
+      "event_seed": 4482444804348536023,
+      "observed_at": 0.9949274795479036,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 2,
+        "generated_region_vacancy": [
+          1
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "recovery_delay": 1.6785777393362826,
+      "resolved_at": 2.6735052188841864,
+      "severity": 0.618186,
+      "source_event": "target_sensor_detection",
+      "state_version": 2,
+      "status": "resolved",
+      "type": "TARGET_DISCOVERED"
+    },
+    "E0003": {
+      "actual_affected_regions": [
+        3
+      ],
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "application_note": "applied",
+      "applied_at": 4.8992914204303855,
+      "event_id": "E0003",
+      "event_seed": 3772274103650659402,
+      "observed_at": 3.9161992829941474,
+      "occurred_at": 2.9568140419468927,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "damaged_uav": 3,
+        "released_regions": [
+          3
+        ]
+      },
+      "recovery_delay": 1.983092137436238,
+      "resolved_at": 5.8992914204303855,
+      "severity": 0.745119,
+      "source_event": "external_random_scheduler",
+      "state_version": 3,
+      "status": "resolved",
+      "type": "UAV_DAMAGE"
+    },
+    "E0004": {
+      "actual_affected_regions": [
+        1
+      ],
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "application_note": "applied",
+      "applied_at": 3.8992914204303855,
+      "event_id": "E0004",
+      "event_seed": 8076575419326315053,
+      "observed_at": 3.8992914204303855,
+      "occurred_at": 2.9568140419468927,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "previous_uav": 2,
+        "vacant_region": 1
+      },
+      "recovery_delay": 1.0,
+      "resolved_at": 4.8992914204303855,
+      "severity": 0.685968,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "status": "resolved",
+      "type": "REGION_VACANCY"
+    }
+  },
+  "event_seed": 5155545397666088690,
+  "event_tape": {
+    "event_seed": 5155545397666088690,
+    "events": [
+      {
+        "affected_regions": [
+          2
+        ],
+        "affected_targets": [
+          0
+        ],
+        "affected_uavs": [
+          2
+        ],
+        "event_id": "E0000",
+        "event_seed": 5420564166281174749,
+        "observed_at": 0.6735052188841864,
+        "occurred_at": 0.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.25,
+            "TARGET_DISCOVERED": 0.37499999999999994,
+            "UAV_DAMAGE": 0.37499999999999994
+          },
+          "discovered_target": 0,
+          "generated_region_vacancy": [
+            2
+          ],
+          "target_region": 2,
+          "tracker_uav": 2
+        },
+        "severity": 0.973862,
+        "source_event": "target_sensor_detection",
+        "state_version": 0,
+        "type": "TARGET_DISCOVERED"
+      },
+      {
+        "affected_regions": [],
+        "affected_targets": [
+          0
+        ],
+        "affected_uavs": [
+          2
+        ],
+        "event_id": "E0001",
+        "event_seed": 9117425105401422137,
+        "observed_at": 1.5847116429311285,
+        "occurred_at": 0.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.2,
+            "TARGET_DESTROYED": 0.2,
+            "TARGET_DISCOVERED": 0.3,
+            "UAV_DAMAGE": 0.3
+          },
+          "destroyed_target": 0,
+          "released_uav": 2
+        },
+        "severity": 0.623076,
+        "source_event": "target_status_update",
+        "state_version": 1,
+        "type": "TARGET_DESTROYED"
+      },
+      {
+        "affected_regions": [
+          1
+        ],
+        "affected_targets": [
+          2
+        ],
+        "affected_uavs": [
+          1
+        ],
+        "event_id": "E0002",
+        "event_seed": 4482444804348536023,
+        "observed_at": 0.9949274795479036,
+        "occurred_at": 0.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.25,
+            "TARGET_DISCOVERED": 0.37499999999999994,
+            "UAV_DAMAGE": 0.37499999999999994
+          },
+          "discovered_target": 2,
+          "generated_region_vacancy": [
+            1
+          ],
+          "target_region": 1,
+          "tracker_uav": 1
+        },
+        "severity": 0.618186,
+        "source_event": "target_sensor_detection",
+        "state_version": 2,
+        "type": "TARGET_DISCOVERED"
+      },
+      {
+        "affected_regions": [
+          3
+        ],
+        "affected_targets": [],
+        "affected_uavs": [
+          3
+        ],
+        "event_id": "E0003",
+        "event_seed": 3772274103650659402,
+        "observed_at": 3.9161992829941474,
+        "occurred_at": 2.9568140419468927,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.2,
+            "TARGET_DESTROYED": 0.2,
+            "TARGET_DISCOVERED": 0.3,
+            "UAV_DAMAGE": 0.3
+          },
+          "damaged_uav": 3,
+          "released_regions": [
+            3
+          ]
+        },
+        "severity": 0.745119,
+        "source_event": "external_random_scheduler",
+        "state_version": 3,
+        "type": "UAV_DAMAGE"
+      },
+      {
+        "affected_regions": [
+          1
+        ],
+        "affected_targets": [],
+        "affected_uavs": [
+          2
+        ],
+        "event_id": "E0004",
+        "event_seed": 8076575419326315053,
+        "observed_at": 3.8992914204303855,
+        "occurred_at": 2.9568140419468927,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.2,
+            "TARGET_DESTROYED": 0.2,
+            "TARGET_DISCOVERED": 0.3,
+            "UAV_DAMAGE": 0.3
+          },
+          "previous_uav": 2,
+          "vacant_region": 1
+        },
+        "severity": 0.685968,
+        "source_event": "direct_region_vacancy",
+        "state_version": 4,
+        "type": "REGION_VACANCY"
+      }
+    ],
+    "initial_seed": 1204399744,
+    "mode": "burst",
+    "schema_version": 1
+  },
+  "events": [
+    {
+      "avg_reward": 16.734834957055046,
+      "communication_bytes": 537,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+      "event_id": "E0000",
+      "event_index": 0,
+      "event_return": 16.734834957055046,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "TARGET_DISCOVERED",
+      "final_infeasible": false,
+      "gate_mean": 0.49684658646583557,
+      "gate_variance": 6.627427313166123e-05,
+      "inference_latency_ms": 13.0008,
+      "inference_latency_p95_ms": 13.0008,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 1.0,
+      "mask_rate": 0.8235294117647058,
+      "normalized_distance": 0.08838834764831843,
+      "pre_mask_invalid_probability": 0.8242151737213135,
+      "recovery_delay": 1.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false,
+      "value_error": 15.539513754776909,
+      "value_squared_error": 241.47648773490076,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": null,
+      "communication_bytes": 0,
+      "communication_opportunities": 0,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": null,
+      "communication_trigger_count": 0,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 0,
+      "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+      "event_id": "E0001",
+      "event_index": 1,
+      "event_return": 0.0,
+      "event_to_action_latency_ms": null,
+      "event_type": "TARGET_DESTROYED",
+      "final_infeasible": false,
+      "gate_mean": null,
+      "gate_variance": null,
+      "inference_latency_ms": null,
+      "inference_latency_p95_ms": null,
+      "legal_coverage_rate": 1.0,
+      "load_gap": null,
+      "mask_rate": null,
+      "normalized_distance": null,
+      "pre_mask_invalid_probability": null,
+      "recovery_delay": 0.08879357595305781,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 0,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false,
+      "value_error": null,
+      "value_squared_error": null,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": 21.08838834764832,
+      "communication_bytes": 537,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+      "event_id": "E0002",
+      "event_index": 2,
+      "event_return": 21.08838834764832,
+      "event_to_action_latency_ms": 678.5777393362828,
+      "event_type": "TARGET_DISCOVERED",
+      "final_infeasible": false,
+      "gate_mean": 0.49650730689366657,
+      "gate_variance": 6.952412975744536e-05,
+      "inference_latency_ms": 16.2393,
+      "inference_latency_p95_ms": 16.2393,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 1.0,
+      "mask_rate": 0.8235294117647058,
+      "normalized_distance": 0.08838834764831843,
+      "pre_mask_invalid_probability": 0.8206126689910889,
+      "recovery_delay": 1.6785777393362826,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false,
+      "value_error": 19.852209830306705,
+      "value_squared_error": 394.1102351465262,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": 16.71338834764832,
+      "communication_bytes": 486,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+      "event_id": "E0003",
+      "event_index": 3,
+      "event_return": 16.71338834764832,
+      "event_to_action_latency_ms": 983.092137436238,
+      "event_type": "UAV_DAMAGE",
+      "final_infeasible": false,
+      "gate_mean": 0.4965129792690277,
+      "gate_variance": 7.059906909686238e-05,
+      "inference_latency_ms": 13.7192,
+      "inference_latency_p95_ms": 13.7192,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 2.0,
+      "mask_rate": 0.8823529411764706,
+      "normalized_distance": 0.21338834764831843,
+      "pre_mask_invalid_probability": 0.8814237117767334,
+      "recovery_delay": 1.983092137436238,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false,
+      "value_error": 15.470422768615421,
+      "value_squared_error": 239.33398063969443,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": 23.08838834764832,
+      "communication_bytes": 482,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=2/burst-0048-e0165c46f308",
+      "event_id": "E0004",
+      "event_index": 4,
+      "event_return": 23.08838834764832,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "REGION_VACANCY",
+      "final_infeasible": false,
+      "gate_mean": 0.49643827478090924,
+      "gate_variance": 7.044222465976998e-05,
+      "inference_latency_ms": 16.5009,
+      "inference_latency_p95_ms": 16.5009,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 1.0,
+      "mask_rate": 0.8235294117647058,
+      "normalized_distance": 0.08838834764831843,
+      "pre_mask_invalid_probability": 0.8200350403785706,
+      "recovery_delay": 1.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "burst-0048-e0165c46f308",
+      "temporary_infeasible": false,
+      "value_error": 21.842585587524113,
+      "value_squared_error": 477.0985451483161,
+      "weighted_uncovered": 0.0
+    }
+  ],
+  "final_snapshot": {
+    "event": {
+      "affected_regions": [
+        3
+      ],
+      "damaged_uav": 3,
+      "description": "",
+      "event_type": 2,
+      "released_uav": -1,
+      "weather_disabled_uav": -1
+    },
+    "random_event": {
+      "current_time": 5.8992914204303855,
+      "decision_version": 4,
+      "event_queue": [],
+      "event_records": {
+        "E0000": {
+          "actual_affected_regions": [
+            2
+          ],
+          "affected_regions": [
+            2
+          ],
+          "affected_targets": [
+            0
+          ],
+          "affected_uavs": [
+            2
+          ],
+          "application_note": "applied",
+          "applied_at": 0.6735052188841864,
+          "event_id": "E0000",
+          "event_seed": 5420564166281174749,
+          "observed_at": 0.6735052188841864,
+          "occurred_at": 0.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.25,
+              "TARGET_DISCOVERED": 0.37499999999999994,
+              "UAV_DAMAGE": 0.37499999999999994
+            },
+            "discovered_target": 0,
+            "generated_region_vacancy": [
+              2
+            ],
+            "target_region": 2,
+            "tracker_uav": 2
+          },
+          "recovery_delay": 1.0,
+          "resolved_at": 1.6735052188841864,
+          "severity": 0.973862,
+          "source_event": "target_sensor_detection",
+          "state_version": 0,
+          "status": "resolved",
+          "type": "TARGET_DISCOVERED"
+        },
+        "E0001": {
+          "actual_affected_regions": [],
+          "affected_regions": [],
+          "affected_targets": [
+            0
+          ],
+          "affected_uavs": [
+            2
+          ],
+          "application_note": "applied",
+          "applied_at": 1.6735052188841864,
+          "event_id": "E0001",
+          "event_seed": 9117425105401422137,
+          "observed_at": 1.5847116429311285,
+          "occurred_at": 0.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.2,
+              "TARGET_DESTROYED": 0.2,
+              "TARGET_DISCOVERED": 0.3,
+              "UAV_DAMAGE": 0.3
+            },
+            "destroyed_target": 0,
+            "released_uav": 2
+          },
+          "recovery_delay": 0.08879357595305781,
+          "resolved_at": 1.6735052188841864,
+          "severity": 0.623076,
+          "source_event": "target_status_update",
+          "state_version": 1,
+          "status": "resolved",
+          "type": "TARGET_DESTROYED"
+        },
+        "E0002": {
+          "actual_affected_regions": [
+            1
+          ],
+          "affected_regions": [
+            1
+          ],
+          "affected_targets": [
+            2
+          ],
+          "affected_uavs": [
+            1
+          ],
+          "application_note": "applied",
+          "applied_at": 1.6735052188841864,
+          "event_id": "E0002",
+          "event_seed": 4482444804348536023,
+          "observed_at": 0.9949274795479036,
+          "occurred_at": 0.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.25,
+              "TARGET_DISCOVERED": 0.37499999999999994,
+              "UAV_DAMAGE": 0.37499999999999994
+            },
+            "discovered_target": 2,
+            "generated_region_vacancy": [
+              1
+            ],
+            "target_region": 1,
+            "tracker_uav": 1
+          },
+          "recovery_delay": 1.6785777393362826,
+          "resolved_at": 2.6735052188841864,
+          "severity": 0.618186,
+          "source_event": "target_sensor_detection",
+          "state_version": 2,
+          "status": "resolved",
+          "type": "TARGET_DISCOVERED"
+        },
+        "E0003": {
+          "actual_affected_regions": [
+            3
+          ],
+          "affected_regions": [
+            3
+          ],
+          "affected_targets": [],
+          "affected_uavs": [
+            3
+          ],
+          "application_note": "applied",
+          "applied_at": 4.8992914204303855,
+          "event_id": "E0003",
+          "event_seed": 3772274103650659402,
+          "observed_at": 3.9161992829941474,
+          "occurred_at": 2.9568140419468927,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.2,
+              "TARGET_DESTROYED": 0.2,
+              "TARGET_DISCOVERED": 0.3,
+              "UAV_DAMAGE": 0.3
+            },
+            "damaged_uav": 3,
+            "released_regions": [
+              3
+            ]
+          },
+          "recovery_delay": 1.983092137436238,
+          "resolved_at": 5.8992914204303855,
+          "severity": 0.745119,
+          "source_event": "external_random_scheduler",
+          "state_version": 3,
+          "status": "resolved",
+          "type": "UAV_DAMAGE"
+        },
+        "E0004": {
+          "actual_affected_regions": [
+            1
+          ],
+          "affected_regions": [
+            1
+          ],
+          "affected_targets": [],
+          "affected_uavs": [
+            2
+          ],
+          "application_note": "applied",
+          "applied_at": 3.8992914204303855,
+          "event_id": "E0004",
+          "event_seed": 8076575419326315053,
+          "observed_at": 3.8992914204303855,
+          "occurred_at": 2.9568140419468927,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.2,
+              "TARGET_DESTROYED": 0.2,
+              "TARGET_DISCOVERED": 0.3,
+              "UAV_DAMAGE": 0.3
+            },
+            "previous_uav": 2,
+            "vacant_region": 1
+          },
+          "recovery_delay": 1.0,
+          "resolved_at": 4.8992914204303855,
+          "severity": 0.685968,
+          "source_event": "direct_region_vacancy",
+          "state_version": 4,
+          "status": "resolved",
+          "type": "REGION_VACANCY"
+        }
+      },
+      "event_tape": {
+        "event_seed": 5155545397666088690,
+        "events": [
+          {
+            "affected_regions": [
+              2
+            ],
+            "affected_targets": [
+              0
+            ],
+            "affected_uavs": [
+              2
+            ],
+            "event_id": "E0000",
+            "event_seed": 5420564166281174749,
+            "observed_at": 0.6735052188841864,
+            "occurred_at": 0.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.25,
+                "TARGET_DISCOVERED": 0.37499999999999994,
+                "UAV_DAMAGE": 0.37499999999999994
+              },
+              "discovered_target": 0,
+              "generated_region_vacancy": [
+                2
+              ],
+              "target_region": 2,
+              "tracker_uav": 2
+            },
+            "severity": 0.973862,
+            "source_event": "target_sensor_detection",
+            "state_version": 0,
+            "type": "TARGET_DISCOVERED"
+          },
+          {
+            "affected_regions": [],
+            "affected_targets": [
+              0
+            ],
+            "affected_uavs": [
+              2
+            ],
+            "event_id": "E0001",
+            "event_seed": 9117425105401422137,
+            "observed_at": 1.5847116429311285,
+            "occurred_at": 0.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.2,
+                "TARGET_DESTROYED": 0.2,
+                "TARGET_DISCOVERED": 0.3,
+                "UAV_DAMAGE": 0.3
+              },
+              "destroyed_target": 0,
+              "released_uav": 2
+            },
+            "severity": 0.623076,
+            "source_event": "target_status_update",
+            "state_version": 1,
+            "type": "TARGET_DESTROYED"
+          },
+          {
+            "affected_regions": [
+              1
+            ],
+            "affected_targets": [
+              2
+            ],
+            "affected_uavs": [
+              1
+            ],
+            "event_id": "E0002",
+            "event_seed": 4482444804348536023,
+            "observed_at": 0.9949274795479036,
+            "occurred_at": 0.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.25,
+                "TARGET_DISCOVERED": 0.37499999999999994,
+                "UAV_DAMAGE": 0.37499999999999994
+              },
+              "discovered_target": 2,
+              "generated_region_vacancy": [
+                1
+              ],
+              "target_region": 1,
+              "tracker_uav": 1
+            },
+            "severity": 0.618186,
+            "source_event": "target_sensor_detection",
+            "state_version": 2,
+            "type": "TARGET_DISCOVERED"
+          },
+          {
+            "affected_regions": [
+              3
+            ],
+            "affected_targets": [],
+            "affected_uavs": [
+              3
+            ],
+            "event_id": "E0003",
+            "event_seed": 3772274103650659402,
+            "observed_at": 3.9161992829941474,
+            "occurred_at": 2.9568140419468927,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.2,
+                "TARGET_DESTROYED": 0.2,
+                "TARGET_DISCOVERED": 0.3,
+                "UAV_DAMAGE": 0.3
+              },
+              "damaged_uav": 3,
+              "released_regions": [
+                3
+              ]
+            },
+            "severity": 0.745119,
+            "source_event": "external_random_scheduler",
+            "state_version": 3,
+            "type": "UAV_DAMAGE"
+          },
+          {
+            "affected_regions": [
+              1
+            ],
+            "affected_targets": [],
+            "affected_uavs": [
+              2
+            ],
+            "event_id": "E0004",
+            "event_seed": 8076575419326315053,
+            "observed_at": 3.8992914204303855,
+            "occurred_at": 2.9568140419468927,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.2,
+                "TARGET_DESTROYED": 0.2,
+                "TARGET_DISCOVERED": 0.3,
+                "UAV_DAMAGE": 0.3
+              },
+              "previous_uav": 2,
+              "vacant_region": 1
+            },
+            "severity": 0.685968,
+            "source_event": "direct_region_vacancy",
+            "state_version": 4,
+            "type": "REGION_VACANCY"
+          }
+        ],
+        "initial_seed": 1204399744,
+        "mode": "burst",
+        "schema_version": 1
+      },
+      "graph_version": 9,
+      "pending_regions": []
+    },
+    "regions": {
+      "0": {
+        "assigned_uav": 0,
+        "center_x": 12.5,
+        "center_y": 37.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "1": {
+        "assigned_uav": 2,
+        "center_x": 37.5,
+        "center_y": 37.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "2": {
+        "assigned_uav": 0,
+        "center_x": 12.5,
+        "center_y": 12.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "3": {
+        "assigned_uav": 0,
+        "center_x": 37.5,
+        "center_y": 12.5,
+        "need_reassign": false,
+        "weather": 0
+      }
+    },
+    "targets": {
+      "0": {
+        "destroyed": true,
+        "discovered": true,
+        "movable": true,
+        "region": 2,
+        "target_type": 0,
+        "tracked": false,
+        "tracker_id": -1,
+        "x": 10.065793274792673,
+        "y": 7.897467639242676
+      },
+      "1": {
+        "destroyed": false,
+        "discovered": false,
+        "movable": true,
+        "region": 2,
+        "target_type": 0,
+        "tracked": false,
+        "tracker_id": -1,
+        "x": 15.577977455770586,
+        "y": 21.09010671697552
+      },
+      "2": {
+        "destroyed": false,
+        "discovered": true,
+        "movable": false,
+        "region": 1,
+        "target_type": 1,
+        "tracked": true,
+        "tracker_id": 1,
+        "x": 36.69103761300867,
+        "y": 39.20013914303415
+      }
+    },
+    "uavs": {
+      "0": {
+        "alive": true,
+        "regions": [
+          0,
+          2,
+          3
+        ],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 0,
+        "x": 12.5,
+        "y": 37.5
+      },
+      "1": {
+        "alive": true,
+        "regions": [],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": 2,
+        "task": 1,
+        "x": 37.5,
+        "y": 37.5
+      },
+      "2": {
+        "alive": true,
+        "regions": [
+          1
+        ],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 0,
+        "x": 37.5,
+        "y": 37.5
+      },
+      "3": {
+        "alive": false,
+        "regions": [],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 2,
+        "x": 37.5,
+        "y": 12.5
+      }
+    }
+  },
+  "initial_seed": 1204399744,
+  "mode": "burst",
+  "schema_version": 1,
+  "tape_id": "burst-0048-e0165c46f308",
+  "tape_sha256": "e0165c46f3084efadff941fbda3f8fffe52014a4d0ad7d669e4c36bfe9a34b68",
+  "terminated": true,
+  "total_reward_check": 77.625,
+  "truncated": false
+}

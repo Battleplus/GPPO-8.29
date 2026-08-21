@@ -35,6 +35,9 @@ from typing import Dict, Any, Optional, List
 
 import numpy as np
 
+from utils.sb3_compat import prepare_sb3_import
+
+prepare_sb3_import()
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.maskable.utils import get_action_masks
 

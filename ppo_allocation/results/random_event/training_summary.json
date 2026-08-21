@@ -1,0 +1,293 @@
+{
+  "created_at_utc": "2026-08-20T04:32:46.025562+00:00",
+  "device": "cpu",
+  "records": [
+    {
+      "checkpoint": "results/random_event/models/gppo_nogate_seed1_steps512.pt",
+      "checkpoint_sha256": "1cf2f0f861a55f0d3c3e4562f0eab5fd181e549c877c54565ed3f76c571ef348",
+      "elapsed_seconds": 61.86828619999869,
+      "final_update": {
+        "approx_kl": 2.293381839990616e-08,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.7137872651219368,
+        "episode_length_mean": 6.421052631578948,
+        "episode_return_mean": 106.59021156194125,
+        "episodes_completed": 19,
+        "explained_variance": 0.0002477529580565685,
+        "gate_mean": 1.0,
+        "gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "grad_norm": 117.09849071502686,
+        "policy_loss": -1.880992203950882e-05,
+        "pre_mask_invalid_probability": 0.8613412454724312,
+        "rollout_gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "rollout_pre_mask_invalid_probability": 0.8613072903826833,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 2419.1796264648438,
+        "variant": "GPPO-NoGate"
+      },
+      "history": "results/random_event/models/gppo_nogate_seed1_history.json",
+      "seed": 1,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoint": "results/random_event/models/gppo_nogate_seed2_steps512.pt",
+      "checkpoint_sha256": "6e51c2d1cfcbb314dd83f892597ff4df216fc7e1bc0317820aeb8f283db89760",
+      "elapsed_seconds": 71.81548360000306,
+      "final_update": {
+        "approx_kl": 7.846392691135406e-08,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.6816991046071053,
+        "episode_length_mean": 6.6,
+        "episode_return_mean": 92.06315972310794,
+        "episodes_completed": 20,
+        "explained_variance": 0.00045698857405107596,
+        "gate_mean": 1.0,
+        "gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "grad_norm": 87.75239562988281,
+        "policy_loss": -1.9974075257778168e-05,
+        "pre_mask_invalid_probability": 0.8670950531959534,
+        "rollout_gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "rollout_pre_mask_invalid_probability": 0.8669365574605763,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 2017.6639404296875,
+        "variant": "GPPO-NoGate"
+      },
+      "history": "results/random_event/models/gppo_nogate_seed2_history.json",
+      "seed": 2,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoint": "results/random_event/models/gppo_nogate_seed3_steps512.pt",
+      "checkpoint_sha256": "aa77cb5ed73ab23cae939afaebc19572823d69dfe3407678e44c28a111a63669",
+      "elapsed_seconds": 57.20825949999562,
+      "final_update": {
+        "approx_kl": 7.043126970529556e-08,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.6234659776091576,
+        "episode_length_mean": 7.875,
+        "episode_return_mean": 119.96120693660474,
+        "episodes_completed": 16,
+        "explained_variance": 0.00027049637607767796,
+        "gate_mean": 1.0,
+        "gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "grad_norm": 119.73009777069092,
+        "policy_loss": -1.0523945093154907e-07,
+        "pre_mask_invalid_probability": 0.874834232032299,
+        "rollout_gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "rollout_pre_mask_invalid_probability": 0.8748303386382759,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 3003.7597045898438,
+        "variant": "GPPO-NoGate"
+      },
+      "history": "results/random_event/models/gppo_nogate_seed3_history.json",
+      "seed": 3,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoint": "results/random_event/models/gppo_adaptive_seed1_steps512.pt",
+      "checkpoint_sha256": "e097d47215b58e350a466bdcba434673257661b7f8db5fcffa42b98bdcb8da42",
+      "elapsed_seconds": 53.5012185999949,
+      "final_update": {
+        "approx_kl": 9.19681042432785e-08,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.7223498672246933,
+        "episode_length_mean": 6.421052631578948,
+        "episode_return_mean": 106.5592437541703,
+        "episodes_completed": 19,
+        "explained_variance": 0.00029099507848984185,
+        "gate_mean": 0.49678893697758514,
+        "gate_means": {
+          "layer0/region": 0.48696067929267883,
+          "layer0/target": 0.5028118193149567,
+          "layer0/uav": 0.49655304476618767,
+          "layer1/region": 0.49435019865632057,
+          "layer1/target": 0.49817508831620216,
+          "layer1/uav": 0.501882791519165
+        },
+        "grad_norm": 84.81542682647705,
+        "policy_loss": -1.1244788765907288e-05,
+        "pre_mask_invalid_probability": 0.8619619756937027,
+        "rollout_gate_means": {
+          "layer0/region": 0.48856822145171463,
+          "layer0/target": 0.5024846505839378,
+          "layer0/uav": 0.49730562628246844,
+          "layer1/region": 0.4956824106629938,
+          "layer1/target": 0.4984182307962328,
+          "layer1/uav": 0.502045517321676
+        },
+        "rollout_pre_mask_invalid_probability": 0.8620156403630972,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 2450.9029846191406,
+        "variant": "GPPO-Adaptive"
+      },
+      "history": "results/random_event/models/gppo_adaptive_seed1_history.json",
+      "seed": 1,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "checkpoint": "results/random_event/models/gppo_adaptive_seed2_steps512.pt",
+      "checkpoint_sha256": "bfb30dd5d51fb7adf139cfe92ab9f2edf80e5d877b7da2a641b71dcad69e1d88",
+      "elapsed_seconds": 60.19704349999665,
+      "final_update": {
+        "approx_kl": 2.6705674827098846e-07,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.6816355437040329,
+        "episode_length_mean": 6.6,
+        "episode_return_mean": 92.06315972310794,
+        "episodes_completed": 20,
+        "explained_variance": 0.00022745672199797617,
+        "gate_mean": 0.49681424846251804,
+        "gate_means": {
+          "layer0/region": 0.508531354367733,
+          "layer0/target": 0.4919033646583557,
+          "layer0/uav": 0.48648446798324585,
+          "layer1/region": 0.4946738965809345,
+          "layer1/target": 0.5036899819970131,
+          "layer1/uav": 0.49560242518782616
+        },
+        "grad_norm": 64.28015041351318,
+        "policy_loss": -6.51385635137558e-05,
+        "pre_mask_invalid_probability": 0.8668205291032791,
+        "rollout_gate_means": {
+          "layer0/region": 0.5079237930476665,
+          "layer0/target": 0.492640063399449,
+          "layer0/uav": 0.487105680629611,
+          "layer1/region": 0.4952337061986327,
+          "layer1/target": 0.503074296284467,
+          "layer1/uav": 0.49606387480162084
+        },
+        "rollout_pre_mask_invalid_probability": 0.8666370329447091,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 2035.7774047851562,
+        "variant": "GPPO-Adaptive"
+      },
+      "history": "results/random_event/models/gppo_adaptive_seed2_history.json",
+      "seed": 2,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "checkpoint": "results/random_event/models/gppo_adaptive_seed3_steps512.pt",
+      "checkpoint_sha256": "6f993988ab8bba7b4dae4445bcc0a3a44346f14f782f2fdc0fe309c509b0aed6",
+      "elapsed_seconds": 55.11098889999266,
+      "final_update": {
+        "approx_kl": 2.1094456315040588e-07,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.6234619095921516,
+        "episode_length_mean": 7.875,
+        "episode_return_mean": 119.96120693660474,
+        "episodes_completed": 16,
+        "explained_variance": 0.0003007162362953508,
+        "gate_mean": 0.49847004500528175,
+        "gate_means": {
+          "layer0/region": 0.49688663333654404,
+          "layer0/target": 0.509484276175499,
+          "layer0/uav": 0.4900252968072891,
+          "layer1/region": 0.5039677694439888,
+          "layer1/target": 0.4980354942381382,
+          "layer1/uav": 0.4924208000302315
+        },
+        "grad_norm": 84.13788604736328,
+        "policy_loss": 1.1055730283260345e-05,
+        "pre_mask_invalid_probability": 0.8750002831220627,
+        "rollout_gate_means": {
+          "layer0/region": 0.4975534190889448,
+          "layer0/target": 0.5082787973806262,
+          "layer0/uav": 0.49144384008832276,
+          "layer1/region": 0.5038577788509429,
+          "layer1/target": 0.49897038214839995,
+          "layer1/uav": 0.4938664329238236
+        },
+        "rollout_pre_mask_invalid_probability": 0.8749134335666895,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 3030.506072998047,
+        "variant": "GPPO-Adaptive"
+      },
+      "history": "results/random_event/models/gppo_adaptive_seed3_history.json",
+      "seed": 3,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-Adaptive"
+    }
+  ],
+  "schema_version": 1,
+  "seeds": [
+    1,
+    2,
+    3
+  ],
+  "timesteps": 512,
+  "variants": [
+    "GPPO-NoGate",
+    "GPPO-Adaptive"
+  ]
+}

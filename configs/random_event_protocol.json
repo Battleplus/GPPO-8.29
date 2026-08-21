@@ -1,0 +1,309 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_name": "random-event-gppo-4uav-4region-3target-v1",
+  "task": {
+    "num_uavs": 4,
+    "num_regions": 4,
+    "num_targets": 3,
+    "uav_modes": ["SEARCH", "TRACK", "IDLE"],
+    "preserve_legacy_task_semantics": true,
+    "parent_subtask_model_enabled": false
+  },
+  "runtime": {
+    "supported_python": ["3.10", "3.11"],
+    "forbidden_training_python": "3.14",
+    "deterministic_torch": true,
+    "canonical_event_json": {
+      "encoding": "utf-8",
+      "sort_keys": true,
+      "allow_nan": false,
+      "separators": [",", ":"],
+      "digest": "sha256"
+    }
+  },
+  "event_scheduler": {
+    "default_events_per_episode": 5,
+    "sampling": "conditional_renormalization_without_rejection",
+    "base_probabilities": {
+      "UAV_DAMAGE": 0.3,
+      "TARGET_DISCOVERED": 0.3,
+      "TARGET_DESTROYED": 0.2,
+      "REGION_VACANCY": 0.2
+    },
+    "event_fields": [
+      "event_id",
+      "event_type",
+      "occurred_at",
+      "observed_at",
+      "source_event",
+      "affected_uavs",
+      "affected_regions",
+      "affected_targets",
+      "severity",
+      "payload",
+      "event_seed",
+      "state_version"
+    ],
+    "detection_delay_seconds": {
+      "distribution": "discrete_uniform",
+      "min": 0,
+      "max": 2
+    },
+    "modes": {
+      "single": {
+        "semantics": "one event per reset-isolated branch; smoke bundles contain at least 3 branches",
+        "events_per_branch": 1
+      },
+      "sequential": {
+        "inter_event_rule": "schedule_next_after_recovery",
+        "interval_seconds": [2, 6]
+      },
+      "overlap": {
+        "inter_event_rule": "allow_arrival_while_pending",
+        "interval_seconds": [1, 3]
+      },
+      "burst": {
+        "events_per_atomic_batch": [2, 3],
+        "window_seconds": 1,
+        "atomic_order": ["observed_at", "occurred_at", "tape_order", "event_id"]
+      }
+    },
+    "unseen_base_probabilities": {
+      "UAV_DAMAGE": 0.15,
+      "TARGET_DISCOVERED": 0.15,
+      "TARGET_DESTROYED": 0.3,
+      "REGION_VACANCY": 0.4
+    },
+    "unseen_distribution_profile": "unseen_shift_v1",
+    "unseen_mode_cycle": ["single", "sequential", "overlap", "burst"],
+    "unseen_detection_delay_seconds_by_mode": {
+      "single": [1.5, 3.0],
+      "sequential": [1.5, 3.0],
+      "overlap": [3.0, 6.0],
+      "burst": [2.0, 4.0]
+    },
+    "unseen_contract": "same_four_event_semantics_shifted_type_mixture_and_observation_delay_not_used_for_training",
+    "horizon": {
+      "type": "events_or_physical_time",
+      "max_events": 5,
+      "max_physical_seconds": 120,
+      "terminate_only_when_source_exhausted_queue_empty_and_no_pending": true,
+      "terminate_on_first_all_valid": false,
+      "distinguish_temporary_and_final_infeasible": true
+    }
+  },
+  "execution_semantics": {
+    "lock_completed_tasks": true,
+    "preserve_unaffected_assignments": true,
+    "preserve_unaffected_search_uavs": true,
+    "preempt_unaffected_tasks": false,
+    "continuous_progress_model_enabled": false,
+    "state_fields": ["pending_regions", "event_queue", "graph_version", "decision_version"],
+    "queue_order": ["observed_at", "occurred_at", "tape_order", "event_id"],
+    "reject_action_when_decision_version_is_stale": true,
+    "re_infer_after_stale_rejection": true,
+    "burst_commit": "atomic_then_increment_graph_version_once"
+  },
+  "graph": {
+    "node_types": {
+      "UAV": ["position", "alive", "mode", "assigned_region_count", "sensor_type", "sensor_failed", "target_id"],
+      "Region": ["center_position", "assigned_uav", "need_reassign", "priority", "workload", "vacancy_duration"],
+      "Target": ["position", "discovered", "tracked", "destroyed", "tracker_id", "region_id"]
+    },
+    "edge_types": {
+      "UAV-Region": ["assignable", "currently_assigned", "normalized_distance", "load", "sensor_available"],
+      "UAV-Target": ["discovered_by", "tracked_by"],
+      "Target-Region": ["located_in"]
+    },
+    "encoder": "AHGNN",
+    "adaptive_gate": {
+      "enabled_for": ["GPPO-Adaptive"],
+      "disabled_value_for_ablation": 1.0
+    },
+    "actor": "candidate_UAV-Region_edge_logits_plus_NOOP",
+    "critic": "heterogeneous_global_graph_pooling_to_scalar_value",
+    "mask_invalid_logit": "negative_infinity",
+    "record_pre_mask_invalid_probability": true
+  },
+  "reward": {
+    "type": "state_cost_difference",
+    "formula": "J_before-J_after",
+    "cost": {
+      "formula": "alpha*weighted_uncovered_regions+beta*normalized_transfer_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+      "weights": {
+        "alpha": 5.0,
+        "beta": 1.0,
+        "gamma": 1.0,
+        "delta": 0.25,
+        "eta": 0.5
+      },
+      "weighted_uncovered_regions": {
+        "priority_weighted_current_uncovered": true,
+        "normalized_vacancy_duration_weight": 0.2
+      },
+      "distance_normalization": "scenario_max_pairwise_UAV-Region_distance",
+      "load_gap": "max_assigned_regions_minus_min_assigned_regions_over_alive_search_capable_uavs"
+    },
+    "logged_components": [
+      "coverage_component",
+      "vacancy_component",
+      "distance_component",
+      "balance_component",
+      "switch_component",
+      "recovery_component"
+    ],
+    "large_invalid_action_penalty": false,
+    "weight_selection_sources": ["train", "validation"],
+    "weight_selection_forbidden_source": "test"
+  },
+  "methods": {
+    "decision_policies": [
+      "Masked-Random",
+      "Nearest-Legal",
+      "Min-Load",
+      "Greedy-Cost",
+      "PPO-MLP",
+      "GPPO-NoGate",
+      "GPPO-Adaptive"
+    ],
+    "reference": "Current-Pending-Exact-Planner",
+    "oracle_assignment_space": "all_currently_legal_assignments_for_4_UAV_x_4_Region",
+    "oracle_regret": "J_algorithm-J_oracle",
+    "equal_training_budget_for_learned_methods": true
+  },
+  "fairness": {
+    "protocols": {
+      "P1_anchored_exact_pair": {
+        "common_pre_event_snapshot": true,
+        "identical_actual_affected_entities": true,
+        "uses": ["Test-Single", "anchored-burst", "oracle-regret", "primary-paired-effect"]
+      },
+      "P2_continuous_exogenous_tape": {
+        "common_initial_state": true,
+        "identical_exogenous_event_fields": [
+          "source_event",
+          "occurred_at",
+          "observed_at",
+          "target_uav",
+          "target_region",
+          "target_target",
+          "severity",
+          "payload"
+        ],
+        "preserve_policy_state_divergence": true,
+        "record_fields": ["intended_affected_regions", "actual_affected_regions", "endogenous_effect_divergence"],
+        "claim_limit": "same exogenous shock, not necessarily identical derived affected state"
+      }
+    },
+    "never_force_policy_state_to_match_reference": true,
+    "report_protocols_separately": true
+  },
+  "evaluation": {
+    "banks": ["train", "validation", "test"],
+    "disjoint_seed_namespaces": true,
+    "checkpoint_selection_source": "validation",
+    "test_allowed_for_checkpoint_selection": false,
+    "smoke": {
+      "modes": ["single", "sequential", "overlap", "burst"],
+      "tapes_or_bundles_per_mode": 20,
+      "minimum_events_per_continuous_tape": 3,
+      "minimum_reset_isolated_branches_per_single_bundle": 3
+    },
+    "preliminary": {
+      "label_required": "preliminary",
+      "training_seeds": 3,
+      "test_tapes_total": 200,
+      "test_tapes_per_set": 40,
+      "test_sets": ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+    },
+    "formal": {
+      "training_seeds": 5,
+      "test_tapes_total": 1000,
+      "test_tapes_per_set": 200,
+      "test_sets": ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+    }
+  },
+  "metrics": {
+    "primary": [
+      "event_recovery_success_rate",
+      "recovery_delay",
+      "recovery_decision_steps",
+      "weighted_coverage_auc",
+      "cumulative_vacancy_time",
+      "distance_cost",
+      "load_gap",
+      "switch_count",
+      "oracle_regret",
+      "infeasible_case_rate"
+    ],
+    "event_triggered": [
+      "trigger_count",
+      "inference_count_per_event",
+      "communication_bytes",
+      "merged_event_count",
+      "stale_action_rejection_count",
+      "event_to_decision_latency"
+    ],
+    "mechanism": [
+      "valid_action_count",
+      "action_mask_ratio",
+      "pre_mask_invalid_probability",
+      "actor_entropy",
+      "critic_value_loss",
+      "explained_variance",
+      "approximate_kl",
+      "ppo_clip_fraction",
+      "gate_mean",
+      "gate_std",
+      "gate_p10",
+      "gate_p50",
+      "gate_p90",
+      "gate_gradient_norm"
+    ],
+    "stratify_by": [
+      "fairness_protocol",
+      "event_type",
+      "event_mode",
+      "feasible",
+      "algorithm",
+      "training_seed",
+      "endogenous_effect_divergence"
+    ],
+    "communication_bytes_definition": "serialized_event_plus_changed_graph_plus_request_plus_action_response_bytes"
+  },
+  "statistics": {
+    "paired_unit": "same_tape_or_same_anchored_snapshot_within_training_seed",
+    "independent_algorithm_stability_unit": "training_seed",
+    "report": ["raw_seed_values", "mean", "standard_deviation", "95_percent_confidence_interval", "paired_difference"],
+    "primary_comparisons": [
+      "GPPO-Adaptive_vs_PPO-MLP",
+      "GPPO-Adaptive_vs_GPPO-NoGate",
+      "GPPO-Adaptive_vs_Greedy-Cost"
+    ],
+    "multiple_comparison_correction": "Holm",
+    "right_censor_unrecovered_delay": true,
+    "instance_bootstrap_is_not_seed_stability": true
+  },
+  "required_plots": [
+    "cumulative_vacancy_time_by_algorithm",
+    "recovery_delay_by_event_type",
+    "oracle_regret",
+    "communication_vs_coverage_pareto"
+  ],
+  "traceability": {
+    "run_manifest_fields": [
+      "git_commit",
+      "python_version",
+      "requirements_lock_sha256",
+      "protocol_sha256",
+      "seed_manifest_sha256",
+      "event_tape_sha256",
+      "model_config",
+      "training_seed",
+      "checkpoint_sha256",
+      "validation_selection_record",
+      "raw_event_log",
+      "aggregation_code_version"
+    ]
+  }
+}

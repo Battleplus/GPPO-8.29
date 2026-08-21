@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "label": "preliminary-test-200",
+  "protocol": "configs/random_event_protocol.json",
+  "seed_manifest": "configs/seed_manifest.json",
+  "split": "test",
+  "may_select_checkpoint": false,
+  "may_tune_reward": false,
+  "tapes_per_set": 40,
+  "events_per_tape": 5,
+  "sets": ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"],
+  "manifest": "ppo_allocation/results/random_event/tapes/preliminary_test_protocol/manifest.json",
+  "result_label_required": "preliminary"
+}

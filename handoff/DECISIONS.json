@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "date": "2026-08-21",
+      "title": "保留现有实现，按需补充",
+      "description": "event_runtime/ 和 ppo_allocation/random_event/ 已有基本实现，按任务书要求补充缺失组件",
+      "rationale": "避免推倒重来，保护已有修改",
+      "impact": "减少实现工作量，保持代码连续性",
+      "status": "accepted"
+    },
+    {
+      "id": "DEC-002",
+      "date": "2026-08-21",
+      "title": "先完成 P0 门禁再启动训练",
+      "description": "所有 P0 门禁通过前禁止启动 GPPO/PPO 训练",
+      "rationale": "确保协议一致性和实验可重复性",
+      "impact": "防止在不完整协议上训练，避免浪费计算资源",
+      "status": "accepted"
+    },
+    {
+      "id": "DEC-003",
+      "date": "2026-08-21",
+      "title": "使用固定 seed 生成事件带",
+      "description": "事件带由 (initial_seed, event_seed, mode, protocol_version) 唯一确定",
+      "rationale": "确保确定性重放和跨算法公平比较",
+      "impact": "保证实验可重复性和公平性",
+      "status": "accepted"
+    },
+    {
+      "id": "DEC-004",
+      "date": "2026-08-21",
+      "title": "Oracle 更名为 Current-Pending Exact Planner",
+      "description": "将 Exhaustive Oracle 全面改为 Current-Pending Exact Planner / 当前待分配区域精确规划器",
+      "rationale": "更准确描述 Oracle 的功能：只枚举当前 pending Regions 的合法联合分配，不预知未来事件",
+      "impact": "避免误解 Oracle 为全局上界",
+      "status": "pending"
+    },
+    {
+      "id": "DEC-005",
+      "date": "2026-08-21",
+      "title": "建立公平 PPO-MLP 基线",
+      "description": "PPO-MLP 与两个 GPPO 使用相同 Truth/Observation/Confirmed 流、图信息、pending/queue/lease/communication/version 特征、edge+NOOP 动作、mask、reward、PPO 参数、预算、seed、Validation 和 checkpoint 间隔",
+      "rationale": "确保 PPO-MLP 与 GPPO 的唯一区别是网络结构（MLP vs AHGNN vs AHGNN+Gate）",
+      "impact": "提供公平的基线比较",
+      "status": "pending"
+    },
+    {
+      "id": "DEC-006",
+      "date": "2026-08-21",
+      "title": "实现 episode_return 唯一定义",
+      "description": "episode_return = sum(row['reward'] for row in decision_rows)",
+      "rationale": "避免 reward 重复累计，确保指标一致性",
+      "impact": "修复 reward 计算问题",
+      "status": "pending"
+    },
+    {
+      "id": "DEC-007",
+      "date": "2026-08-21",
+      "title": "实现版本校验和并发一致性",
+      "description": "实现 graph_version, action_version, AssignmentCommand, ACK, AssignmentLease, FencingToken",
+      "rationale": "确保状态变化后旧动作 100% 拒绝，排他任务有效 holder 始终不超过 1",
+      "impact": "防止并发冲突和过时动作执行",
+      "status": "pending"
+    },
+    {
+      "id": "DEC-008",
+      "date": "2026-08-21",
+      "title": "实现 Train/Validation/Test 冻结协议",
+      "description": "验证 seed manifest 被训练器使用，Validation 不包含 unseen，Test 不参与选模",
+      "rationale": "确保实验协议的严谨性和结果的可信度",
+      "impact": "防止数据泄露和过拟合",
+      "status": "pending"
+    }
+  ],
+  "metadata": {
+    "total_decisions": 8,
+    "accepted": 3,
+    "pending": 5,
+    "rejected": 0
+  }
+}

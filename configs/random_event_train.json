@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "label": "preliminary-short-training",
+  "protocol": "configs/random_event_protocol.json",
+  "seed_manifest": "configs/seed_manifest.json",
+  "environment": {
+    "uavs": 4,
+    "regions": 4,
+    "targets": 3,
+    "events_per_episode": 5,
+    "mode_cycle": ["single", "sequential", "overlap", "burst"],
+    "terminate_on_first_all_valid": false
+  },
+  "training": {
+    "variants": ["GPPO-NoGate", "GPPO-Adaptive"],
+    "training_seeds": [1, 2, 3],
+    "total_timesteps_per_checkpoint": 512,
+    "rollout_steps": 128,
+    "ppo_updates": 4,
+    "update_epochs": 4,
+    "minibatch_size": 64,
+    "device": "cpu",
+    "checkpoint_selection": false,
+    "status": "engineering_preliminary_not_converged"
+  },
+  "outputs": {
+    "summary": "ppo_allocation/results/random_event/training_summary.json",
+    "models": "ppo_allocation/results/random_event/models"
+  }
+}

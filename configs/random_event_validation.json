@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "label": "preliminary-validation",
+  "protocol": "configs/random_event_protocol.json",
+  "seed_manifest": "configs/seed_manifest.json",
+  "split": "validation",
+  "may_select_checkpoint": true,
+  "may_tune_reward": true,
+  "tapes_per_set": 20,
+  "events_per_tape": 5,
+  "sets": ["single", "sequential", "overlap", "burst"],
+  "unseen_forbidden": true,
+  "manifest": "ppo_allocation/results/random_event/tapes/preliminary_validation_protocol/manifest.json",
+  "test_data_forbidden": true
+}

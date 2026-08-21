@@ -1,0 +1,60 @@
+{
+  "created_at_utc": "2026-08-20T16:56:20.436679+00:00",
+  "device": "cpu",
+  "records": [
+    {
+      "checkpoint": "results/random_event/test_train/models/gppo_nogate_seed1101_steps512.pt",
+      "checkpoint_sha256": "4dd6f60e4a7265a60c87086329b45041ccdd5c586e8a544eb6a6694402382196",
+      "elapsed_seconds": 11.834780399998635,
+      "final_update": {
+        "approx_kl": 1.1338852345943451e-07,
+        "clip_fraction": 0.0,
+        "early_stop_kl": false,
+        "entropy": 0.7371762916445732,
+        "episode_length_mean": 6.35,
+        "episode_return_mean": 98.78083739263761,
+        "episodes_completed": 20,
+        "explained_variance": 0.00044929981231689453,
+        "gate_mean": 1.0,
+        "gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "grad_norm": 100.24324893951416,
+        "policy_loss": -3.714859485626221e-05,
+        "pre_mask_invalid_probability": 0.8564208969473839,
+        "rollout_gate_means": {
+          "layer0/region": 1.0,
+          "layer0/target": 1.0,
+          "layer0/uav": 1.0,
+          "layer1/region": 1.0,
+          "layer1/target": 1.0,
+          "layer1/uav": 1.0
+        },
+        "rollout_pre_mask_invalid_probability": 0.8564941198565066,
+        "rollout_steps": 128,
+        "total_steps": 512,
+        "update": 4,
+        "value_loss": 2122.201461791992,
+        "variant": "GPPO-NoGate"
+      },
+      "history": "results/random_event/test_train/models/gppo_nogate_seed1101_history.json",
+      "seed": 1101,
+      "timesteps": 512,
+      "updates": 4,
+      "variant": "GPPO-NoGate"
+    }
+  ],
+  "schema_version": 1,
+  "seeds": [
+    1101
+  ],
+  "timesteps": 512,
+  "variants": [
+    "GPPO-NoGate"
+  ]
+}
