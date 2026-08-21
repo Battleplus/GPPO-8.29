@@ -125,6 +125,30 @@ class TrainerVersionedSubmissionTests(unittest.TestCase):
         self.assertEqual(trainer.total_steps, 4)
         env.close()
 
+    def test_trainer_injected_stale_reject_reinfers(self):
+        from ppo_allocation.random_event.trainer import PPOConfig, PPOTrainer
+        env = RandomEventAllocationEnv(
+            initial_seed=42, event_seed=42001, mode="single", events_per_episode=2
+        )
+        original_submit = env.submit_action
+        calls = {"count": 0}
+        def injected(submission):
+            if calls["count"] == 0:
+                calls["count"] += 1
+                env.decision_version += 1
+            return original_submit(submission)
+        env.submit_action = injected
+        trainer = PPOTrainer(
+            env=env, variant="GPPO-Adaptive",
+            config=PPOConfig(rollout_steps=1, update_epochs=1, minibatch_size=1, seed=1, device="cpu"),
+        )
+        buffer, stats = trainer.collect_rollout(1)
+        self.assertEqual(len(buffer), 1)
+        self.assertEqual(trainer.total_steps, 1)
+        self.assertEqual(stats["stale_retries"], 1)
+        self.assertEqual(env.stale_rejection_count, 1)
+        env.close()
+
     def test_trainer_stale_reject_no_buffer(self):
         """Stale rejection should NOT add to buffer or increment total_steps."""
         from ppo_allocation.random_event.trainer import PPOConfig, PPOTrainer
@@ -145,6 +169,41 @@ class TrainerVersionedSubmissionTests(unittest.TestCase):
 # Eval versioned submission
 # ---------------------------------------------------------------------------
 class EvalVersionedSubmissionTests(unittest.TestCase):
+    def test_run_episode_injected_stale_retries_without_trace_row(self):
+        from unittest.mock import patch
+        from ppo_allocation.random_event.events import EventTape, RandomEvent, RandomEventType
+        import ppo_allocation.random_event.experiment as experiment
+        from ppo_allocation.random_event.baselines import NearestLegalPolicy
+        event = RandomEvent(
+            event_id="test-stale", event_type=RandomEventType.REGION_VACANCY,
+            occurred_at=0.0, observed_at=0.0, source_event="test",
+            affected_uavs=(0,), affected_regions=(0,), severity=0.5,
+            event_seed=100, state_version=0,
+        )
+        tape = EventTape(initial_seed=42, event_seed=100, mode="single", events=(event,))
+        original_cls = experiment.RandomEventAllocationEnv
+        def factory(**kwargs):
+            env = original_cls(**kwargs)
+            original_submit = env.submit_action
+            calls = {"count": 0}
+            def injected(submission):
+                if calls["count"] == 0:
+                    calls["count"] += 1
+                    env.decision_version += 1
+                return original_submit(submission)
+            env.submit_action = injected
+            return env
+        with patch.object(experiment, "RandomEventAllocationEnv", side_effect=factory):
+            episode, trace = experiment.run_episode(
+                NearestLegalPolicy(), tape_id="test-stale", tape=tape,
+                algorithm="NearestLegal", max_decisions=5,
+            )
+        self.assertEqual(trace["stale_submission_retry_count"], 1)
+        self.assertEqual(len(trace["decisions"]), 1)
+        self.assertTrue(all("stale_decision" not in row for row in trace["decisions"]))
+        self.assertEqual(trace["episode_return_check"], sum(row["reward"] for row in trace["decisions"]))
+        self.assertEqual(episode.decision_count, sum(event["decision_count"] for event in trace["events"]))
+
     def test_run_episode_versioned(self):
         from ppo_allocation.random_event.events import EventTape, RandomEvent, RandomEventType
         from ppo_allocation.random_event.baselines import NearestLegalPolicy
@@ -310,13 +369,38 @@ class ValidationMetricIntegrationTests(unittest.TestCase):
         self.assertEqual(result.cumulative_weighted_vacancy, 2.0)
         self.assertAlmostEqual(result.fixed_j, 2.0 * 5.0 + 1.0 + 0.5 + 2.0 * 0.25 + 3.0 * 0.5)
 
-    def test_missing_recovery_metric_is_hard_failure(self):
-        from ppo_allocation.random_event.phase_j import extract_validation_metrics
-        with self.assertRaises(ValueError):
-            extract_validation_metrics(
-                self._episode(recovery_delay=None, recovery_delay_observed_count=0),
-                self._trace(recovery_delay=None), self._checkpoint()
-            )
+    def test_unresolved_event_is_rankable_with_explicit_censoring(self):
+        from ppo_allocation.random_event.phase_j import extract_validation_metrics, _lexicographic_select
+        candidate_a = extract_validation_metrics(
+            self._episode(final_infeasible_count=1, final_infeasible_rate=1.0,
+                          recovery_delay=None, recovery_delay_observed_count=0),
+            self._trace(recovery_delay=None), self._checkpoint()
+        )
+        candidate_b = extract_validation_metrics(
+            self._episode(final_infeasible_count=0, final_infeasible_rate=0.0),
+            self._trace(), self._checkpoint()
+        )
+        selected, _ = _lexicographic_select([candidate_a, candidate_b])
+        self.assertEqual(selected.final_infeasible_count, 0)
+        self.assertEqual(candidate_a.recovery_latency, 200.0)
+        self.assertGreater(candidate_a.fixed_j, candidate_b.fixed_j)
+
+    def test_equal_nonzero_infeasible_candidates_remain_rankable(self):
+        from ppo_allocation.random_event.phase_j import extract_validation_metrics, _lexicographic_select
+        first = extract_validation_metrics(
+            self._episode(final_infeasible_count=1, final_infeasible_rate=1.0,
+                          cumulative_uncovered_time=10.0, recovery_delay=None,
+                          recovery_delay_observed_count=0),
+            self._trace(recovery_delay=None), self._checkpoint()
+        )
+        second = extract_validation_metrics(
+            self._episode(final_infeasible_count=1, final_infeasible_rate=1.0,
+                          cumulative_uncovered_time=2.0, recovery_delay=None,
+                          recovery_delay_observed_count=0),
+            self._trace(recovery_delay=None), self._checkpoint()
+        )
+        selected, _ = _lexicographic_select([first, second])
+        self.assertEqual(selected.cumulative_weighted_vacancy, 2.0)
 
 
 class PhaseJCompletenessAndCliTests(unittest.TestCase):
@@ -337,6 +421,132 @@ class PhaseJCompletenessAndCliTests(unittest.TestCase):
         help_text = build_parser().format_help()
         for command in ("preliminary-train", "preliminary-validate", "preliminary-freeze", "preliminary-test", "phase-j-dry-run"):
             self.assertIn(command, help_text)
+
+
+# ---------------------------------------------------------------------------
+# Provenance, Test lock and public bypass guards
+# ---------------------------------------------------------------------------
+class ProvenanceGuardTests(unittest.TestCase):
+    def _gate(self):
+        return {
+            "source_tree_hash": "s" * 64,
+            "attested_source_commit_sha": "a" * 40,
+            "protocol_sha256": "p" * 64,
+            "seed_manifest_sha256": "m" * 64,
+        }
+
+    def _formal_freeze(self, gate):
+        freezes = []
+        for variant in ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"):
+            for seed in (1101, 2202, 3303):
+                freezes.append({
+                    "variant": variant, "training_seed": seed,
+                    "selected_step": 25000, "checkpoint_path": "x.pt",
+                    "checkpoint_sha256": "c" * 64,
+                    "source_sha": gate["source_tree_hash"],
+                    "protocol_sha": gate["protocol_sha256"],
+                    "seed_manifest_sha": gate["seed_manifest_sha256"],
+                    "validation_manifest_sha": "v" * 64,
+                    "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                    "selected_at": "now",
+                })
+        return {
+            "formal": True, "freeze_count": 9, "freezes": freezes,
+            "source_tree_hash": gate["source_tree_hash"],
+            "attested_source_commit_sha": gate["attested_source_commit_sha"],
+            "protocol_sha256": gate["protocol_sha256"],
+            "seed_manifest_sha256": gate["seed_manifest_sha256"],
+        }
+
+    def test_stale_selection_provenance_rejected_by_freeze(self):
+        from unittest.mock import patch
+        from ppo_allocation.random_event.phase_j import preliminary_freeze
+        gate = self._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "preliminary").mkdir()
+            selection = {
+                "formal": True, "selected_checkpoints": [],
+                "source_tree_hash": "old" * 16,
+                "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                "protocol_sha256": gate["protocol_sha256"],
+                "seed_manifest_sha256": gate["seed_manifest_sha256"],
+            }
+            (root / "preliminary" / "validation_selection.json").write_text(json.dumps(selection))
+            with patch("ppo_allocation.random_event.phase_j._check_p0_gate_strict", return_value=gate), \
+                 patch("ppo_allocation.random_event.phase_j._validate_hashes_match"):
+                with self.assertRaises(SystemExit):
+                    preliminary_freeze(root)
+
+    def test_every_freeze_provenance_field_is_checked(self):
+        from ppo_allocation.random_event.phase_j import _validate_freeze_payload
+        gate = self._gate()
+        payload = self._formal_freeze(gate)
+        for field in ("source_tree_hash", "attested_source_commit_sha", "protocol_sha256", "seed_manifest_sha256"):
+            altered = dict(payload)
+            altered[field] = "wrong"
+            with self.assertRaises(SystemExit):
+                _validate_freeze_payload(altered, gate)
+        for field in ("source_sha", "attested_source_commit_sha", "protocol_sha", "seed_manifest_sha"):
+            altered = json.loads(json.dumps(payload))
+            altered["freezes"][0][field] = "wrong"
+            with self.assertRaises(SystemExit):
+                _validate_freeze_payload(altered, gate)
+
+    def test_test_manifest_requires_all_frozen_contract_fields(self):
+        from ppo_allocation.random_event.phase_j import _validate_test_manifest
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "manifest.json"
+            path.write_text(json.dumps({"tier": "preliminary", "split": "test"}))
+            with self.assertRaises(SystemExit):
+                _validate_test_manifest(path, self._gate())
+
+    def test_formal_test_bank_lock_rejects_regeneration(self):
+        from unittest.mock import patch
+        import ppo_allocation.random_event.phase_j as phase_j
+        gate = self._gate()
+        freeze_payload = self._formal_freeze(gate)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir)
+            (output / "preliminary").mkdir()
+            (output / "preliminary" / "frozen_manifests.json").write_text(json.dumps(freeze_payload))
+            manifest_path = output / "preliminary" / "tapes" / "preliminary_test_protocol" / "manifest.json"
+            labels = ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+            def fake_generate(*args, **kwargs):
+                entries = [{"set_name": label, "mode": "single"} for label in labels for _ in range(40)]
+                payload = {
+                    "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
+                    "expected_tape_count": 200, "tape_count": 200,
+                    "checkpoint_selection": False, "reward_tuning": False,
+                    "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                    "protocol_sha256": gate["protocol_sha256"], "entries": entries,
+                }
+                manifest_path.parent.mkdir(parents=True, exist_ok=True)
+                manifest_path.write_text(json.dumps(payload))
+                return payload
+            with patch.object(phase_j, "_check_p0_gate_strict", return_value=gate), \
+                 patch.object(phase_j, "_validate_hashes_match"), \
+                 patch.object(phase_j, "generate_protocol_bank", side_effect=fake_generate):
+                phase_j.generate_test_bank(output)
+                self.assertTrue((output / "preliminary" / "formal_test_bank_lock.json").exists())
+                payload = json.loads(manifest_path.read_text())
+                payload["created_at_utc"] = "changed"
+                manifest_path.write_text(json.dumps(payload))
+                with self.assertRaises(SystemExit):
+                    phase_j.generate_test_bank(output)
+
+    def test_legacy_protocol_bank_test_path_is_guarded(self):
+        from argparse import Namespace
+        from ppo_allocation.random_event.experiment import run_protocol_bank
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = Namespace(
+                output_dir=tmpdir, tier="preliminary", split="test",
+                seed_manifest="configs/seed_manifest.json",
+                protocol="configs/random_event_protocol.json",
+                events_per_tape=5, limit_per_set=None,
+            )
+            with self.assertRaises((SystemExit, FileNotFoundError)):
+                run_protocol_bank(args)
 
 
 # ---------------------------------------------------------------------------

@@ -1112,15 +1112,21 @@ def run_train(args: argparse.Namespace) -> dict[str, Any]:
 def run_protocol_bank(args: argparse.Namespace) -> dict[str, Any]:
     output_dir = _relative_path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    result = generate_protocol_bank(
+    if args.tier == "preliminary" and args.split == "test":
+        # Official Preliminary Test is Phase J guarded. This closes the old
+        # protocol-bank bypass at the public CLI boundary.
+        from .phase_j import generate_test_bank
+        result = generate_test_bank(output_dir)
+    else:
+        result = generate_protocol_bank(
         output_dir,
         tier=args.tier,
         split=args.split,
         seed_manifest_path=args.seed_manifest,
         protocol_path=args.protocol,
         events_per_tape=args.events_per_tape,
-        limit_per_set=args.limit_per_set,
-    )
+            limit_per_set=args.limit_per_set,
+        )
     _json_file(output_dir / "environment_metadata.json", environment_metadata())
     return result
 

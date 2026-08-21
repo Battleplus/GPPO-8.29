@@ -54,6 +54,10 @@ VARIANTS = ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive")
 TRAINING_SEEDS = (1101, 2202, 3303)
 DEFAULT_BUDGET = 300_000
 CHECKPOINT_INTERVAL = 25_000
+# Frozen censoring rule: an unrecovered event contributes the protocol's
+# finite observation-horizon penalty to Levels 3 and 4. It is never coerced
+# from None to zero.
+UNCENSORED_RECOVERY_PENALTY_SECONDS = 200.0
 
 
 @dataclass(frozen=True)
@@ -225,12 +229,19 @@ def compute_fixed_j_from_episode(episode: EpisodeMetrics, trace: dict[str, Any])
         raise ValueError("trace.events must contain one metric row per episode event")
     total = 0.0
     for index, row in enumerate(rows):
+        recovery_delay = row.get("recovery_delay")
+        censored = recovery_delay is None
+        if censored:
+            # Explicit finite right-censoring rule from the frozen protocol.
+            # This preserves rankability without pretending that recovery took
+            # zero time.
+            recovery_delay = UNCENSORED_RECOVERY_PENALTY_SECONDS
         total += compute_fixed_j_from_components(
             uncovered=row.get("weighted_uncovered"),
             distance=row.get("normalized_distance"),
             load_gap=row.get("load_gap"),
             switches=row.get("switch_count"),
-            recovery_delay=row.get("recovery_delay"),
+            recovery_delay=recovery_delay,
         )
     return float(total)
 
@@ -255,12 +266,17 @@ def extract_validation_metrics(
         episode.cumulative_uncovered_time, "cumulative_weighted_vacancy"
     )
     observed_recoveries = int(episode.recovery_delay_observed_count)
-    if observed_recoveries != event_count:
-        raise ValueError(
-            "recovery_delay is incomplete for validation selection; "
-            f"observed={observed_recoveries}, events={event_count}"
-        )
-    recovery = _require_finite_metric(episode.recovery_delay, "recovery_latency")
+    if observed_recoveries < 0 or observed_recoveries > event_count:
+        raise ValueError("invalid recovery_delay_observed_count")
+    unresolved = event_count - observed_recoveries
+    observed_delay_sum = 0.0
+    for row in trace["events"]:
+        delay = row.get("recovery_delay")
+        if delay is not None:
+            observed_delay_sum += _require_finite_metric(delay, "recovery_delay")
+    # Level 3 uses sum(observed delays) + one explicit finite penalty per
+    # unresolved event. The penalty is a censored upper horizon, not a zero.
+    recovery = observed_delay_sum + unresolved * UNCENSORED_RECOVERY_PENALTY_SECONDS
     fixed_j = compute_fixed_j_from_episode(episode, trace)
     return ValidationMetrics(
         checkpoint_path=checkpoint.checkpoint_path,
@@ -671,6 +687,14 @@ def preliminary_freeze(
     if not selection_path.exists():
         raise FileNotFoundError("Run preliminary-validate first")
     selection = json.loads(selection_path.read_text(encoding="utf-8"))
+    if formal and selection.get("formal") is not True:
+        raise SystemExit("formal freeze refuses a developer or legacy selection")
+    provenance_fields = (
+        "source_tree_hash", "attested_source_commit_sha",
+        "protocol_sha256", "seed_manifest_sha256",
+    )
+    if formal and any(selection.get(field) != gate.get(field) for field in provenance_fields):
+        raise SystemExit("selection provenance does not match the current P0 attestation")
     expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
     selected = selection.get("selected_checkpoints", [])
     selected_keys = {(item.get("variant"), int(item.get("training_seed"))) for item in selected}
@@ -682,6 +706,8 @@ def preliminary_freeze(
     manifest_path = validation_manifest or _relative_path(
         selection.get("validation_manifest_path", "results/random_event/tapes/preliminary_validation_protocol/manifest.json")
     )
+    if formal:
+        _validate_validation_manifest(manifest_path, gate, formal=True)
     validation_sha = _sha256_file(manifest_path)
 
     # Verify validation manifest SHA matches what was recorded at selection time
@@ -743,6 +769,69 @@ def preliminary_freeze(
 # Test bank generation & execution
 # ---------------------------------------------------------------------------
 
+def _validate_freeze_payload(freeze_payload: dict[str, Any], gate: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate the complete formal freeze provenance before any Test access."""
+    if freeze_payload.get("formal") is not True:
+        raise SystemExit("formal Test requires a formal freeze manifest")
+    if int(freeze_payload.get("freeze_count", 0)) != 9:
+        raise SystemExit("formal Test requires exactly nine frozen checkpoints")
+    expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
+    freezes = freeze_payload.get("freezes", [])
+    keys = {(item.get("variant"), int(item.get("training_seed"))) for item in freezes}
+    if len(freezes) != 9 or keys != expected_keys:
+        raise SystemExit("formal freeze keys are not exactly the 3x3 protocol")
+    global_fields = {
+        "source_tree_hash": gate.get("source_tree_hash"),
+        "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
+        "protocol_sha256": gate.get("protocol_sha256"),
+        "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+    }
+    for field, expected in global_fields.items():
+        if freeze_payload.get(field) != expected:
+            raise SystemExit(f"freeze provenance mismatch: {field}")
+    for item in freezes:
+        entry_fields = {
+            "source_sha": gate.get("source_tree_hash"),
+            "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
+            "protocol_sha": gate.get("protocol_sha256"),
+            "seed_manifest_sha": gate.get("seed_manifest_sha256"),
+        }
+        for field, expected in entry_fields.items():
+            if item.get(field) != expected:
+                raise SystemExit(f"freeze entry provenance mismatch: {field}")
+    return freezes
+
+
+def _validate_test_manifest(manifest_path: Path, gate: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """Validate the immutable official 200-tape Test bank and return its SHA."""
+    if not manifest_path.exists():
+        raise FileNotFoundError("Run generate_test_bank first")
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    required = {
+        "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
+        "expected_tape_count": 200, "tape_count": 200,
+        "checkpoint_selection": False, "reward_tuning": False,
+        "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+        "protocol_sha256": gate.get("protocol_sha256"),
+    }
+    for field, expected in required.items():
+        if payload.get(field) != expected:
+            raise SystemExit(f"Test manifest contract mismatch: {field}")
+    expected_sets = {f"Test-{mode.title()}": 40 for mode in MODES}
+    expected_sets["Test-Unseen"] = 40
+    set_counts: dict[str, int] = {}
+    for entry in payload.get("entries", []):
+        label = entry.get("set_name")
+        set_counts[label] = set_counts.get(label, 0) + 1
+    if set_counts != expected_sets:
+        raise SystemExit(f"Test set counts mismatch: {set_counts}")
+    return payload, _sha256_file(manifest_path)
+
+
+def _test_lock_path(output_dir: Path) -> Path:
+    return output_dir / "preliminary" / "formal_test_bank_lock.json"
+
+
 def generate_test_bank(output_dir: Path) -> dict[str, Any]:
     """Generate the frozen Test bank (200 tapes: 40×5 sets).
 
@@ -755,18 +844,49 @@ def generate_test_bank(output_dir: Path) -> dict[str, Any]:
             "Test bank must not be generated before checkpoint selection is frozen."
         )
     freeze_payload = json.loads(freeze_path.read_text(encoding="utf-8"))
-    if int(freeze_payload.get("freeze_count", 0)) != 9:
-        raise SystemExit("Cannot generate formal Test bank until exactly 9 checkpoints are frozen")
-
     gate = _check_p0_gate_strict()
     _validate_hashes_match(gate, "generate-test-bank")
+    freezes = _validate_freeze_payload(freeze_payload, gate)
+    freeze_sha = _sha256_file(freeze_path)
 
-    return generate_protocol_bank(
-        output_dir / "preliminary",
-        tier="preliminary",
-        split="test",
-        events_per_tape=5,
+    lock_path = _test_lock_path(output_dir)
+    manifest_path = output_dir / "preliminary" / "tapes" / "preliminary_test_protocol" / "manifest.json"
+    if lock_path.exists():
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        if not manifest_path.exists():
+            raise SystemExit("formal Test lock exists but its manifest is missing")
+        _, current_sha = _validate_test_manifest(manifest_path, gate)
+        expected = {
+            "test_manifest_sha256": current_sha,
+            "source_tree_hash": gate.get("source_tree_hash"),
+            "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
+            "protocol_sha256": gate.get("protocol_sha256"),
+            "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+            "freeze_manifest_sha256": freeze_sha,
+        }
+        if any(lock.get(key) != value for key, value in expected.items()):
+            raise SystemExit("formal Test bank lock provenance mismatch; refusing regeneration")
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    # First official generation only. Thereafter the lock makes the manifest
+    # immutable, including its created_at timestamp and byte-level SHA.
+    manifest = generate_protocol_bank(
+        output_dir / "preliminary", tier="preliminary", split="test", events_per_tape=5,
     )
+    _, manifest_sha = _validate_test_manifest(manifest_path, gate)
+    lock = {
+        "schema_version": 1,
+        "test_manifest_sha256": manifest_sha,
+        "source_tree_hash": gate.get("source_tree_hash"),
+        "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
+        "protocol_sha256": gate.get("protocol_sha256"),
+        "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+        "freeze_manifest_sha256": freeze_sha,
+        "created_at": _utc_now(),
+        "completed": False,
+    }
+    _json_file(lock_path, lock)
+    return manifest
 
 
 def preliminary_test(output_dir: Path) -> dict[str, Any]:
@@ -783,48 +903,38 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
     _validate_hashes_match(gate, "preliminary-test")
 
     freeze_payload = json.loads(freeze_path.read_text(encoding="utf-8"))
-    freezes = freeze_payload.get("freezes", [])
-    expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
-    freeze_keys = {(item.get("variant"), int(item.get("training_seed"))) for item in freezes}
-    if len(freezes) != 9 or freeze_keys != expected_keys:
-        raise SystemExit("formal Test requires exactly 9 frozen variant/seed checkpoints")
+    freezes = _validate_freeze_payload(freeze_payload, gate)
 
-    # Load test bank
+    # Load and verify the immutable Test bank.
     test_bank_dir = output_dir / "preliminary" / "tapes" / "preliminary_test_protocol"
     test_manifest = test_bank_dir / "manifest.json"
     if not test_manifest.exists():
         raise FileNotFoundError("Run generate_test_bank first")
 
-    test_manifest_sha = _sha256_file(test_manifest)
-    test_manifest_payload = json.loads(test_manifest.read_text(encoding="utf-8"))
-    if test_manifest_payload.get("split") != "test" or test_manifest_payload.get("tier") != "preliminary":
-        raise SystemExit("formal Test requires a preliminary/test manifest")
-    if test_manifest_payload.get("tape_count") != 200:
-        raise SystemExit("formal Test requires exactly 200 tapes")
-    mode_counts = {mode: 0 for mode in MODES}
-    for item in test_manifest_payload.get("entries", []):
-        mode = item.get("mode")
-        if mode in mode_counts:
-            mode_counts[mode] += 1
-    # Unseen is represented by Test-Unseen entries whose mode cycles over the
-    # four timing modes; the set count is checked separately.
-    set_counts = {}
-    for item in test_manifest_payload.get("entries", []):
-        set_counts[item.get("set_name")] = set_counts.get(item.get("set_name"), 0) + 1
-    if set_counts.get("Test-Unseen") != 40 or any(
-        set_counts.get(f"Test-{mode.title()}") != 40 for mode in MODES
-    ):
-        raise SystemExit(f"formal Test mode/set counts mismatch: {set_counts}")
-    if test_manifest_payload.get("seed_manifest_sha256") != gate.get("seed_manifest_sha256"):
-        raise SystemExit("Test seed manifest hash mismatch")
-    if test_manifest_payload.get("protocol_sha256") != gate.get("protocol_sha256"):
-        raise SystemExit("Test protocol hash mismatch")
+    test_manifest_payload, test_manifest_sha = _validate_test_manifest(test_manifest, gate)
+    lock_path = _test_lock_path(output_dir)
+    if not lock_path.exists():
+        raise SystemExit("formal Test bank has no immutable lock; run generate_test_bank first")
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    freeze_sha = _sha256_file(freeze_path)
+    if any(lock.get(key) != value for key, value in {
+        "test_manifest_sha256": test_manifest_sha,
+        "source_tree_hash": gate.get("source_tree_hash"),
+        "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
+        "protocol_sha256": gate.get("protocol_sha256"),
+        "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+        "freeze_manifest_sha256": freeze_sha,
+    }.items()):
+        raise SystemExit("formal Test lock provenance mismatch")
+    if lock.get("completed") is True:
+        raise SystemExit("formal Test experiment is already completed")
 
     # Test ledger tracks per-(variant, seed, checkpoint_sha, test_manifest_sha)
     ledger_path = output_dir / "preliminary" / "test_ledger.json"
-    ledger = {}
-    if ledger_path.exists():
-        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8")) if ledger_path.exists() else {
+        "schema_version": 1, "entries": {}, "completed": False,
+    }
+    entries_ledger = ledger.setdefault("entries", {})
 
     all_results = []
     for freeze in freezes:
@@ -832,7 +942,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             f"{freeze['variant']}_seed{freeze['training_seed']}_"
             f"{freeze['checkpoint_sha256'][:12]}_{test_manifest_sha}"
         )
-        if ledger.get(key, {}).get("consumed"):
+        if entries_ledger.get(key, {}).get("consumed"):
             raise SystemExit(
                 f"formal Test combination already consumed: {key}; "
                 "use an explicit developer retest path"
@@ -888,7 +998,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "results": results,
         })
 
-        ledger[key] = {
+        entries_ledger[key] = {
             "consumed": True,
             "variant": freeze["variant"],
             "training_seed": freeze["training_seed"],
@@ -898,8 +1008,19 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "result_path": _relative_label(result_path),
         }
         all_results.append({"variant": freeze["variant"], "seed": freeze["training_seed"], "tape_count": len(results)})
+        # Persist each completed checkpoint so a partial run can resume only
+        # against this exact locked manifest.
+        _json_file(ledger_path, ledger)
 
+    ledger["completed"] = len(entries_ledger) == 9 and all(
+        item.get("consumed") is True for item in entries_ledger.values()
+    )
+    ledger["test_manifest_sha256"] = test_manifest_sha
     _json_file(ledger_path, ledger)
+    if ledger["completed"]:
+        lock["completed"] = True
+        lock["completed_at"] = _utc_now()
+        _json_file(lock_path, lock)
 
     return {
         "consumed_count": len(all_results),

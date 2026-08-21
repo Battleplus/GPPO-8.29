@@ -431,6 +431,7 @@ def run_invariant_checks() -> dict:
     # --- Reward semantic consistency: the protocol and runtime are one truth ---
     try:
         from random_event.reward import CostWeights, VACANCY_DURATION_WEIGHT
+        from random_event.phase_j import UNCENSORED_RECOVERY_PENALTY_SECONDS
         cw = CostWeights()
         protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
         reward_config = protocol.get("reward", {})
@@ -458,7 +459,14 @@ def run_invariant_checks() -> dict:
             and abs(VACANCY_DURATION_WEIGHT - 0.2) <= 1e-12
         )
         tuning_ok = validation.get("reward_tuning") is False and test.get("reward_tuning") is False
-        semantic_pass = all(mapping_status.values()) and constraint_ok and normalization_ok and vacancy_ok and tuning_ok
+        validation_metrics = reward_config.get("validation_metrics", {})
+        censoring_ok = (
+            validation_metrics.get("missing_metric_is_zero") is False
+            and abs(float(validation_metrics.get("unrecovered_recovery_penalty_seconds", -1.0)) - UNCENSORED_RECOVERY_PENALTY_SECONDS) <= 1e-12
+            and "unresolved event" in validation_metrics.get("recovery_latency_definition", "")
+            and "censored recovery penalty" in validation_metrics.get("fixed_j_unrecovered_rule", "")
+        )
+        semantic_pass = all(mapping_status.values()) and constraint_ok and normalization_ok and vacancy_ok and tuning_ok and censoring_ok
         results["reward_semantic_consistency"] = {
             "passed": semantic_pass,
             "mapping": {key: "PASS" if value else "FAIL" for key, value in mapping_status.items()},
@@ -468,6 +476,7 @@ def run_invariant_checks() -> dict:
             "validation_reward_tuning": validation.get("reward_tuning"),
             "test_reward_tuning": test.get("reward_tuning"),
             "reward_tuning": "PASS" if tuning_ok else "FAIL",
+            "unrecovered_event_censoring": "PASS" if censoring_ok else "FAIL",
             "cost_weights": asdict(cw),
             "protocol_reward": reward_config,
         }

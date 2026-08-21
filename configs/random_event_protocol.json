@@ -153,8 +153,17 @@
       "balance_component",
       "switch_component",
       "recovery_component"
-    ],
-    "large_invalid_action_penalty": false,  "weight_selection_sources": [
+    ],  "large_invalid_action_penalty": false,
+  "validation_metrics": {
+    "final_infeasible_definition": "sum(final_infeasible_count) / sum(event_count) over the validation bank",
+    "cumulative_weighted_vacancy_definition": "sum EpisodeMetrics.cumulative_weighted_vacancy over tapes",
+    "recovery_latency_definition": "sum observed recovery_delay + 200.0 seconds per unresolved event",
+    "unrecovered_recovery_penalty_seconds": 200.0,
+    "fixed_j_unrecovered_rule": "use the same 200.0 second censored recovery penalty in eta*recovery_delay",
+    "missing_metric_is_zero": false
+  },
+  "weight_selection_sources": [
+
     "train"
   ],
 
