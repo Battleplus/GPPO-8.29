@@ -3,7 +3,7 @@
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-21T09:13:38.285859+00:00",
+  "generated_at": "2026-08-21T10:38:55.471603+00:00",
   "training_allowed": true,
   "training_allowed_reason": "All machine checks PASS",
   "checks": {
@@ -15,28 +15,28 @@
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 1.430s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 1.908s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.461s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 2.139s\n\nOK\n"
         },
         "event_runtime_integration": {
           "passed": true,
           "tests_run": 8,
           "failures": 0,
           "errors": 0,
-          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.011s\n\nOK\n"
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.010s\n\nOK\n"
         },
         "confirmation_timelines": {
           "passed": true,
           "tests_run": 15,
           "failures": 0,
           "errors": 0,
-          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.006s\n\nOK\n"
+          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.005s\n\nOK\n"
         },
         "concurrency_invariants": {
           "passed": true,
@@ -50,30 +50,30 @@
           "tests_run": 4,
           "failures": 0,
           "errors": 0,
-          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 4.368s\n\nOK\n"
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 5.542s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": true,
           "tests_run": 2,
           "failures": 0,
           "errors": 0,
-          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 3.933s\n\nOK\n"
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.656s\n\nOK\n"
         },
         "phase_j": {
           "passed": true,
-          "tests_run": 39,
+          "tests_run": 46,
           "failures": 0,
           "errors": 0,
-          "output": ".......................................\n----------------------------------------------------------------------\nRan 39 tests in 111.389s\n\nOK\n"
+          "output": "..............................................\n----------------------------------------------------------------------\nRan 46 tests in 117.560s\n\nOK\n"
         },
-        "total_tests": 110
+        "total_tests": 117
       }
     },
     "seed_namespace_isolation": {
       "status": "PASS",
       "details": {
         "passed": true,
-        "train_count": 1800000,
+        "train_count": 1800006,
         "validation_count": 200,
         "test_count": 400,
         "overlaps": {
@@ -88,9 +88,11 @@
         ],
         "train_mode_cycle_ok": true,
         "runtime_formula_ok": true,
-        "reserved_episodes_per_seed": 300000,
+        "reserved_episodes_per_seed": 300001,
         "formal_budget_decision_steps": 300000,
+        "seed_coverage_rule": "reserved >= formal_budget + 1",
         "seed_coverage_ok": true,
+        "seed_coverage_assertions_ok": true,
         "seed_start_formula_ok": true,
         "seed_start_formula_checks": {
           "instance_seed_1101": true,
@@ -242,6 +244,19 @@
         "test_reward_tuning": false,
         "reward_tuning": "PASS",
         "unrecovered_event_censoring": "PASS",
+        "unobserved_event_fixed_j_rule": "PASS",
+        "unobserved_event_rule": {
+          "definition": "Frozen rule for an event that never produced a decision (unobserved because an earlier event caused final-infeasible termination). Components are derived from the FINAL environment snapshot at episode finalization; recovery_delay uses the explicit 200.0s censored horizon. NEVER None -> 0.",
+          "uncovered_source": "final_environment_cost.uncovered",
+          "distance_source": "final_environment_cost.distance",
+          "load_gap_source": "final_environment_cost.load_gap",
+          "switches_source": "frozen_zero_no_reference_assignments_at_finalization",
+          "switches_value": 0.0,
+          "recovery_delay_seconds": 200.0,
+          "missing_metric_is_zero": false
+        },
+        "runtime_recovery_penalty": 200.0,
+        "runtime_switches_without_reference_is_zero": true,
         "cost_weights": {
           "uncovered": 5.0,
           "distance": 1.0,
@@ -286,7 +301,17 @@
             "recovery_latency_definition": "sum observed recovery_delay + 200.0 seconds per unresolved event",
             "unrecovered_recovery_penalty_seconds": 200.0,
             "fixed_j_unrecovered_rule": "use the same 200.0 second censored recovery penalty in eta*recovery_delay",
-            "missing_metric_is_zero": false
+            "missing_metric_is_zero": false,
+            "fixed_j_unobserved_event_rule": {
+              "definition": "Frozen rule for an event that never produced a decision (unobserved because an earlier event caused final-infeasible termination). Components are derived from the FINAL environment snapshot at episode finalization; recovery_delay uses the explicit 200.0s censored horizon. NEVER None -> 0.",
+              "uncovered_source": "final_environment_cost.uncovered",
+              "distance_source": "final_environment_cost.distance",
+              "load_gap_source": "final_environment_cost.load_gap",
+              "switches_source": "frozen_zero_no_reference_assignments_at_finalization",
+              "switches_value": 0.0,
+              "recovery_delay_seconds": 200.0,
+              "missing_metric_is_zero": false
+            }
           },
           "weight_selection_sources": [
             "train"
@@ -308,13 +333,13 @@
           "burst": 20
         },
         "mode_ok": true,
-        "summary_sha256": "4d25a4cf44a6db6f5becfa8a2398aba5dbc716f6f104d48b229a830c21d324ed",
-        "manifest_file_sha256": "a844151f5c522ce4d3563960f52316b1a64d247203dbccc535c037ebdba81b5f",
-        "environment_metadata_sha256": "751f4f86b334100b464e7c5496658ffff66e3b0df9b3a20d141d521803b637bc",
+        "summary_sha256": "bbc90ba104990b509a101f1c682f8783f400f465e7852bf3db1743006ef24deb",
+        "manifest_file_sha256": "26d535b92c078b3b115c760c78a117616e66dde3f449d47baa3c2f9677ac02d0",
+        "environment_metadata_sha256": "7463bb014d1ea8a281c5787d5718451132af152d8e965fd0dbe5e7a8ab4c0ca3",
         "environment_metadata": {
           "python": "3.11.5 | packaged by Anaconda, Inc. | (main, Sep 11 2023, 13:26:23) [MSC v.1916 64 bit (AMD64)]",
           "python_311": true,
-          "git_commit": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
+          "git_commit": "0b48d20c58028503818a953ced93216912db1c4a",
           "git_commit_matches_attested": true,
           "torch": "2.5.0+cpu",
           "numpy": "2.0.2",
@@ -328,8 +353,8 @@
     "source_hash_integrity": {
       "status": "PASS",
       "details": {
-        "git_commit_sha": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
-        "source_tree_hash": "2daaf0812634af4e083abea632aa8a5709dc07220f4ff8c9388422f01cba9592",
+        "git_commit_sha": "0b48d20c58028503818a953ced93216912db1c4a",
+        "source_tree_hash": "06d9bef37a316058fc9469db231e2b0c8c7c7c5334cecd5ab0ba4938d8df37e2",
         "missing": [],
         "working_tree_clean": true,
         "dirty_paths": [],
@@ -339,8 +364,8 @@
       }
     }
   },
-  "test_count": 110,
-  "required_test_count": 110,
+  "test_count": 117,
+  "required_test_count": 117,
   "protected_source_files": [
     "configs/random_event_protocol.json",
     "configs/seed_manifest.json",
@@ -358,6 +383,7 @@
     "ppo_allocation/random_event/experiment.py",
     "ppo_allocation/random_event/graph.py",
     "ppo_allocation/random_event/legacy_adapter.py",
+    "ppo_allocation/random_event/metrics.py",
     "ppo_allocation/random_event/models.py",
     "ppo_allocation/random_event/phase_j.py",
     "ppo_allocation/random_event/reward.py",
@@ -375,14 +401,14 @@
     "run_phase_j.py",
     "scripts/build_p0_gate.py"
   ],
-  "attested_source_commit_sha": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
-  "git_commit_sha": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
-  "source_tree_hash": "2daaf0812634af4e083abea632aa8a5709dc07220f4ff8c9388422f01cba9592",
-  "protocol_sha256": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
-  "seed_manifest_sha256": "8cef4f7fafb8a0c2c1b3851d6acf83d0f8c352cdd9658b4dcb6ceced60891de9",
+  "attested_source_commit_sha": "0b48d20c58028503818a953ced93216912db1c4a",
+  "git_commit_sha": "0b48d20c58028503818a953ced93216912db1c4a",
+  "source_tree_hash": "06d9bef37a316058fc9469db231e2b0c8c7c7c5334cecd5ab0ba4938d8df37e2",
+  "protocol_sha256": "accdca00715eb1baef3eb1c17b615d26db5dbb39ab2cf17c79f372f6acea380a",
+  "seed_manifest_sha256": "d5ed5079ed5f3841e8012d9e3b64cd8daaa65cb064cf4ccd8a88cd0881c305ef",
   "source_hashes": {
-    "git_commit_sha": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
-    "source_tree_hash": "2daaf0812634af4e083abea632aa8a5709dc07220f4ff8c9388422f01cba9592",
+    "git_commit_sha": "0b48d20c58028503818a953ced93216912db1c4a",
+    "source_tree_hash": "06d9bef37a316058fc9469db231e2b0c8c7c7c5334cecd5ab0ba4938d8df37e2",
     "source": {
       "event_runtime/concurrency.py": "ee88114bfe10038fe5e795f82b50d10a0910ea0e06dc047789c4422e79277a5d",
       "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
@@ -392,18 +418,19 @@
       "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
       "ppo_allocation/random_event/environment.py": "781a6871766a452a77bdc3dd461db859b42a04e69cc62bd0324424fa7bde19f6",
-      "ppo_allocation/random_event/experiment.py": "37911dbab22d8147537b9ab64ba308a77616fc5d5911cc3e2004f114d4a32ba5",
+      "ppo_allocation/random_event/experiment.py": "0a42d391f61b965f099e19799a26ed76cc3ed357008420906fec69bb8578046f",
+      "ppo_allocation/random_event/metrics.py": "5d2a224a609b03568dbbd1b67fe2de3a4e8e03139b7ef7e6847511f2818bd0e9",
       "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
       "ppo_allocation/random_event/trainer.py": "e41b26487393881cac3efb856f9d9263f74092df964718c53b3c70dcd8a9208d",
       "ppo_allocation/random_event/runtime_bridge.py": "2259c124812e8a04344d4b38ad79a92180cfc162e96431f116c030c07fce94fc",
       "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08",
       "ppo_allocation/random_event/graph.py": "c2ddec3c2dd378fe64e750726c5065bc6a72dd8d14a10980b85aafb25e70dd1f",
-      "ppo_allocation/random_event/reward.py": "57646f6fc0740f26b9c84265fa1b4ff38514610031a9f9e2cdb4de5c22675585",
+      "ppo_allocation/random_event/reward.py": "22f693cc47c8ba81aec6bf8d0d26f77ff75f59167d6d077d4b28b228d6f87394",
       "ppo_allocation/random_event/baselines.py": "da9134a5953f96533f90323c59f13b24e07f4b17bdd232bb56069939bb8c7cd5",
       "ppo_allocation/random_event/events.py": "942c309746c28568cc9f534bad839fb5a45c1d38f052aaa253182a8ca353b4c2",
       "ppo_allocation/random_event/legacy_adapter.py": "f9fe0e627f8952b3e3d22a4594bc9a87c07908c335454a60f92455bf39f36259",
       "ppo_allocation/config.py": "2dbfb766e1717d0524024f5881736e59599cb74c0466e140db6bd6d7a4cdc7f9",
-      "scripts/build_p0_gate.py": "b79e934bd390d1307e7267bd4868009dd58655441f24102dacd3723dd662ce31",
+      "scripts/build_p0_gate.py": "8ed3af1fabce6c214f32bdff9810cb12844297d7af564f9e23cff7d7a8176592",
       "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
       "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
       "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "28bf17783c48beb96436c2e275326615479fcfb39cc5911e972e3340f7015dc6",
@@ -411,14 +438,14 @@
       "ppo_allocation/tests_random_event/test_random_event_core.py": "16a0e8fc3a3a3619f4cb1a741a9a72bb90e160c52bdbc2baa50533cd34bb9bd1",
       "ppo_allocation/tests_random_event/test_random_event_training.py": "ecb907458158135bbbcae273ac023db4b7357cdc41ce7b73fa1d4ef79acc808a",
       "ppo_allocation/tests_random_event/test_legacy_compatibility.py": "afc17b48a6910e2a9a6192d0ec53cd70e0079aa5ea315ececf517aa3f99ba0f7",
-      "ppo_allocation/random_event/phase_j.py": "63dfe3fee8fb24c4e3b63b568d7afb9eed83679808114efbc9d75156dcea71d0",
-      "ppo_allocation/tests_random_event/test_phase_j.py": "ae38e35c5be9bdad9cfc82b2413d811881fee7be89e1f4e436c238357c10695d",
+      "ppo_allocation/random_event/phase_j.py": "da49c3c8e67e820cd7805a7976f2b90bc446d2fa6391097e0696495683f7a5ce",
+      "ppo_allocation/tests_random_event/test_phase_j.py": "021a562f65b02be2facde16554f24931e46d6e7c1960d8c9cea3dc24515a8bb8",
       "run_phase_j.py": "92d6e594106c379aab9f02020dafea41c5c01743302517c089fc227857d53f79",
-      "configs/random_event_protocol.json": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
-      "configs/seed_manifest.json": "8cef4f7fafb8a0c2c1b3851d6acf83d0f8c352cdd9658b4dcb6ceced60891de9"
+      "configs/random_event_protocol.json": "accdca00715eb1baef3eb1c17b615d26db5dbb39ab2cf17c79f372f6acea380a",
+      "configs/seed_manifest.json": "d5ed5079ed5f3841e8012d9e3b64cd8daaa65cb064cf4ccd8a88cd0881c305ef"
     },
-    "protocol": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
-    "seed_manifest": "8cef4f7fafb8a0c2c1b3851d6acf83d0f8c352cdd9658b4dcb6ceced60891de9"
+    "protocol": "accdca00715eb1baef3eb1c17b615d26db5dbb39ab2cf17c79f372f6acea380a",
+    "seed_manifest": "d5ed5079ed5f3841e8012d9e3b64cd8daaa65cb064cf4ccd8a88cd0881c305ef"
   },
   "violations": []
 }

@@ -1,0 +1,91 @@
+{
+  "checkpoints": [
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 4.291633900007582,
+      "seed": 1101,
+      "variant": "PPO-MLP"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 3.0546382000029553,
+      "seed": 2202,
+      "variant": "PPO-MLP"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 3.039271000001463,
+      "seed": 3303,
+      "variant": "PPO-MLP"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 13.034585700006573,
+      "seed": 1101,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 16.39828700000362,
+      "seed": 2202,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 13.650451800000155,
+      "seed": 3303,
+      "variant": "GPPO-NoGate"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 17.252368799992837,
+      "seed": 1101,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 15.572742700009258,
+      "seed": 2202,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "checkpoints_created": 2,
+      "elapsed_seconds": 13.679283300007228,
+      "seed": 3303,
+      "variant": "GPPO-Adaptive"
+    }
+  ],
+  "created_at": "2026-08-21T10:33:24.177903+00:00",
+  "ppo_config": {
+    "clip_coef": 0.2,
+    "device": "cpu",
+    "entropy_coef": 0.01,
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "learning_rate": 0.0002,
+    "max_grad_norm": 0.5,
+    "minibatch_size": 64,
+    "normalize_advantages": true,
+    "rollout_steps": 512,
+    "seed": 1,
+    "target_kl": null,
+    "update_epochs": 4,
+    "value_coef": 0.5
+  },
+  "protocol": {
+    "budget": 128,
+    "checkpoint_interval": 64,
+    "events_per_tape": 5,
+    "training_seeds": [
+      1101,
+      2202,
+      3303
+    ],
+    "variants": [
+      "PPO-MLP",
+      "GPPO-NoGate",
+      "GPPO-Adaptive"
+    ]
+  },
+  "resume_supported": false
+}

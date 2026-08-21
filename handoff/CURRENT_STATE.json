@@ -1,12 +1,11 @@
 {
   "branch": "plan/lightweight-sfc-refactor",
-  "source_commit_s3": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
-  "evidence_commit_e3": "b76ef503fdec1de291ece2175c04e9a3d53e84f0",
-  "previous_source_s2": "6943a92f7e3663fc469eea98ad730e64784a0148",
-  "previous_evidence_e2": "4c2e7c736e1d55aeaeea87a34b3c731de514e2df",
-  "attested_source_commit_sha": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
+  "source_commit_s4": "0b48d20c58028503818a953ced93216912db1c4a",
+  "previous_source_s3": "f87fd5acc3cc458127099ccca90f3d09a092a4a9",
+  "evidence_commit": "see current branch HEAD (evidence-only; never self-referential)",
+  "attested_source_commit_sha": "0b48d20c58028503818a953ced93216912db1c4a",
   "training_allowed": true,
-  "test_count": 110,
+  "test_count": 117,
   "tests_all_pass": true,
   "python": "3.11.5",
   "torch": "2.5.0+cpu",
@@ -17,12 +16,13 @@
   "formal_300k_started": false,
   "formal_validation_started": false,
   "formal_test_started": false,
-  "phase_j_round": "Final pre-300k closeout (S3)",
+  "phase_j_round": "S4 closeout: reset cap +1, atomic Test journal, protected metrics.py, early-termination integration, frozen unobserved fixed-J rule",
   "notes": [
-    "Frozen train mode cycle bound to seed_manifest preliminary.train.mode_cycle (sequential/overlap/burst).",
-    "Train seed namespace expanded to 300000 episodes/seed; CyclingTrainingEnv hard-FAILs past the reserved cap.",
-    "Per-event fixed_j materialised with frozen 200s censoring for unobserved/final-infeasible events.",
-    "Formal Test supports partial resume under immutable lock with running/consumed state guard.",
+    "Train reset cap: episodes_per_training_seed=300001 (1 initial reset + 300000 post-terminal resets); gate enforces reserved >= formal_budget + 1.",
+    "Formal Test uses a per-checkpoint atomic journal (temp + fsync + os.replace); journal is the single source of truth for consumption; consumed journal without ledger rebuilds from verified result; ledger-consumed + running journal recovers without re-run; ambiguous running journal hard-fails; completed lock rejects rerun.",
+    "ppo_allocation/random_event/metrics.py added to P0 SOURCE_FILES; protected-source contract tests added.",
+    "Real run_episode early-termination integration test: 4-UAV burst terminates with final infeasibility before a 5th event is observed; unobserved event gets finite fixed_j and the checkpoint remains lexicographically rankable.",
+    "Unobserved-event fixed-J rule frozen in configs/random_event_protocol.json and machine-checked by the gate (final-snapshot uncovered/distance/load_gap, frozen switches=0, 200s censored recovery).",
     "No Preliminary 300k started."
   ]
 }
