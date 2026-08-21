@@ -699,11 +699,15 @@ def run_episode(
         previous_repairs = int(env.repair_count)
         previous_comm_bytes = int(env.communication_bytes)
         previous_comm_count = int(env.communication_trigger_count)
-        mask = graph.action_mask.cpu().numpy().astype(bool)
-        action, diagnostics = _select_action(policy, env, graph)
-        # Phase J: use versioned submission contract
+        # Phase J: begin_decision first, then infer on ctx.graph
+        ctx = None
         if hasattr(env, "begin_decision"):
             ctx = env.begin_decision()
+            graph = ctx.graph
+        mask = graph.action_mask.cpu().numpy().astype(bool)
+        action, diagnostics = _select_action(policy, env, graph)
+        # Submit with versioned contract
+        if ctx is not None:
             submission = ActionSubmission.from_decision(action, ctx)
             graph_after, reward, terminated, truncated, info = env.submit_action(submission)
         else:

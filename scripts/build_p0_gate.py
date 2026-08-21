@@ -32,6 +32,7 @@ import json
 import subprocess
 import sys
 import tempfile
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest import TextTestRunner, loader
@@ -71,6 +72,8 @@ SOURCE_FILES = [
     "ppo_allocation/tests_random_event/test_random_event_core.py",
     "ppo_allocation/tests_random_event/test_random_event_training.py",
     "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
+    "ppo_allocation/random_event/phase_j.py",
+    "ppo_allocation/tests_random_event/test_phase_j.py",
 ]
 
 # Required test suites.  Each entry: (label, discovery_dir, pattern).
@@ -86,6 +89,7 @@ REQUIRED_TEST_SUITES = [
     ("concurrency_invariants", "ppo_allocation/tests_random_event", "test_concurrency_invariants.py"),
     ("p0_gate_contract", "ppo_allocation/tests_random_event", "test_p0_gate_contract.py"),
     ("legacy_compatibility", "ppo_allocation/tests_random_event", "test_legacy_compatibility.py"),
+    ("phase_j", "ppo_allocation/tests_random_event", "test_phase_j.py"),
 ]
 
 
@@ -377,6 +381,31 @@ def run_invariant_checks() -> dict:
     except Exception as exc:  # pragma: no cover
         results["stale_injection_rate"] = {"passed": False, "error": str(exc)}
 
+    # --- Reward semantic consistency: CostWeights default matches protocol ---
+    try:
+        from random_event.reward import CostWeights
+        cw = CostWeights()
+        protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
+        reward_config = protocol.get("reward", {})
+        protocol_matches = True
+        mismatches = []
+        if "region_penalty" in reward_config:
+            if abs(cw.region_penalty - reward_config["region_penalty"]) > 1e-9:
+                protocol_matches = False
+                mismatches.append(f"region_penalty: {cw.region_penalty} != {reward_config['region_penalty']}")
+        if "distance_cost" in reward_config:
+            if abs(cw.distance_cost - reward_config["distance_cost"]) > 1e-9:
+                protocol_matches = False
+                mismatches.append(f"distance_cost: {cw.distance_cost} != {reward_config['distance_cost']}")
+        results["reward_semantic_consistency"] = {
+            "passed": protocol_matches,
+            "cost_weights": asdict(cw) if hasattr(cw, '__dataclass_fields__') else str(cw),
+            "protocol_reward": reward_config,
+            "mismatches": mismatches,
+        }
+    except Exception as exc:
+        results["reward_semantic_consistency"] = {"passed": False, "error": str(exc)}
+
     # --- Snapshot identity, overlap delivery order and unseen isolation ---
     try:
         from random_event.environment import RandomEventAllocationEnv
@@ -632,6 +661,10 @@ def main() -> int:
         "model_save_load_determinism": {
             "status": "PASS" if invariants.get("model_save_load_determinism", {}).get("passed") else "FAIL",
             "details": invariants.get("model_save_load_determinism", {}),
+        },
+        "reward_semantic_consistency": {
+            "status": "PASS" if invariants.get("reward_semantic_consistency", {}).get("passed") else "FAIL",
+            "details": invariants.get("reward_semantic_consistency", {}),
         },
         "smoke_20x4": {
             "status": "PASS" if smoke.get("passed") else "FAIL",

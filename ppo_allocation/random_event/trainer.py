@@ -322,7 +322,20 @@ class PPOTrainer:
         return self._current_graph
 
     def collect_rollout(self, steps: int | None = None) -> tuple[TrajectoryBuffer, dict[str, Any]]:
-        """Collect an on-policy rollout and compute its GAE targets."""
+        """Collect an on-policy rollout and compute its GAE targets.
+
+        Phase J timing (for RandomEventAllocationEnv):
+            ctx = env.begin_decision()
+            graph = ctx.graph
+            action = policy(graph)
+            submission = ActionSubmission(action, ctx.graph_version, ctx.action_version)
+            result = env.submit_action(submission)
+
+        On stale reject (reward=0, info.stale_decision=True):
+            - Do NOT buffer.add
+            - Do NOT total_steps += 1
+            - Refresh ctx and re-infer
+        """
 
         steps = int(steps or self.config.rollout_steps)
         if steps <= 0:
@@ -335,20 +348,28 @@ class PPOTrainer:
         episode_lengths: list[int] = []
         invalid_probabilities: list[float] = []
         gate_values: dict[str, list[float]] = {}
+        stale_retries = 0
 
-        for _ in range(steps):
+        collected = 0
+        while collected < steps:
+            # Phase J: begin_decision first, then infer on ctx.graph
+            ctx = None
+            if hasattr(self.env, "begin_decision"):
+                ctx = self.env.begin_decision()
+                graph = ctx.graph
             device_graph = graph.to(self.device)
             if not bool(device_graph.action_mask.any().item()):
                 raise RuntimeError("graph action mask contains no legal action")
             action, log_prob, value, diagnostics = model.act(device_graph, deterministic=False)
-            # Phase J: use versioned submission contract for RandomEventAllocationEnv
-            ctx = None
-            if hasattr(self.env, "begin_decision"):
-                ctx = self.env.begin_decision()
-            next_graph, reward, terminated, truncated, _ = (
-                _versioned_step_env(self.env, action, ctx) if ctx is not None
-                else _step_env(self.env, action)
-            )
+            # Submit with versioned contract
+            if ctx is not None:
+                next_graph, reward, terminated, truncated, info = _versioned_step_env(self.env, action, ctx)
+                # Phase J: on stale reject, refresh ctx and re-infer without buffering
+                if info.get("stale_decision", False):
+                    stale_retries += 1
+                    continue  # re-loop: fresh begin_decision → fresh inference
+            else:
+                next_graph, reward, terminated, truncated, info = _step_env(self.env, action)
             with torch.no_grad():
                 if terminated:
                     next_value = 0.0
@@ -370,6 +391,7 @@ class PPOTrainer:
                 gate_values.setdefault(key, []).append(float(gate_mean))
 
             self.total_steps += 1
+            collected += 1
             self._episode_return += reward
             self._episode_length += 1
             if terminated or truncated:
@@ -390,6 +412,7 @@ class PPOTrainer:
             "episode_length_mean": float(np.mean(episode_lengths)) if episode_lengths else float("nan"),
             "pre_mask_invalid_probability": float(np.mean(invalid_probabilities)),
             "gate_means": {key: float(np.mean(values)) for key, values in sorted(gate_values.items())},
+            "stale_retries": stale_retries,
         }
         rollout_stats["gate_mean"] = (
             float(np.mean(list(rollout_stats["gate_means"].values())))
