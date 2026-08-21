@@ -311,6 +311,8 @@ class RuntimeBridge:
         return {
             "stale_rejected": 0,
             "stale_attempted": 0,
+            "injected_stale_submissions": 0,
+            "injected_stale_rejected": 0,
             "duplicate_assignments": 0,
             "late_ack_resurrections": 0,
             "unaffected_interruptions": 0,
@@ -717,12 +719,17 @@ class RuntimeBridge:
             concurrency.get_valid_holder_count(region, now) <= 1
             for region in regions
         )
+        injected = self._cc["injected_stale_submissions"]
+        injected_rejected = self._cc["injected_stale_rejected"]
         return {
             "valid_exclusive_holder": exclusive,
             "stale_rejection_rate": (
-                float(self._cc["stale_rejected"])
-                / max(1, self._cc["stale_attempted"])
+                float(injected_rejected) / max(1, injected)
+                if injected > 0
+                else 1.0  # No stale submissions attempted → vacuously true
             ),
+            "injected_stale_submissions": injected,
+            "injected_stale_rejected": injected_rejected,
             "stale_rejected": self._cc["stale_rejected"],
             "stale_attempted": self._cc["stale_attempted"],
             "duplicate_assignments": self._cc["duplicate_assignments"],
@@ -730,6 +737,51 @@ class RuntimeBridge:
             "unaffected_interruptions": self._cc["unaffected_interruptions"],
             "exclusive_holder_violations": self._cc["exclusive_holder_violations"],
         }
+
+    def submit_stale_action(
+        self,
+        env: Any,
+        command_id: str,
+        uav_id: str,
+        region_id: str,
+        stale_graph_version: int,
+        action_version: int,
+        fencing_token: int,
+        now: float,
+    ) -> bool:
+        """Submit a deliberately stale command for testing.
+
+        This creates a command with an old graph_version and attempts to
+        execute it.  The execution layer must reject it.  This is the ONLY
+        method that should increment ``injected_stale_submissions``.
+
+        Returns True if the stale submission was correctly rejected.
+        """
+        cc = self._cc
+        cc["injected_stale_submissions"] += 1
+        concurrency = self.adapter.concurrency
+        command = concurrency.create_command(
+            command_id=command_id,
+            uav_id=uav_id,
+            region_id=region_id,
+            graph_version=stale_graph_version,
+            action_version=action_version,
+            ttl=0.5,
+            now=now,
+        )
+        # Validate against current (newer) graph version — must reject.
+        current_gv = int(env.graph_version)
+        if not concurrency.validate_command(command.command_id, current_gv):
+            cc["injected_stale_rejected"] += 1
+            cc["stale_rejected"] += 1
+            return True
+        # Also try via reject_stale_action for belt-and-suspenders.
+        if concurrency.reject_stale_action(command, current_gv):
+            cc["injected_stale_rejected"] += 1
+            cc["stale_rejected"] += 1
+            return True
+        # If we get here, the stale command was NOT rejected — a bug.
+        return False
 
     def get_belief(self) -> BeliefState:
         return self.adapter.belief

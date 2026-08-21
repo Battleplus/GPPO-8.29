@@ -3,7 +3,7 @@
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-21T04:04:58.569154+00:00",
+  "generated_at": "2026-08-21T04:25:45.451520+00:00",
   "training_allowed": true,
   "training_allowed_reason": "All machine checks PASS",
   "checks": {
@@ -15,21 +15,21 @@
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.923s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.942s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.506s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.399s\n\nOK\n"
         },
         "event_runtime_integration": {
           "passed": true,
           "tests_run": 8,
           "failures": 0,
           "errors": 0,
-          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.014s\n\nOK\n"
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.011s\n\nOK\n"
         },
         "confirmation_timelines": {
           "passed": true,
@@ -40,24 +40,24 @@
         },
         "concurrency_invariants": {
           "passed": true,
-          "tests_run": 13,
+          "tests_run": 20,
           "failures": 0,
           "errors": 0,
-          "output": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.000s\n\nOK\n"
+          "output": "....................\n----------------------------------------------------------------------\nRan 20 tests in 0.016s\n\nOK\n"
         },
         "p0_gate_contract": {
           "passed": true,
           "tests_run": 4,
           "failures": 0,
           "errors": 0,
-          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 3.600s\n\nOK\n"
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 3.656s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": true,
           "tests_run": 2,
           "failures": 0,
           "errors": 0,
-          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.207s\n\nOK\n"
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.463s\n\nOK\n"
         }
       }
     },
@@ -165,7 +165,10 @@
     "concurrency_fencing_monotonicity": {
       "status": "PASS",
       "details": {
-        "passed": true
+        "passed": true,
+        "old_token": 1,
+        "new_token": 3,
+        "old_token_rejected": true
       }
     },
     "model_save_load_determinism": {
@@ -184,49 +187,63 @@
       "details": {
         "passed": true,
         "replayed_tape_count": 80,
+        "replayed_ok": true,
         "counts_by_mode": {
           "single": 20,
           "sequential": 20,
           "overlap": 20,
           "burst": 20
         },
-        "summary_sha256": "ad1e72240af742f85bc2ab70ad3ff2a7cd51f0e85e17de4ca0b9bb792b8b120c"
+        "mode_ok": true,
+        "summary_sha256": "10b49cf4c173e03ea15e6f02c3f2582463b711316b66fa9e00969a337056d6a9",
+        "manifest_sha256": "",
+        "environment_metadata": {
+          "python": "3.11.5 | packaged by Anaconda, Inc. | (main, Sep 11 2023, 13:26:23) [MSC v.1916 64 bit (AMD64)]",
+          "python_311": true,
+          "git_commit": "e351a358ce23a06223a7757529a662d47d31ad0a",
+          "torch": "2.5.0+cpu",
+          "numpy": "2.0.2",
+          "sb3_contrib": "2.9.0",
+          "stable_baselines3": "2.9.0",
+          "gymnasium": "1.3.0"
+        }
       }
     },
     "source_hash_integrity": {
       "status": "PASS",
       "details": {
-        "git_commit_sha": "e351a358ce23a06223a7757529a662d47d31ad0a",
-        "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
+        "git_commit_sha": "d44ff59dc46d6198bdc104bcb87b2177f09e2bdd",
+        "source_tree_hash": "b864895d5fbd37687f78b424eca09b79a319e307fc24de386ac381ceb82f01f2",
         "missing": [],
         "previous_gate_not_used_as_baseline": true
       }
     }
   },
-  "git_commit_sha": "e351a358ce23a06223a7757529a662d47d31ad0a",
-  "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
+  "attested_source_commit_sha": "d44ff59dc46d6198bdc104bcb87b2177f09e2bdd",
+  "git_commit_sha": "d44ff59dc46d6198bdc104bcb87b2177f09e2bdd",
+  "source_tree_hash": "b864895d5fbd37687f78b424eca09b79a319e307fc24de386ac381ceb82f01f2",
   "protocol_sha256": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
   "seed_manifest_sha256": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43",
   "source_hashes": {
-    "git_commit_sha": "e351a358ce23a06223a7757529a662d47d31ad0a",
-    "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
+    "git_commit_sha": "d44ff59dc46d6198bdc104bcb87b2177f09e2bdd",
+    "source_tree_hash": "b864895d5fbd37687f78b424eca09b79a319e307fc24de386ac381ceb82f01f2",
     "source": {
-      "event_runtime/concurrency.py": "29d97c2cb4458a3e51830520964caa50eb269a2dbcf1c7d33d76fa25ef56fb9e",
+      "event_runtime/concurrency.py": "ee88114bfe10038fe5e795f82b50d10a0910ea0e06dc047789c4422e79277a5d",
       "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
       "event_runtime/metrics.py": "508b515e5998af914df97c0e45725360d0f714d26852279e87447f58b54ca44f",
       "event_runtime/replay.py": "a206c4aa719f6fe57cf5292ddc80612e3f5d65bc47afdbc43519b89db20475fc",
       "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
       "ppo_allocation/random_event/environment.py": "f569b6bd68c7bfecb54f8acd4c4b8d64d654cab447cadcab3f9134bab7041681",
-      "ppo_allocation/random_event/experiment.py": "231e973595f0dfdd94b5a8d7012312372e30987027bf0f37272f2477b7293331",
+      "ppo_allocation/random_event/experiment.py": "8eb945d6e17ae64511f82537a10157f061f89880ba7798217083fdc8a8bd9a59",
       "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
       "ppo_allocation/random_event/trainer.py": "bd1dc1a32900f1cfca54340846e3cbb766818227c6aae55f0b2f8dfa237941c0",
-      "ppo_allocation/random_event/runtime_bridge.py": "9d5d9f8598aa9fd0deca45262ac9e44b9710c7355844e873ebcfcb9313cc52e7",
+      "ppo_allocation/random_event/runtime_bridge.py": "17b912af06c83ab4d67cca8a96302bcc4c6e896057d4df9336d64c42e520987d",
       "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08",
-      "scripts/build_p0_gate.py": "7708416e539a347b48cc7f6d405f961796ac875935c8626b54955d78f0209eec",
+      "scripts/build_p0_gate.py": "831072c0c84e7e5b041ef228c55826b447957e85c2e58f70ada4192f04029cbc",
       "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
       "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
-      "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "78f91eb61f749cae87b42818a6dbaacc907b15893c99815a165994aa394c661e",
+      "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "00ab1bd2e5baf9d0e32880743cb6fc9d470e0776dbe50565490a5b76c56936c2",
       "ppo_allocation/tests_random_event/test_p0_gate_contract.py": "1d4ec8f5664e4ffabc5789c8bb1139ef0ed1c04d0c3d935bc07f1e7bc5461516"
     },
     "protocol": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",

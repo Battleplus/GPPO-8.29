@@ -961,11 +961,21 @@ def run_smoke(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _check_p0_gate() -> None:
-    """Refuse training unless the machine gate and current tree are identical.
+    """Refuse training unless the machine gate and current tree are consistent.
 
-    In addition to ``training_allowed``, this verifies the attested commit,
-    every frozen source hash, the source-tree hash, protocol hash, and seed
-    manifest hash. Any source/config drift invalidates the gate immediately.
+    The gate records ``attested_source_commit_sha`` — the commit where all
+    protected source/config/test files were verified.  Training is allowed if
+    and only if:
+
+    1. ``training_allowed`` is true in the gate JSON.
+    2. ``current HEAD`` is an ancestor-or-equal of ``attested_source_commit_sha``
+       OR ``attested_source_commit_sha`` is an ancestor-or-equal of
+       ``current HEAD`` (i.e.  the attested commit is reachable).
+    3. All protected source/config/test file hashes match the attested values.
+    4. ``source_tree_hash``, ``protocol_sha256``, ``seed_manifest_sha256`` match.
+
+    Evidence-only commits (gate JSON, smoke evidence, handoff reports) are
+    allowed on top of the attested source commit without invalidating it.
     """
 
     gate_path = PPO_DIR.parent / "handoff" / "P0_GATE.json"
@@ -979,18 +989,38 @@ def _check_p0_gate() -> None:
         violations = "; ".join(gate.get("violations", []))
         raise SystemExit(f"P0 gate is RED. Violations: {violations}")
 
+    # --- Commit attestation ---
+    # The gate stores ``attested_source_commit_sha`` (the commit where all
+    # protected files were verified).  Current HEAD must contain that commit
+    # (i.e.  the attested source is reachable from HEAD).
+    attested = gate.get("attested_source_commit_sha") or gate.get("git_commit_sha")
+    if not attested:
+        raise SystemExit("P0 gate has no attested_source_commit_sha; rerun the gate.")
+
     try:
         current_commit = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=root, text=True,
         ).strip()
     except (OSError, subprocess.CalledProcessError) as exc:
         raise SystemExit(f"Cannot determine current git HEAD: {exc}") from exc
-    if current_commit != gate.get("git_commit_sha"):
-        raise SystemExit(
-            "P0 gate commit mismatch: current HEAD differs from attested git_commit_sha; "
-            "rerun the complete gate."
-        )
 
+    # Verify the attested commit is an ancestor of (or equal to) current HEAD.
+    # This allows evidence-only commits on top of the attested source.
+    if current_commit != attested:
+        try:
+            merge_base = subprocess.check_output(
+                ["git", "merge-base", "--is-ancestor", attested, current_commit],
+                cwd=root, text=True,
+            )
+            # If merge-base exits 0, attested is ancestor of HEAD — OK.
+        except (OSError, subprocess.CalledProcessError):
+            raise SystemExit(
+                f"P0 gate attested commit {attested[:12]} is not an ancestor of "
+                f"current HEAD {current_commit[:12]}; protected source may have changed; "
+                "rerun the complete gate."
+            )
+
+    # --- Source/config/test hash verification ---
     frozen = gate.get("source_hashes", {})
     frozen_sources = frozen.get("source", {})
     current_sources = {}
@@ -998,11 +1028,11 @@ def _check_p0_gate() -> None:
         path = root / relative
         if not path.exists():
             raise SystemExit(f"P0 gate source is missing: {relative}")
-        current_sources[relative] = _sha256_bytes(path.read_bytes())
+        current_sources[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
     if current_sources != frozen_sources:
-        raise SystemExit("P0 gate source hash mismatch; source tree changed after attestation.")
+        raise SystemExit("P0 gate source hash mismatch; protected source changed after attestation.")
     current_tree_hash = hashlib.sha256(
-        "".join(f"{key}:{value}\\n" for key, value in sorted(current_sources.items())).encode("utf-8")
+        "".join(f"{key}:{value}\n" for key, value in sorted(current_sources.items())).encode("utf-8")
     ).hexdigest()
     if current_tree_hash != gate.get("source_tree_hash"):
         raise SystemExit("P0 gate source_tree_hash mismatch; rerun the complete gate.")

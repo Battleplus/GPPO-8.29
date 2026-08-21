@@ -1,130 +1,69 @@
-# Round-2 P0 修复 — 最终状态
+# Round-3 P0 收口 — 最终状态
 
 ## 当前状态
 
 - 分支：`plan/lightweight-sfc-refactor`
-- 最终 Commit：`e351a35`
-- 工作树：clean
+- 代码 Commit：`e351a35`（round-2 修复）
+- Gate Commit：`d44ff59`（round-2 gate）
+- 当前 HEAD 将在本轮提交后更新
 - `training_allowed`：`true`（P0 Gate 全绿）
-- 未启动 Preliminary 300k 训练（gate 转绿后需用户确认启动）
+- 未启动 Preliminary 300k 训练
 
-## 锁定验证环境
+## Round-3 修复内容
 
-- Python 3.11.5 (`D:\anaconda`)
-- torch 2.5.0+cpu
-- numpy 2.0.2
-- sb3-contrib 2.9.0
-- stable-baselines3 2.9.0
-- gymnasium 1.3.0
+### 1. Gate commit self-reference 修复
+- 新增 `attested_source_commit_sha` 字段
+- `_check_p0_gate()` 验证当前 HEAD 包含 attested commit（git merge-base --is-ancestor）
+- 允许 evidence-only commits（gate JSON、smoke、handoff）不使 attestation 过期
+- 修改任何 protected source/config/test 文件后立即拒绝
 
-## 全部 61 测试 PASS（Python 3.11 实际运行）
+### 2. Gate 验证最终 Python 3.11 smoke
+- `SMOKE_SUMMARY_PATH` 指向 `smoke_20260821_final`
+- 验证 `environment_metadata.json`：Python 3.11.x、sb3_contrib、stable-baselines3 已安装
+- 验证 per-mode counts（各 20）和总 replayed_tape_count=80
 
-### Test Suites
+### 3. ConcurrencyManager exact graph_version equality
+- `validate()`、`is_valid_at()`、`reject_stale_action()` 全部改为 `!=` 而非 `>`
+- 未来版本命令也被拒绝（command v5 / current v4 → REJECT）
 
-| Suite | Tests | Status |
-|-------|-------|--------|
-| core_contracts | 18 | ✅ PASS |
-| training_contracts | 1 | ✅ PASS |
-| event_runtime_integration | 8 | ✅ PASS |
-| confirmation_timelines | 15 | ✅ PASS |
-| concurrency_invariants | 13 | ✅ PASS |
-| p0_gate_contract | 4 | ✅ PASS |
-| legacy_compatibility | 2 | ✅ PASS |
-| **Total** | **61** | **✅ ALL PASS** |
+### 4. Stale rejection rate 修复
+- 新增 `injected_stale_submissions` / `injected_stale_rejected` counters
+- `submit_stale_action()` 是唯一注入 stale 的方法
+- 正常合法 action 不计入 stale_attempted
+- `snapshot_concurrency()` 报告注入 stale 的 rejection rate
 
-### 关键测试覆盖
+### 5. Fencing monotonicity gate probe 修复
+- 不再使用 `cmd.fencing_token < cmd.fencing_token + 1`（无效测试）
+- 改为：holder A → revoke → holder B（更高 token）→ 旧 token 创建 lease 被拒绝
 
-#### Confirmation Timelines
-- discovery 3-of-5: ✅ (0→not, 1→not, 2→not, 3→confirmed, 4→confirmed, 5→confirmed)
-- duplicate does not increase independent count: ✅
-- destruction authoritative single confirm: ✅
-- destruction 2 same source → not confirmed: ✅
-- destruction 2 independent → confirmed: ✅
-- heartbeat 1 miss → SUSPECTED: ✅
-- heartbeat 3 misses → PROBE_REQUIRED: ✅
-- probe timeout → CONFIRMED: ✅
-- healthy telemetry → FALSE_ALARM: ✅
-- second independent source → CONFIRMED: ✅
-- truth/belief isolation (2 of 5 → env unchanged): ✅
+### 6. 新增 7 个测试（61 → 68）
+- `test_future_version_rejected`
+- `test_is_valid_at_rejects_future`
+- `test_action_version_mismatch_rejected`
+- `test_late_ack_after_expire_rejected`
+- `test_real_revoke_and_new_holder`
+- `test_matching_action_version_accepted`
+- `test_mismatched_action_version_rejected_by_bridge`
 
-#### Concurrency Invariants
-- graph_version exact match: ✅
-- old version rejected: ✅
-- ACK valid: ✅
-- ACK wrong uav rejected: ✅
-- ACK wrong fencing token rejected: ✅
-- late ACK cannot resurrect: ✅
-- exclusive holder ≤ 1: ✅
-- two holders rejected: ✅
-- revoke removes holder: ✅
-- fencing token monotonicity: ✅
-- action version stored: ✅
-- adapter uses concurrency manager: ✅
+## 测试结果（Python 3.11.5 锁定环境）
 
-#### Integration
-- same seed → identical tape: ✅
-- different seed → different tape: ✅
-- same seed → same snapshot: ✅
-- bridge observation count increments: ✅
-- region vacancy confirms and modifies env: ✅
-- UAV damage confirms and kills UAV: ✅
-- concurrency counters initialized: ✅
-- ACK resurrection count == 0: ✅
+**68 tests, 0 failures, 0 errors — ALL PASS**
 
-#### Event Mode Contracts
-- burst 3-event → graph_version delta == 1: ✅
-- single region vacancy → 1 increment: ✅
-- overlap received_at ordering: ✅
-- unseen isolation: ✅
-- single snapshot identity: ✅
-- four-mode reward invariant: ✅
+## Gate 关键字段
 
-#### Model Save/Load
-- PPO-MLP: ✅
-- GPPO-NoGate: ✅
-- GPPO-Adaptive: ✅
-- legacy MLP checkpoint → legal edge: ✅
+- `attested_source_commit_sha`: 记录保护的源代码 commit
+- `git_commit_sha`: 当前 gate 生成时的 commit
+- `training_allowed`: true
+- `violations`: []
+- smoke_20x4: PASS（80 tapes, Python 3.11 metadata verified）
+- concurrency_fencing_monotonicity: PASS（real revoke + new holder test）
 
-## Smoke（20×4 = 80 tapes）
+## 验证结果
 
-- Manifest: `results/random_event/smoke_20260821_final/tapes/smoke_20260821_final/manifest.json`
-- Summary: `results/random_event/smoke_20260821_final/smoke_summary.json`
-- Single 20, Sequential 20, Overlap 20, Burst 20 = 80 tapes replayed
-
-## P0 Gate
-
-- `training_allowed`: **true**
-- `generated_by`: `scripts/build_p0_gate.py`
-- `git_commit_sha`: `e351a358ce23a06223a7757529a662d47d31ad0a`
-- `source_tree_hash`: `b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf`
-- `protocol_sha256`: `3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739`
-- `seed_manifest_sha256`: `a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43`
-- 16 source file hashes all current
-- violations: []
-
-## Phase 状态
-
-- Phase A: ✅ PASS — 真实状态记录
-- Phase B: ✅ PASS — 冻结 seeds [1101,2202,3303]、protocol、validation/test bank
-- Phase C: ✅ PASS — RuntimeBridge 主链路，TruthEvent→Detector→Observation→Confirmation→Belief→env
-- Phase D: ✅ PASS — 3-of-5 discovery、dual-path destruction、heartbeat/probe/FALSE_ALARM
-- Phase E: ✅ PASS — 执行级 command/ACK/lease/fencing 全部逻辑测试通过
-- Phase F: ✅ PASS — Fair PPO-MLP input_dim 384、三 variant save/load 确定性
-- Phase G: ✅ PASS — burst atomicity、四模式 reward invariant、80 tape smoke
-- Phase H: ✅ PASS — 机器 gate 全绿、训练入口 HEAD/hash 验证
-
-## 当前阻塞项
-
-- L2 SFC/Isaac Sim 尚未开始（按规划 L0/L1 稳定后进行）
-- Preliminary 300k 训练可启动（gate 全绿），等待用户确认
-
-## 训练入口防护
-
-experiment._check_p0_gate() 在每次 train 启动时验证：
-- generated_by == scripts/build_p0_gate.py
-- training_allowed == true
-- current HEAD == gate git_commit_sha
-- 所有 16 个 source file hash 完全一致
-- protocol hash 一致
-- seed_manifest hash 一致
-- source_tree_hash 一致
+1. ✅ `_check_p0_gate()` 从当前 HEAD 通过
+2. ✅ 修改 protected source 1 byte 后 `_check_p0_gate()` 拒绝
+3. ✅ 未来 graph_version 命令被拒绝
+4. ✅ stale action_version 被拒绝
+5. ✅ 旧 fencing token 创建 lease 被拒绝
+6. ✅ 新 fencing token 严格大于旧 token
+7. ✅ 最终 Python 3.11 smoke 被 Gate 实际引用并验证

@@ -57,13 +57,13 @@ class AssignmentCommand:
             return False
         if now > self.expires_at:
             return False
-        if current_graph_version > self.graph_version:
+        if current_graph_version != self.graph_version:
             return False
         return True
 
     def validate(self, current_graph_version: int) -> bool:
-        """Validate command against current graph version."""
-        if current_graph_version > self.graph_version:
+        """Validate command against current graph version (exact equality)."""
+        if current_graph_version != self.graph_version:
             self.status = CommandStatus.REJECTED
             return False
         self.status = CommandStatus.VALIDATED
@@ -357,8 +357,8 @@ class ConcurrencyManager:
         command: AssignmentCommand,
         current_graph_version: int,
     ) -> bool:
-        """Reject stale action if graph version has changed."""
-        if current_graph_version > command.graph_version:
+        """Reject stale action if graph version does not match (exact equality)."""
+        if current_graph_version != command.graph_version:
             command.status = CommandStatus.REJECTED
             return True
         return False

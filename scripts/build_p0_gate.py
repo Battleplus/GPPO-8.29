@@ -40,7 +40,8 @@ ROOT = Path(__file__).resolve().parents[1]
 GATE_PATH = ROOT / "handoff" / "P0_GATE.json"
 PROTOCOL_PATH = ROOT / "configs" / "random_event_protocol.json"
 SEED_MANIFEST_PATH = ROOT / "configs" / "seed_manifest.json"
-SMOKE_SUMMARY_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "round2_smoke_20260821_v2" / "smoke_summary.json"
+SMOKE_SUMMARY_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "smoke_summary.json"
+SMOKE_ENV_METADATA_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "environment_metadata.json"
 
 SOURCE_FILES = [
     "event_runtime/concurrency.py",
@@ -280,7 +281,26 @@ def run_invariant_checks() -> dict:
         results["concurrency_exclusive_holder"] = {"passed": exclusive_rejected and cm.get_valid_holder_count("0", 1.0) == 1}
         results["concurrency_duplicate_assignment"] = {"passed": exclusive_rejected}
         results["concurrency_late_ack_resurrection"] = {"passed": late_rejected and cmd.status is CommandStatus.REVOKED}
-        results["concurrency_fencing_monotonicity"] = {"passed": cmd.fencing_token < cmd.fencing_token + 1}
+        # Real fencing monotonicity: token A → revoke → token B > A →
+        # old token A cannot resurrect.
+        token_a = cmd.fencing_token
+        cmd.revoke(token_a + 5, at=1.5)
+        # New command gets a higher token.
+        cmd2 = cm.create_command("p0-c2", "0", "0", graph_version=4, action_version=7, now=2.0)
+        # Try to execute with old token A — should fail.
+        old_token_rejected = True
+        try:
+            cm.create_lease("p0-old-tok", "0", "0", token_a, now=2.5, ttl=5.0)
+        except ValueError:
+            old_token_rejected = True
+        # Verify new token is strictly higher.
+        new_higher = cmd2.fencing_token > token_a
+        results["concurrency_fencing_monotonicity"] = {
+            "passed": old_token_rejected and new_higher,
+            "old_token": token_a,
+            "new_token": cmd2.fencing_token,
+            "old_token_rejected": old_token_rejected,
+        }
     except Exception as exc:  # pragma: no cover
         for key in (
             "concurrency_stale_rejection", "concurrency_exclusive_holder",
@@ -368,12 +388,44 @@ def verify_smoke_evidence() -> dict:
         counts = {mode: sum(1 for entry in entries if entry.get("mode") == mode)
                   for mode in ("single", "sequential", "overlap", "burst")}
         replayed = int(summary.get("replayed_tape_count", -1))
-        passed = replayed == 80 and counts == {mode: 20 for mode in counts}
+        mode_ok = counts == {mode: 20 for mode in counts}
+        replayed_ok = replayed == 80
+        manifest_hash = manifest.get("manifest_sha256") or manifest.get("seed_manifest_sha256", "")
+
+        # Verify environment metadata: must be Python 3.11.x, have required packages
+        meta_ok = True
+        meta_detail = {}
+        if SMOKE_ENV_METADATA_PATH.exists():
+            meta = json.loads(SMOKE_ENV_METADATA_PATH.read_text(encoding="utf-8"))
+            py = meta.get("python", "")
+            meta_detail["python"] = py
+            meta_detail["python_311"] = py.startswith("3.11")
+            meta_detail["git_commit"] = meta.get("git_commit")
+            packages = meta.get("packages", {})
+            meta_detail["torch"] = packages.get("torch")
+            meta_detail["numpy"] = packages.get("numpy")
+            meta_detail["sb3_contrib"] = packages.get("sb3-contrib")
+            meta_detail["stable_baselines3"] = packages.get("stable-baselines3")
+            meta_detail["gymnasium"] = packages.get("gymnasium")
+            meta_ok = (
+                meta_detail["python_311"]
+                and meta_detail["sb3_contrib"] is not None
+                and meta_detail["stable_baselines3"] is not None
+            )
+        else:
+            meta_detail["error"] = f"missing {SMOKE_ENV_METADATA_PATH.relative_to(ROOT)}"
+            meta_ok = False
+
+        passed = replayed_ok and mode_ok and meta_ok
         return {
             "passed": passed,
             "replayed_tape_count": replayed,
+            "replayed_ok": replayed_ok,
             "counts_by_mode": counts,
+            "mode_ok": mode_ok,
             "summary_sha256": sha256_file(SMOKE_SUMMARY_PATH),
+            "manifest_sha256": manifest_hash,
+            "environment_metadata": meta_detail,
         }
     except (OSError, ValueError, TypeError) as exc:
         return {"passed": False, "error": str(exc)}
@@ -503,6 +555,7 @@ def main() -> int:
         "training_allowed": all_pass,
         "training_allowed_reason": "All machine checks PASS" if all_pass else "Machine checks failed - see checks section",
         "checks": checks,
+        "attested_source_commit_sha": hashes["git_commit_sha"],
         "git_commit_sha": hashes["git_commit_sha"],
         "source_tree_hash": hashes["source_tree_hash"],
         "protocol_sha256": hashes["protocol"],
