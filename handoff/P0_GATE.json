@@ -3,7 +3,7 @@
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-21T02:50:55.348536+00:00",
+  "generated_at": "2026-08-21T03:40:40.317161+00:00",
   "training_allowed": false,
   "training_allowed_reason": "Machine checks failed - see checks section",
   "checks": {
@@ -15,21 +15,49 @@
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.761s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.646s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.195s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 0.962s\n\nOK\n"
+        },
+        "event_runtime_integration": {
+          "passed": true,
+          "tests_run": 8,
+          "failures": 0,
+          "errors": 0,
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.010s\n\nOK\n"
+        },
+        "confirmation_timelines": {
+          "passed": true,
+          "tests_run": 15,
+          "failures": 0,
+          "errors": 0,
+          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.004s\n\nOK\n"
+        },
+        "concurrency_invariants": {
+          "passed": true,
+          "tests_run": 13,
+          "failures": 0,
+          "errors": 0,
+          "output": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.000s\n\nOK\n"
+        },
+        "p0_gate_contract": {
+          "passed": true,
+          "tests_run": 4,
+          "failures": 0,
+          "errors": 0,
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.360s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": false,
           "tests_run": 2,
           "failures": 0,
           "errors": 2,
-          "output": "EE\n======================================================================\nERROR: test_cpp_bridge_returns_machine_readable_success_json (test_legacy_compatibility.LegacyCompatibilityTests.test_cpp_bridge_returns_machine_readable_success_json)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 49, in test_cpp_bridge_returns_machine_readable_success_json\n    completed = subprocess.run(\n        [sys.executable, str(PPO_DIR / \"cpp_bridge.py\"), \"--request-file\", str(request_path)],\n    ...<4 lines>...\n        check=True,\n    )\n  File \"C:\\Python314\\Lib\\subprocess.py\", line 578, in run\n    raise CalledProcessError(retcode, process.args,\n                             output=stdout, stderr=stderr)\nsubprocess.CalledProcessError: Command '['C:\\\\Python314\\\\python.exe', 'E:\\\\Z博士\\\\8.20\\\\54_20-master\\\\ppo_allocation\\\\cpp_bridge.py', '--request-file', 'C:\\\\Users\\\\ASUS\\\\AppData\\\\Local\\\\Temp\\\\tmpvqz1jwno\\\\request.json']' returned non-zero exit status 1.\n\n======================================================================\nERROR: test_real_legacy_mlp_checkpoint_selects_legal_edge (test_legacy_compatibility.LegacyCompatibilityTests.test_real_legacy_mlp_checkpoint_selects_legal_edge)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 25, in test_real_legacy_mlp_checkpoint_selects_legal_edge\n    policy = LegacyMLPPPOPolicy(MODEL)\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\random_event\\legacy_adapter.py\", line 51, in __init__\n    from sb3_contrib import MaskablePPO\nModuleNotFoundError: No module named 'sb3_contrib'\n\n----------------------------------------------------------------------\nRan 2 tests in 0.197s\n\nFAILED (errors=2)\n"
+          "output": "EE\n======================================================================\nERROR: test_cpp_bridge_returns_machine_readable_success_json (test_legacy_compatibility.LegacyCompatibilityTests.test_cpp_bridge_returns_machine_readable_success_json)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 49, in test_cpp_bridge_returns_machine_readable_success_json\n    completed = subprocess.run(\n        [sys.executable, str(PPO_DIR / \"cpp_bridge.py\"), \"--request-file\", str(request_path)],\n    ...<4 lines>...\n        check=True,\n    )\n  File \"C:\\Python314\\Lib\\subprocess.py\", line 578, in run\n    raise CalledProcessError(retcode, process.args,\n                             output=stdout, stderr=stderr)\nsubprocess.CalledProcessError: Command '['C:\\\\Python314\\\\python.exe', 'E:\\\\Z博士\\\\8.20\\\\54_20-master\\\\ppo_allocation\\\\cpp_bridge.py', '--request-file', 'C:\\\\Users\\\\ASUS\\\\AppData\\\\Local\\\\Temp\\\\tmpmzzllh38\\\\request.json']' returned non-zero exit status 1.\n\n======================================================================\nERROR: test_real_legacy_mlp_checkpoint_selects_legal_edge (test_legacy_compatibility.LegacyCompatibilityTests.test_real_legacy_mlp_checkpoint_selects_legal_edge)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 25, in test_real_legacy_mlp_checkpoint_selects_legal_edge\n    policy = LegacyMLPPPOPolicy(MODEL)\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\random_event\\legacy_adapter.py\", line 51, in __init__\n    from sb3_contrib import MaskablePPO\nModuleNotFoundError: No module named 'sb3_contrib'\n\n----------------------------------------------------------------------\nRan 2 tests in 0.163s\n\nFAILED (errors=2)\n"
         }
       }
     },
@@ -68,6 +96,78 @@
         "graph_version_after_3_event_batch": 1
       }
     },
+    "single_snapshot_identity": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "overlap_received_order": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "unseen_isolation": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "reward_invariant_four_modes": {
+      "status": "PASS",
+      "details": {
+        "passed": true,
+        "modes": {
+          "single": true,
+          "sequential": true,
+          "overlap": true,
+          "burst": true
+        }
+      }
+    },
+    "confirmation_timeline_contracts": {
+      "status": "PASS",
+      "details": {
+        "passed": true,
+        "status": "SUSPECTED",
+        "independent_evidence": 2
+      }
+    },
+    "unconfirmed_event_no_decision": {
+      "status": "PASS",
+      "details": "covered by confirmation_timeline_contracts and dedicated tests"
+    },
+    "concurrency_stale_rejection": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "concurrency_exclusive_holder": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "concurrency_duplicate_assignment": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "concurrency_late_ack_resurrection": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
+    "concurrency_fencing_monotonicity": {
+      "status": "PASS",
+      "details": {
+        "passed": true
+      }
+    },
     "model_save_load_determinism": {
       "status": "PASS",
       "details": {
@@ -79,39 +179,60 @@
         }
       }
     },
-    "source_hash_integrity": {
-      "status": "FAIL",
+    "smoke_20x4": {
+      "status": "PASS",
       "details": {
-        "baseline_recorded": false,
-        "drift": {
-          "ppo_allocation/random_event/experiment.py": {
-            "previous": "3b1ff0b989e175c5743113b2d63d73efa3a9617b0cccfd7bdaa8ed374e60dd77",
-            "current": "a0fabf4d4427d71ea371948fa8cb84d6b9e7a2541c0b5099a3389201f71d5ca6"
-          }
-        }
+        "passed": true,
+        "replayed_tape_count": 80,
+        "counts_by_mode": {
+          "single": 20,
+          "sequential": 20,
+          "overlap": 20,
+          "burst": 20
+        },
+        "summary_sha256": "ad1e72240af742f85bc2ab70ad3ff2a7cd51f0e85e17de4ca0b9bb792b8b120c"
+      }
+    },
+    "source_hash_integrity": {
+      "status": "PASS",
+      "details": {
+        "git_commit_sha": "ad488bc692dd2c093a56a43eb661f1bfa288315d",
+        "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
+        "missing": [],
+        "previous_gate_not_used_as_baseline": true
       }
     }
   },
+  "git_commit_sha": "ad488bc692dd2c093a56a43eb661f1bfa288315d",
+  "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
+  "protocol_sha256": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
+  "seed_manifest_sha256": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43",
   "source_hashes": {
+    "git_commit_sha": "ad488bc692dd2c093a56a43eb661f1bfa288315d",
+    "source_tree_hash": "b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf",
     "source": {
-      "event_runtime/concurrency.py": "5b88d20a7a702cdd7a9201195b89df8b5b9f551eda60dbee487e9195fd5d93ab",
-      "event_runtime/adapter.py": "9ebcc7dce45da5b9efa73d1c946b8ec9a48cc411afb142970d082ce8f9b1cfdb",
+      "event_runtime/concurrency.py": "29d97c2cb4458a3e51830520964caa50eb269a2dbcf1c7d33d76fa25ef56fb9e",
+      "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
       "event_runtime/metrics.py": "508b515e5998af914df97c0e45725360d0f714d26852279e87447f58b54ca44f",
       "event_runtime/replay.py": "a206c4aa719f6fe57cf5292ddc80612e3f5d65bc47afdbc43519b89db20475fc",
-      "event_runtime/state_machine.py": "cdcc1b4b842e7583677a1c2309baf47939ba9bb9144cfc1613fa1f8bdf90b8c3",
+      "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
-      "ppo_allocation/random_event/environment.py": "a58040b35a727fe8e7fa5165077372ce859ea31cf8a3e1ad7acaea4cccd6e853",
-      "ppo_allocation/random_event/experiment.py": "a0fabf4d4427d71ea371948fa8cb84d6b9e7a2541c0b5099a3389201f71d5ca6",
+      "ppo_allocation/random_event/environment.py": "f569b6bd68c7bfecb54f8acd4c4b8d64d654cab447cadcab3f9134bab7041681",
+      "ppo_allocation/random_event/experiment.py": "231e973595f0dfdd94b5a8d7012312372e30987027bf0f37272f2477b7293331",
       "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
       "ppo_allocation/random_event/trainer.py": "bd1dc1a32900f1cfca54340846e3cbb766818227c6aae55f0b2f8dfa237941c0",
-      "ppo_allocation/random_event/runtime_bridge.py": "294c44ebb309a623be48951854d84b5400d4f87931ddccf33cbc31180ac397ed",
-      "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08"
+      "ppo_allocation/random_event/runtime_bridge.py": "9d5d9f8598aa9fd0deca45262ac9e44b9710c7355844e873ebcfcb9313cc52e7",
+      "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08",
+      "scripts/build_p0_gate.py": "7708416e539a347b48cc7f6d405f961796ac875935c8626b54955d78f0209eec",
+      "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
+      "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
+      "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "78f91eb61f749cae87b42818a6dbaacc907b15893c99815a165994aa394c661e",
+      "ppo_allocation/tests_random_event/test_p0_gate_contract.py": "1d4ec8f5664e4ffabc5789c8bb1139ef0ed1c04d0c3d935bc07f1e7bc5461516"
     },
     "protocol": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
     "seed_manifest": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43"
   },
   "violations": [
-    "test_suites: FAIL",
-    "source_hash_integrity: FAIL"
+    "test_suites: FAIL"
   ]
 }

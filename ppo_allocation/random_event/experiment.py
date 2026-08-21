@@ -961,31 +961,60 @@ def run_smoke(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _check_p0_gate() -> None:
-    """Refuse to train unless the machine-generated P0 gate is green.
+    """Refuse training unless the machine gate and current tree are identical.
 
-    The gate (scripts/build_p0_gate.py) is the ONLY authority for
-    ``training_allowed``; this check re-reads handoff/P0_GATE.json and aborts
-    if the gate was not machine-generated, is stale, or has any FAIL/PARTIAL
-    check.
+    In addition to ``training_allowed``, this verifies the attested commit,
+    every frozen source hash, the source-tree hash, protocol hash, and seed
+    manifest hash. Any source/config drift invalidates the gate immediately.
     """
 
     gate_path = PPO_DIR.parent / "handoff" / "P0_GATE.json"
+    root = PPO_DIR.parent
     if not gate_path.exists():
-        raise SystemExit(
-            "P0 gate missing. Run `python scripts/build_p0_gate.py` before training."
-        )
+        raise SystemExit("P0 gate missing. Run `python scripts/build_p0_gate.py` before training.")
     gate = json.loads(gate_path.read_text(encoding="utf-8"))
     if gate.get("generated_by") != "scripts/build_p0_gate.py":
-        raise SystemExit(
-            "P0 gate was not machine-generated (scripts/build_p0_gate.py). "
-            "Refusing to train; manual gate edits are prohibited."
-        )
+        raise SystemExit("P0 gate was not machine-generated; refusing to train.")
     if not gate.get("training_allowed"):
         violations = "; ".join(gate.get("violations", []))
+        raise SystemExit(f"P0 gate is RED. Violations: {violations}")
+
+    try:
+        current_commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise SystemExit(f"Cannot determine current git HEAD: {exc}") from exc
+    if current_commit != gate.get("git_commit_sha"):
         raise SystemExit(
-            f"P0 gate is RED (training_allowed=false). Violations: {violations}. "
-            "Fix issues and rerun `python scripts/build_p0_gate.py`."
+            "P0 gate commit mismatch: current HEAD differs from attested git_commit_sha; "
+            "rerun the complete gate."
         )
+
+    frozen = gate.get("source_hashes", {})
+    frozen_sources = frozen.get("source", {})
+    current_sources = {}
+    for relative, expected in frozen_sources.items():
+        path = root / relative
+        if not path.exists():
+            raise SystemExit(f"P0 gate source is missing: {relative}")
+        current_sources[relative] = _sha256_bytes(path.read_bytes())
+    if current_sources != frozen_sources:
+        raise SystemExit("P0 gate source hash mismatch; source tree changed after attestation.")
+    current_tree_hash = hashlib.sha256(
+        "".join(f"{key}:{value}\\n" for key, value in sorted(current_sources.items())).encode("utf-8")
+    ).hexdigest()
+    if current_tree_hash != gate.get("source_tree_hash"):
+        raise SystemExit("P0 gate source_tree_hash mismatch; rerun the complete gate.")
+
+    for relative, key, field in (
+        ("configs/random_event_protocol.json", "protocol", "protocol_sha256"),
+        ("configs/seed_manifest.json", "seed_manifest", "seed_manifest_sha256"),
+    ):
+        current_hash = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+        expected = gate.get(field) or frozen.get(key)
+        if current_hash != expected:
+            raise SystemExit(f"P0 gate {key} hash mismatch; configuration changed after attestation.")
 
 
 def run_train(args: argparse.Namespace) -> dict[str, Any]:

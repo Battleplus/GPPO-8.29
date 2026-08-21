@@ -19,6 +19,7 @@ class EventType(str, Enum):
 class ConfirmationStatus(str, Enum):
     NORMAL = "NORMAL"
     SUSPECTED = "SUSPECTED"
+    PROBE_REQUIRED = "PROBE_REQUIRED"
     CONFIRMED = "CONFIRMED"
     RECOVERING = "RECOVERING"
     RESOLVED = "RESOLVED"

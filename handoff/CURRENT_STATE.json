@@ -1,37 +1,61 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "audit_date": "2026-08-21",
   "branch": "plan/lightweight-sfc-refactor",
-  "git_head": "684a113",
-  "git_head_message": "docs: add lightweight-first SFC refactor execution plan",
-  "git_status": "dirty (work in progress from Phase A-H)",
+  "base_commit": "ad488bc692dd2c093a56a43eb661f1bfa288315d",
+  "git_status": "dirty (round-2 P0 fixes pending commit)",
   "training_allowed": false,
-  "training_allowed_reason": "P0 gate RED: legacy_compatibility suite requires sb3_contrib (locked env Python 3.11)",
-  "real_code_status": {
-    "event_runtime": {
-      "modules_exist": ["events.py", "observation.py", "detector.py", "state_machine.py", "queue.py", "scheduler.py", "concurrency.py", "adapter.py", "metrics.py", "replay.py"],
-      "bridge_created": "ppo_allocation/random_event/runtime_bridge.py",
-      "env_integration": "environment.py routes truth events through RuntimeBridge",
-      "note": "TruthEvent->Observation->Confirmation->Belief; only confirmed events mutate env"
-    },
-    "ppo_allocation_random_event": {
-      "fair_ppo_mlp": "FIXED input dim (numel 384) and load() rebuild",
-      "trainer_ppo_mlp_support": "DONE - PPO-MLP / GPPO-NoGate / GPPO-Adaptive all train+save+load"
-    },
-    "configs": {
-      "preliminary_seeds": [1101, 2202, 3303],
-      "validation_tapes": 100,
-      "validation_per_mode": 25,
-      "burst_window_seconds": 0.1,
-      "test_tapes": 200,
-      "test_per_set": 40
-    }
+  "training_allowed_reason": "Machine gate is RED because locked Python 3.11 legacy compatibility has not passed; no training may start.",
+  "truth_belief_separation": {
+    "truth_state_tracker": "implemented",
+    "unconfirmed_observation_changes_belief": false,
+    "unconfirmed_observation_changes_graph_version": false
+  },
+  "confirmation": {
+    "target_discovered": "3-of-5 distinct source evidence",
+    "target_destroyed": "authoritative single path or two independent strong sources",
+    "heartbeat": "SUSPECTED -> PROBE_REQUIRED after 3 misses -> timeout/independent source confirmation",
+    "healthy_before_confirmation": "FALSE_ALARM",
+    "duplicate_source_evidence": "does not increase independent count"
+  },
+  "concurrency": {
+    "command_ack_lease_fencing_execution_path": "implemented",
+    "exact_graph_version_check": true,
+    "action_version_check": true,
+    "latest_mask_revalidation": true,
+    "ack_identity_validation": true,
+    "late_ack_resurrection": false,
+    "exclusive_valid_holder": true,
+    "logic_tests": "PASS"
   },
   "p0_gate": {
-    "training_allowed": false,
     "generated_by": "scripts/build_p0_gate.py",
-    "passing_checks": ["seed_namespace_isolation", "frozen_protocol_contract", "burst_atomicity", "model_save_load_determinism", "source_hash_integrity"],
-    "failing_checks": ["test_suites: legacy_compatibility needs sb3_contrib"]
+    "training_allowed": false,
+    "machine_checks": "all new round-2 checks PASS",
+    "blocking_check": "legacy_compatibility: sb3_contrib missing and C++ bridge not yet verified in locked Python 3.11 environment"
   },
-  "next_phase": "L0/L1 stabilization on locked Python 3.11 env with sb3_contrib, then Preliminary"
+  "smoke": {
+    "status": "PASS",
+    "tapes": 80,
+    "per_mode": {"single": 20, "sequential": 20, "overlap": 20, "burst": 20},
+    "evidence": "ppo_allocation/results/random_event/round2_smoke_20260821_v2/smoke_evidence.json"
+  },
+  "phase_status": {
+    "A": "PASS",
+    "B": "PASS",
+    "C": "PASS",
+    "D": "PASS",
+    "E": "PASS",
+    "F": "PASS",
+    "G": "PASS",
+    "H": "PASS",
+    "I": "PENDING_LOCKED_ENV"
+  },
+  "training_started": false,
+  "preliminary_started": false,
+  "remaining_risks": [
+    "locked Python 3.11 + sb3_contrib + project dependency compatibility is unverified",
+    "C++ bridge legacy test is unverified in the locked environment",
+    "L2 SFC/Isaac Sim integration has not started"
+  ]
 }

@@ -1,52 +1,52 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "decisions": [
     {
-      "id": "D-001",
+      "id": "D-007",
       "date": "2026-08-21",
-      "phase": "A",
-      "decision": "Reset all P0 gate claims to reflect reality",
-      "rationale": "Previous P0_GATE.json had training_allowed=true with PARTIAL checks and pending hashes. Planning doc prohibits manual gate override.",
+      "phase": "D",
+      "decision": "Use distinct-source evidence keys rather than raw observation counts",
+      "rationale": "3-of-5 and independent destruction evidence must not be satisfied by duplicate or same-source observations.",
       "status": "EXECUTED"
     },
     {
-      "id": "D-002",
+      "id": "D-008",
       "date": "2026-08-21",
-      "phase": "C",
-      "decision": "Preserve existing event_runtime/ and random_event/ modules; integrate via runtime_bridge.py",
-      "rationale": "Planning doc Phase C: 'Do not rewrite the entire environment. Prioritize bridge/adapter.'",
+      "phase": "D",
+      "decision": "Implement heartbeat probe as a real state transition",
+      "rationale": "Three heartbeat misses enter PROBE_REQUIRED; healthy telemetry is FALSE_ALARM; probe timeout or independent failure source confirms.",
       "status": "EXECUTED"
     },
     {
-      "id": "D-003",
+      "id": "D-009",
       "date": "2026-08-21",
-      "phase": "B",
-      "decision": "Unify preliminary seeds to [1101, 2202, 3303]; Validation to 100 tapes (25x4); burst window to 0.1s",
-      "rationale": "Planning doc Phases B and G explicitly require these values.",
+      "phase": "C/G",
+      "decision": "Increment graph_version only for confirmed decision-relevant mutation",
+      "rationale": "An observation arriving without confirmation must not trigger a policy decision or invalidate an action.",
       "status": "EXECUTED"
     },
     {
-      "id": "D-004",
+      "id": "D-010",
       "date": "2026-08-21",
-      "phase": "F",
-      "decision": "PPOTrainer supports all three variants: PPO-MLP, GPPO-NoGate, GPPO-Adaptive",
-      "rationale": "Planning doc Phase F: 'PPOTrainer must simultaneously support all three.'",
+      "phase": "E",
+      "decision": "Reject ACK identity mismatches and lease conflicts at execution time",
+      "rationale": "Concurrency invariants must be enforced in the command lifecycle, not checked only after conflicting state exists.",
       "status": "EXECUTED"
     },
     {
-      "id": "D-005",
+      "id": "D-011",
       "date": "2026-08-21",
       "phase": "H",
-      "decision": "Create scripts/build_p0_gate.py for machine-generated gates; training entry points read it",
-      "rationale": "Planning doc Phase H: 'Gate must be machine-generated. Manual training_allowed=true prohibited.'",
+      "decision": "Gate records current git commit and complete source/config hashes without implicit re-baselining",
+      "rationale": "Training must be refused if current HEAD or any attested source/config hash differs.",
       "status": "EXECUTED"
     },
     {
-      "id": "D-006",
+      "id": "D-012",
       "date": "2026-08-21",
-      "phase": "H",
-      "decision": "Gate stays RED until legacy_compatibility suite passes on locked env (Python 3.11 + sb3_contrib)",
-      "rationale": "Planning doc Phase I gate list includes 'CPP / legacy compatibility'. Missing dependency must keep gate false, not silently pass.",
+      "phase": "I",
+      "decision": "Keep training_allowed=false until locked Python 3.11 legacy/C++ compatibility is actually rerun",
+      "rationale": "The current environment has not established sb3_contrib and C++ bridge compatibility; no assumptions are promoted to PASS.",
       "status": "HONEST-CURRENT-STATE"
     }
   ]

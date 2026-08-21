@@ -145,6 +145,9 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
                 out_of_order_max_delay=0.0,
             ),
         )
+        # Seed the true-state tracker separately from the environment belief.
+        # This does not expose truth to graph construction or policy input.
+        self.runtime_bridge.truth_state.initialize_alive(self.uavs.keys())
 
         if self.supplied_tape is None:
             initial_state = SchedulerState.from_entities(
@@ -239,6 +242,7 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
                     break
 
             version_before = self.graph_version
+            batch_state_changed = False
             for item in batch:
                 if self.runtime_bridge is not None:
                     # Phase C: truth -> observation -> confirmation -> belief.
@@ -250,17 +254,18 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
                         observation_delay=item.observed_at - item.occurred_at,
                     )
                     if confirmed is not None:
-                        self.runtime_bridge.apply_confirmed_to_env(self, confirmed)
-                        # Record the runtime entry for the confirmed event so
-                        # experiment.py can attribute recovery to it.
+                        changed = self.runtime_bridge.apply_confirmed_to_env(self, confirmed)
+                        batch_state_changed = batch_state_changed or changed
                         self._record_confirmed_event(item)
                 else:
                     # Legacy fallback: direct application without bridge.
                     self._apply_random_event(item, increment_version=False)
                 ingested.append(item.event_id)
 
-            # Atomic commit: exactly one graph_version increment per batch.
-            if batch:
+            # Atomic commit: graph_version only increments when at least one
+            # confirmed event actually changed belief/decision-relevant state.
+            # Unconfirmed observations must NEVER change graph_version (audit item 5).
+            if batch and batch_state_changed:
                 self.graph_version = version_before + 1
         return ingested
 
@@ -448,10 +453,21 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
         decoded = decode_edge_action(graph_before, repaired)
         if decoded is not None:
             uid, rid = decoded
-            self._assign_region_to_uav(rid, uid)
-            if self._valid_search_assign(uid, rid):
-                self.pending_regions.discard(rid)
-                self.regions[rid].need_reassign = False
+            # Phase E: command/ACK/lease/fencing lifecycle at the execution
+            # layer. A rejected command must not mutate the environment.
+            command_accepted = True
+            if self.runtime_bridge is not None:
+                bridge = self.runtime_bridge
+                bridge._cc["stale_attempted"] += 1
+                command_accepted = bridge.issue_assignment_command(self, uid, rid, self.current_time) is not None
+                if not command_accepted:
+                    self.stale_rejection_count += 1
+                    repaired = self.noop_action
+            if command_accepted:
+                self._assign_region_to_uav(rid, uid)
+                if self._valid_search_assign(uid, rid):
+                    self.pending_regions.discard(rid)
+                    self.regions[rid].need_reassign = False
 
         self.decision_step += 1
         self.decision_version += 1

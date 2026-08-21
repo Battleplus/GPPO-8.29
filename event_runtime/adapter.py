@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .concurrency import ConcurrencyManager, AssignmentCommand, CommandStatus
-from .events import ConfirmedEvent, EventType, TruthEvent
+from .events import ConfirmationStatus, ConfirmedEvent, EventType, TruthEvent
 from .queue import EventQueue
 from .state_machine import ConfirmationStateMachine
 from .observation import Observation
@@ -38,12 +38,14 @@ class EventRuntimeAdapter:
         heartbeat_miss_threshold: int = 3,
         target_confirmation_count: int = 3,
         destruction_confirmation_count: int = 2,
+        probe_timeout: float = 2.0,
     ) -> None:
         self.state_machine = ConfirmationStateMachine(
             heartbeat_miss_threshold=heartbeat_miss_threshold,
             target_confirmation_count=target_confirmation_count,
             destruction_confirmation_count=destruction_confirmation_count,
             suspicion_timeout=suspicion_timeout,
+            probe_timeout=probe_timeout,
         )
         self.event_queue = EventQueue(merge_window=merge_window)
         self.concurrency = ConcurrencyManager()
@@ -72,21 +74,30 @@ class EventRuntimeAdapter:
 
     def advance_time(self, now: float) -> list[ConfirmedEvent]:
         """Advance time and process any timeout-triggered events."""
-        # Expire suspected events
-        expired = self.state_machine.advance(now)
-        
-        # Process queue
-        confirmed = []
+        # Probe-timeout confirmations + expired suspicions.
+        changed_ids = self.state_machine.advance(now)
+        # Queue any newly timeout-confirmed events. They are returned exactly
+        # once below when the atomic queue batch is drained.
+        for event_id in changed_ids:
+            record = self.state_machine.get(event_id)
+            if (
+                record is not None
+                and record.status is ConfirmationStatus.CONFIRMED
+                and record.confirmed_event is not None
+            ):
+                self.event_queue.enqueue(record.confirmed_event)
+
+        confirmed: list[ConfirmedEvent] = []
         while True:
             batch = self.event_queue.pop_atomic_batch(now=now)
             if not batch:
                 break
             confirmed.extend(batch)
             self.belief.confirmed_events.extend(batch)
-        
+
         # Cleanup expired commands and leases
         self.concurrency.cleanup_expired(now)
-        
+
         return confirmed
 
     def get_pending_batch(self, now: float) -> tuple[ConfirmedEvent, ...]:
@@ -178,6 +189,7 @@ class EventRuntimeAdapter:
             target_confirmation_count=self.state_machine.target_confirmation_count,
             destruction_confirmation_count=self.state_machine.destruction_confirmation_count,
             suspicion_timeout=self.state_machine.suspicion_timeout,
+            probe_timeout=self.state_machine.probe_timeout,
         )
         self.event_queue = EventQueue(merge_window=self.event_queue.merge_window)
         self.concurrency = ConcurrencyManager()

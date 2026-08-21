@@ -1,4 +1,24 @@
-"""Idempotent event confirmation state machine."""
+"""Idempotent event confirmation state machine.
+
+Round-2 semantics (per audit):
+
+- Evidence is counted by DISTINCT SOURCE, never by observation count.  Two
+  observations from the same source are one piece of evidence; a duplicate
+  observation (``duplicate_of``) never adds evidence.
+- TARGET_DISCOVERED requires ``target_confirmation_count`` distinct sources
+  (3-of-5 semantics: the bridge generates up to 5 opportunities; only >=3
+  distinct-source positives confirm).
+- TARGET_DESTROYED has two paths:
+    * AUTHORITATIVE_TARGET_DESTROYED -> single observation confirms directly.
+    * STRONG_TARGET_DESTROYED -> >=2 independent sources confirm.
+  Tracking loss / HEALTHY_TELEMETRY can never confirm destruction.
+- UAV_DAMAGE heartbeat/probe chain:
+    * ACTIVE_FAILURE_REPORT (trusted hard failure) -> direct confirm.
+    * 1 heartbeat miss -> SUSPECTED (lease NOT released).
+    * ``heartbeat_miss_threshold`` consecutive misses -> PROBE_REQUIRED.
+    * probe timeout OR a second independent failure source -> CONFIRMED.
+    * healthy telemetry before confirmation -> FALSE_ALARM.
+"""
 
 from __future__ import annotations
 
@@ -16,10 +36,13 @@ class ConfirmationRecord:
     status: ConfirmationStatus = ConfirmationStatus.NORMAL
     occurred_at: float | None = None
     suspected_at: float | None = None
+    probe_started_at: float | None = None
     confirmed_at: float | None = None
     resolved_at: float | None = None
     observations: list[Observation] = field(default_factory=list)
-    positive_evidence_keys: set[str] = field(default_factory=set)
+    positive_evidence_sources: set[str] = field(default_factory=set)
+    failure_sources: set[str] = field(default_factory=set)
+    heartbeat_miss_count: int = 0
     last_sequence_by_source: dict[str, int] = field(default_factory=dict)
     confirmed_event: ConfirmedEvent | None = None
 
@@ -42,11 +65,13 @@ class ConfirmationStateMachine:
         target_confirmation_count: int = 3,
         destruction_confirmation_count: int = 2,
         suspicion_timeout: float = 5.0,
+        probe_timeout: float = 2.0,
     ) -> None:
         self.heartbeat_miss_threshold = int(heartbeat_miss_threshold)
         self.target_confirmation_count = int(target_confirmation_count)
         self.destruction_confirmation_count = int(destruction_confirmation_count)
         self.suspicion_timeout = float(suspicion_timeout)
+        self.probe_timeout = float(probe_timeout)
         self.records: dict[str, ConfirmationRecord] = {}
         self._processed_evidence: set[str] = set()
         self.false_alarm_count = 0
@@ -74,7 +99,10 @@ class ConfirmationStateMachine:
         cleared = False
         affected = set(observation.affected_uavs)
         for record in self.records.values():
-            if record.status is not ConfirmationStatus.SUSPECTED:
+            if record.status not in {
+                ConfirmationStatus.SUSPECTED,
+                ConfirmationStatus.PROBE_REQUIRED,
+            }:
                 continue
             record_uavs = {
                 uav
@@ -84,14 +112,13 @@ class ConfirmationStateMachine:
             if record.event_id == observation.event_id or affected.intersection(record_uavs):
                 record.status = ConfirmationStatus.FALSE_ALARM
                 record.resolved_at = observation.received_at
+                record.heartbeat_miss_count = 0
                 record.observations.append(observation)
                 self.false_alarm_count += 1
                 cleared = True
         return cleared
 
     def _required_evidence(self, observation: Observation) -> int:
-        if observation.signal_type == "HEARTBEAT_MISSED":
-            return self.heartbeat_miss_threshold
         if observation.event_type is EventType.TARGET_DISCOVERED:
             return self.target_confirmation_count
         if observation.event_type is EventType.TARGET_DESTROYED:
@@ -105,6 +132,10 @@ class ConfirmationStateMachine:
             "AUTHORITATIVE_TARGET_DESTROYED",
             "REGION_LEASE_VACANT",
         } and observation.confidence >= 0.95
+
+    @staticmethod
+    def _is_heartbeat_observation(observation: Observation) -> bool:
+        return observation.signal_type in {"HEARTBEAT_MISSED", "HEALTHY_TELEMETRY", "COMMUNICATION_RECOVERY"}
 
     @staticmethod
     def _build_confirmed(record: ConfirmationRecord, observation: Observation) -> ConfirmedEvent:
@@ -130,6 +161,44 @@ class ConfirmationStateMachine:
             status=ConfirmationStatus.CONFIRMED,
             evidence_ids=tuple(item.observation_id for item in record.observations),
         )
+
+    def _confirm(self, record: ConfirmationRecord, observation: Observation) -> ConfirmedEvent:
+        record.status = ConfirmationStatus.CONFIRMED
+        record.confirmed_at = observation.received_at
+        if record.confirmed_event is None:
+            confirmed = self._build_confirmed(record, observation)
+            record.confirmed_event = confirmed
+            return confirmed
+        return record.confirmed_event
+
+    def _handle_heartbeat_miss(self, record: ConfirmationRecord, observation: Observation) -> ConfirmedEvent | None:
+        """Heartbeat-miss chain: 1 miss -> SUSPECTED, threshold -> PROBE_REQUIRED.
+
+        A second INDEPENDENT failure source confirms immediately.  The count
+        alone (even at the threshold) never confirms -- only the probe timeout
+        (in ``advance``) or a second independent source does.
+        """
+        record.observations.append(observation)
+        record.last_sequence_by_source[observation.source_id] = max(
+            observation.sequence,
+            record.last_sequence_by_source.get(observation.source_id, -1),
+        )
+        record.failure_sources.add(observation.source_id)
+
+        if len(record.failure_sources) >= 2:
+            # Second independent failure source -> CONFIRMED.
+            return self._confirm(record, observation)
+
+        if record.status is ConfirmationStatus.NORMAL:
+            record.status = ConfirmationStatus.SUSPECTED
+            record.suspected_at = observation.received_at
+
+        record.heartbeat_miss_count += 1
+        if record.heartbeat_miss_count >= self.heartbeat_miss_threshold:
+            record.status = ConfirmationStatus.PROBE_REQUIRED
+            if record.probe_started_at is None:
+                record.probe_started_at = observation.received_at
+        return None
 
     def process(self, observation: Observation) -> StateMachineResult:
         evidence_key = self._evidence_key(observation)
@@ -172,6 +241,15 @@ class ConfirmationStateMachine:
                 confirmed_event=record.confirmed_event,
             )
 
+        if observation.signal_type == "HEARTBEAT_MISSED":
+            confirmed = self._handle_heartbeat_miss(record, observation)
+            return StateMachineResult(
+                accepted=True,
+                status_before=before,
+                status_after=record.status,
+                confirmed_event=confirmed,
+            )
+
         record.observations.append(observation)
         record.last_sequence_by_source[observation.source_id] = max(
             observation.sequence,
@@ -188,27 +266,34 @@ class ConfirmationStateMachine:
                 status_after=record.status,
             )
 
-        record.positive_evidence_keys.add(evidence_key)
-        if self._direct_confirmation(observation):
-            record.status = ConfirmationStatus.CONFIRMED
-            record.confirmed_at = observation.received_at
-        else:
-            if record.status is ConfirmationStatus.NORMAL:
-                record.status = ConfirmationStatus.SUSPECTED
-                record.suspected_at = observation.received_at
-            if len(record.positive_evidence_keys) >= self._required_evidence(observation):
-                record.status = ConfirmationStatus.CONFIRMED
-                record.confirmed_at = observation.received_at
+        # Evidence counted per DISTINCT SOURCE: re-adding the same source does
+        # not increase the independent evidence count.
+        record.positive_evidence_sources.add(observation.source_id)
 
-        confirmed = None
-        if record.status is ConfirmationStatus.CONFIRMED and record.confirmed_event is None:
-            confirmed = self._build_confirmed(record, observation)
-            record.confirmed_event = confirmed
+        if self._direct_confirmation(observation):
+            confirmed = self._confirm(record, observation)
+            return StateMachineResult(
+                accepted=True,
+                status_before=before,
+                status_after=record.status,
+                confirmed_event=confirmed,
+            )
+
+        if record.status is ConfirmationStatus.NORMAL:
+            record.status = ConfirmationStatus.SUSPECTED
+            record.suspected_at = observation.received_at
+        if len(record.positive_evidence_sources) >= self._required_evidence(observation):
+            confirmed = self._confirm(record, observation)
+            return StateMachineResult(
+                accepted=True,
+                status_before=before,
+                status_after=record.status,
+                confirmed_event=confirmed,
+            )
         return StateMachineResult(
             accepted=True,
             status_before=before,
             status_after=record.status,
-            confirmed_event=confirmed,
         )
 
     def process_many(self, observations: Iterable[Observation]) -> list[ConfirmedEvent]:
@@ -223,17 +308,38 @@ class ConfirmationStateMachine:
         return confirmed
 
     def advance(self, now: float) -> tuple[str, ...]:
-        expired = []
+        """Advance timers.
+
+        - PROBE_REQUIRED records whose probe window elapsed -> CONFIRMED
+          (probe timeout confirms per the round-2 protocol).
+        - Plain SUSPECTED records (no probe started) whose suspicion window
+          elapsed -> EXPIRED (kept for non-heartbeat suspicions).
+        """
+        confirmed_ids: list[str] = []
+        expired: list[str] = []
         for event_id, record in self.records.items():
-            if (
+            if record.status is ConfirmationStatus.PROBE_REQUIRED:
+                if record.probe_started_at is not None and now - record.probe_started_at >= self.probe_timeout:
+                    record.status = ConfirmationStatus.CONFIRMED
+                    record.confirmed_at = now
+                    if record.confirmed_event is None:
+                        latest = max(
+                            record.observations,
+                            key=lambda item: (item.received_at, item.observation_id),
+                        )
+                        confirmed = self._build_confirmed(record, latest)
+                        record.confirmed_event = confirmed
+                    confirmed_ids.append(event_id)
+            elif (
                 record.status is ConfirmationStatus.SUSPECTED
+                and record.probe_started_at is None
                 and record.suspected_at is not None
                 and now - record.suspected_at >= self.suspicion_timeout
             ):
                 record.status = ConfirmationStatus.EXPIRED
                 record.resolved_at = now
                 expired.append(event_id)
-        return tuple(expired)
+        return tuple(confirmed_ids) + tuple(expired)
 
     def mark_recovering(self, event_id: str) -> None:
         record = self.records[event_id]

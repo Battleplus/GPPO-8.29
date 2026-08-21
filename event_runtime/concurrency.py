@@ -218,10 +218,28 @@ class ConcurrencyManager:
         command.commit()
 
     def receive_ack(self, command_id: str, ack: ACK) -> None:
-        """Receive acknowledgment for a command."""
+        """Receive an ACK only when all command identity fields match.
+
+        ACK validation is an execution constraint, not a post-hoc invariant:
+        command id, UAV id and fencing token must all match the live command,
+        and revoked/expired commands can never be resurrected.
+        """
         command = self.commands.get(command_id)
         if command is None:
             raise ValueError(f"Command {command_id} not found")
+        if ack.command_id != command.command_id:
+            raise ValueError("ACK command_id does not match command")
+        if ack.uav_id != command.uav_id:
+            raise ValueError("ACK uav_id does not match command")
+        if ack.fencing_token != command.fencing_token:
+            raise ValueError("ACK fencing_token does not match command")
+        if command.status in {
+            CommandStatus.REVOKED,
+            CommandStatus.EXPIRED,
+            CommandStatus.REJECTED,
+            CommandStatus.COMPLETED,
+        }:
+            raise ValueError("late ACK cannot resurrect inactive command")
         command.receive_ack(ack.ack_type, ack.received_at)
 
     def revoke_command(self, command_id: str, new_fencing_token: int, at: float) -> None:
@@ -250,7 +268,19 @@ class ConcurrencyManager:
         now: float,
         ttl: float = 5.0,
     ) -> AssignmentLease:
-        """Create a new assignment lease."""
+        """Create an exclusive lease, rejecting conflicts in the execution layer.
+
+        A region cannot have two valid holders. A new holder also needs a
+        strictly higher fencing token than the last holder for that region.
+        The old lease must already be revoked or expired before this method
+        succeeds.
+        """
+        current = self.fencing_tokens.get(region_id)
+        if current is not None and fencing_token <= current.token:
+            raise ValueError("fencing token is not higher than current region token")
+        existing = self.get_valid_lease(region_id, now)
+        if existing is not None:
+            raise ValueError("region already has a valid exclusive lease holder")
         lease = AssignmentLease(
             lease_id=lease_id,
             uav_id=uav_id,
@@ -260,6 +290,13 @@ class ConcurrencyManager:
             expires_at=now + ttl,
         )
         self.leases[lease_id] = lease
+        self.fencing_tokens[region_id] = FencingToken(
+            token=fencing_token,
+            region_id=region_id,
+            granted_at=now,
+            granted_to=uav_id,
+            reason="assignment lease",
+        )
         return lease
 
     def get_valid_lease(self, region_id: str, at: float) -> AssignmentLease | None:
