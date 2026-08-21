@@ -1,93 +1,117 @@
 {
   "schema_version": "1.0.0",
   "gate_name": "P0_READINESS_GATE",
+  "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "training_allowed": true,
+  "generated_at": "2026-08-21T02:50:55.348536+00:00",
+  "training_allowed": false,
+  "training_allowed_reason": "Machine checks failed - see checks section",
   "checks": {
-    "event_runtime_implementation": {
-      "status": "PASS",
-      "description": "event_runtime modules implemented and tested",
+    "test_suites": {
+      "status": "FAIL",
       "details": {
-        "concurrency.py": "Implemented Command, ACK, Lease, FencingToken",
-        "adapter.py": "Implemented EventRuntimeAdapter for integration",
-        "metrics.py": "Implemented MetricsTracker for tracking",
-        "replay.py": "Implemented TapeReplayer for deterministic replay"
+        "core_contracts": {
+          "passed": true,
+          "tests_run": 18,
+          "failures": 0,
+          "errors": 0,
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.761s\n\nOK\n"
+        },
+        "training_contracts": {
+          "passed": true,
+          "tests_run": 1,
+          "failures": 0,
+          "errors": 0,
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.195s\n\nOK\n"
+        },
+        "legacy_compatibility": {
+          "passed": false,
+          "tests_run": 2,
+          "failures": 0,
+          "errors": 2,
+          "output": "EE\n======================================================================\nERROR: test_cpp_bridge_returns_machine_readable_success_json (test_legacy_compatibility.LegacyCompatibilityTests.test_cpp_bridge_returns_machine_readable_success_json)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 49, in test_cpp_bridge_returns_machine_readable_success_json\n    completed = subprocess.run(\n        [sys.executable, str(PPO_DIR / \"cpp_bridge.py\"), \"--request-file\", str(request_path)],\n    ...<4 lines>...\n        check=True,\n    )\n  File \"C:\\Python314\\Lib\\subprocess.py\", line 578, in run\n    raise CalledProcessError(retcode, process.args,\n                             output=stdout, stderr=stderr)\nsubprocess.CalledProcessError: Command '['C:\\\\Python314\\\\python.exe', 'E:\\\\Z博士\\\\8.20\\\\54_20-master\\\\ppo_allocation\\\\cpp_bridge.py', '--request-file', 'C:\\\\Users\\\\ASUS\\\\AppData\\\\Local\\\\Temp\\\\tmpvqz1jwno\\\\request.json']' returned non-zero exit status 1.\n\n======================================================================\nERROR: test_real_legacy_mlp_checkpoint_selects_legal_edge (test_legacy_compatibility.LegacyCompatibilityTests.test_real_legacy_mlp_checkpoint_selects_legal_edge)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\tests_random_event\\test_legacy_compatibility.py\", line 25, in test_real_legacy_mlp_checkpoint_selects_legal_edge\n    policy = LegacyMLPPPOPolicy(MODEL)\n  File \"E:\\Z博士\\8.20\\54_20-master\\ppo_allocation\\random_event\\legacy_adapter.py\", line 51, in __init__\n    from sb3_contrib import MaskablePPO\nModuleNotFoundError: No module named 'sb3_contrib'\n\n----------------------------------------------------------------------\nRan 2 tests in 0.197s\n\nFAILED (errors=2)\n"
+        }
       }
     },
-    "reward_fix": {
+    "seed_namespace_isolation": {
       "status": "PASS",
-      "description": "Episode reward double-counting fixed",
       "details": {
-        "reward_invariant": "episode_return = sum(row['reward'] for row in decision_rows)",
-        "affected_event_ids": "Added to decision rows",
-        "double_counting_prevented": "Reward recorded only once per decision"
+        "passed": true,
+        "train_count": 6000,
+        "validation_count": 200,
+        "test_count": 400,
+        "overlaps": {
+          "train_vs_validation": [],
+          "train_vs_test": [],
+          "validation_vs_test": []
+        }
       }
     },
-    "oracle_rename": {
+    "frozen_protocol_contract": {
       "status": "PASS",
-      "description": "Oracle renamed to Current-Pending Exact Planner",
       "details": {
-        "baselines.py": "ExhaustiveOraclePolicy -> CurrentPendingExactPlannerPolicy",
-        "experiment.py": "Updated imports and references",
-        "configs": "Updated random_event_protocol.json"
+        "preliminary_seeds": true,
+        "validation_tapes_100": true,
+        "validation_per_mode_25": true,
+        "validation_no_unseen": true,
+        "test_tapes_200": true,
+        "test_per_set_40": true,
+        "test_has_unseen": true,
+        "burst_window_100ms": true,
+        "test_not_for_selection": true
       }
     },
-    "fair_ppo_mlp": {
+    "burst_atomicity": {
       "status": "PASS",
-      "description": "Fair PPO-MLP baseline implemented",
       "details": {
-        "model": "FairPPOMLP with same graph inputs as GPPO",
-        "architecture": "MLP instead of AHGNN, same edge features and mask"
+        "passed": true,
+        "graph_version_after_3_event_batch": 1
       }
     },
-    "version_validation": {
-      "status": "PARTIAL",
-      "description": "Basic version validation implemented in concurrency.py",
+    "model_save_load_determinism": {
+      "status": "PASS",
       "details": {
-        "graph_version": "Implemented in EventRuntimeAdapter",
-        "action_version": "Implemented in AssignmentCommand",
-        "stale_action_rejection": "Implemented in ConcurrencyManager"
+        "passed": true,
+        "variants": {
+          "PPO-MLP": true,
+          "GPPO-NoGate": true,
+          "GPPO-Adaptive": true
+        }
       }
     },
-    "deterministic_tests": {
-      "status": "PASS",
-      "description": "Core tests passing",
+    "source_hash_integrity": {
+      "status": "FAIL",
       "details": {
-        "scheduler_tests": "6/6 passed",
-        "environment_tests": "9/9 passed",
-        "model_tests": "3/3 passed",
-        "total": "18/21 tests passed (2 legacy compatibility errors expected)"
-      }
-    },
-    "freeze_protocol": {
-      "status": "PASS",
-      "description": "Train/Validation/Test freeze protocol implemented",
-      "details": {
-        "validation_unseen_forbidden": true,
-        "test_checkpoint_selection_forbidden": true,
-        "seed_manifest_isolation": true,
-        "formal_validation_unseen_forbidden": true
+        "baseline_recorded": false,
+        "drift": {
+          "ppo_allocation/random_event/experiment.py": {
+            "previous": "3b1ff0b989e175c5743113b2d63d73efa3a9617b0cccfd7bdaa8ed374e60dd77",
+            "current": "a0fabf4d4427d71ea371948fa8cb84d6b9e7a2541c0b5099a3389201f71d5ca6"
+          }
+        }
       }
     }
   },
-  "violations": [],
-  "warnings": [
-    "Legacy compatibility tests require sb3_contrib module",
-    "CPP bridge test requires specific environment setup"
-  ],
-  "next_steps": [
-    "Complete Train/Validation/Test freeze protocol",
-    "Run full P0 gate tests",
-    "Generate smoke test results",
-    "Prepare Colab Pro bundle"
-  ],
   "source_hashes": {
-    "concurrency.py": "pending",
-    "adapter.py": "pending",
-    "metrics.py": "pending",
-    "replay.py": "pending",
-    "baselines.py": "pending",
-    "experiment.py": "pending",
-    "models.py": "pending"
-  }
+    "source": {
+      "event_runtime/concurrency.py": "5b88d20a7a702cdd7a9201195b89df8b5b9f551eda60dbee487e9195fd5d93ab",
+      "event_runtime/adapter.py": "9ebcc7dce45da5b9efa73d1c946b8ec9a48cc411afb142970d082ce8f9b1cfdb",
+      "event_runtime/metrics.py": "508b515e5998af914df97c0e45725360d0f714d26852279e87447f58b54ca44f",
+      "event_runtime/replay.py": "a206c4aa719f6fe57cf5292ddc80612e3f5d65bc47afdbc43519b89db20475fc",
+      "event_runtime/state_machine.py": "cdcc1b4b842e7583677a1c2309baf47939ba9bb9144cfc1613fa1f8bdf90b8c3",
+      "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
+      "ppo_allocation/random_event/environment.py": "a58040b35a727fe8e7fa5165077372ce859ea31cf8a3e1ad7acaea4cccd6e853",
+      "ppo_allocation/random_event/experiment.py": "a0fabf4d4427d71ea371948fa8cb84d6b9e7a2541c0b5099a3389201f71d5ca6",
+      "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
+      "ppo_allocation/random_event/trainer.py": "bd1dc1a32900f1cfca54340846e3cbb766818227c6aae55f0b2f8dfa237941c0",
+      "ppo_allocation/random_event/runtime_bridge.py": "294c44ebb309a623be48951854d84b5400d4f87931ddccf33cbc31180ac397ed",
+      "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08"
+    },
+    "protocol": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
+    "seed_manifest": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43"
+  },
+  "violations": [
+    "test_suites: FAIL",
+    "source_hash_integrity: FAIL"
+  ]
 }

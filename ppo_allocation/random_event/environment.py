@@ -32,6 +32,7 @@ from env.uav_env import UAVTaskAllocationEnv  # noqa: E402
 from .events import EventTape, RandomEvent, RandomEventType
 from .graph import HeteroGraphState, build_graph_state, decode_edge_action
 from .reward import CostWeights, assignment_map, compute_cost, cost_difference_reward
+from .runtime_bridge import RuntimeBridge, DetectorConfig
 from .scheduler import RandomEventScheduler, SchedulerState
 
 
@@ -103,6 +104,7 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
         self.repair_count = 0
         self.stale_rejection_count = 0
         self.last_event: RandomEvent | None = None
+        self.runtime_bridge: RuntimeBridge | None = None
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         # Avoid UAVTaskAllocationEnv.reset(): it mutates the state by generating
@@ -132,6 +134,17 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
         self.stale_rejection_count = 0
         self.last_event = None
         self.current_event = LegacyEvent(EventType.REGION_VACANCY, [], description="awaiting event")
+        # Phase C: Initialize runtime bridge for truth→observation→confirmation flow
+        self.runtime_bridge = RuntimeBridge(
+            merge_window=0.10,
+            detector_seed=self.event_seed,
+            detector_config=DetectorConfig(
+                loss_rate=0.0,
+                duplicate_rate=0.0,
+                false_positive_rate=0.0,
+                out_of_order_max_delay=0.0,
+            ),
+        )
 
         if self.supplied_tape is None:
             initial_state = SchedulerState.from_entities(
@@ -191,19 +204,112 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
         return self._ingest_observed_events()
 
     def _ingest_observed_events(self) -> list[str]:
+        """Ingest events through the runtime bridge pipeline with burst batching.
+
+        Phase C: Events flow through TruthEvent → Observation → Confirmation
+        → BeliefState.  Only confirmed events modify env state.
+
+        Phase G (burst atomicity): events whose observed_at falls inside the
+        burst window (100ms) are collected into ONE atomic batch.  The batch
+        is committed with a single graph_version increment and a single policy
+        call afterwards; there are no intermediate policy calls inside the
+        window.
+        """
         assert self.event_tape is not None
+        burst_window = 0.1 if self.mode == "burst" else 0.0
         ingested: list[str] = []
         while self.next_event_index < len(self._observation_order):
             tape_index = self._observation_order[self.next_event_index]
             event = self.event_tape.events[tape_index]
             if event.observed_at > self.current_time + 1e-12:
                 break
-            self.next_event_index += 1
-            self._apply_random_event(event)
-            ingested.append(event.event_id)
+
+            # Collect the full atomic batch (all events inside the burst window).
+            batch: list[RandomEvent] = []
+            window_cutoff = event.observed_at + burst_window + 1e-12
+            while self.next_event_index < len(self._observation_order):
+                candidate_index = self._observation_order[self.next_event_index]
+                candidate = self.event_tape.events[candidate_index]
+                if candidate.observed_at > self.current_time + 1e-12 and candidate.observed_at > window_cutoff:
+                    break
+                if candidate.observed_at <= self.current_time + 1e-12 or burst_window > 0:
+                    self.next_event_index += 1
+                    batch.append(candidate)
+                else:
+                    break
+
+            version_before = self.graph_version
+            for item in batch:
+                if self.runtime_bridge is not None:
+                    # Phase C: truth -> observation -> confirmation -> belief.
+                    # ONLY confirmed events mutate env state; unconfirmed events
+                    # must NOT change belief, mask, or trigger rescheduling.
+                    truth_event = self._random_event_to_truth_event(item)
+                    confirmed = self.runtime_bridge.ingest_truth_event(
+                        truth_event, self.current_time,
+                        observation_delay=item.observed_at - item.occurred_at,
+                    )
+                    if confirmed is not None:
+                        self.runtime_bridge.apply_confirmed_to_env(self, confirmed)
+                        # Record the runtime entry for the confirmed event so
+                        # experiment.py can attribute recovery to it.
+                        self._record_confirmed_event(item)
+                else:
+                    # Legacy fallback: direct application without bridge.
+                    self._apply_random_event(item, increment_version=False)
+                ingested.append(item.event_id)
+
+            # Atomic commit: exactly one graph_version increment per batch.
+            if batch:
+                self.graph_version = version_before + 1
         return ingested
 
-    def _apply_random_event(self, event: RandomEvent) -> None:
+    def _record_confirmed_event(self, event: RandomEvent) -> None:
+        """Create an EventRuntime record for a bridge-confirmed event.
+
+        Mirrors the bookkeeping inside ``_apply_random_event`` (status, actual
+        affected regions, event queue membership) without double-applying the
+        state mutation that the bridge already performed.
+        """
+
+        actual = {rid for rid in event.affected_regions}
+        runtime = EventRuntime(
+            event=event,
+            actual_affected_regions=tuple(sorted(actual)),
+            status="pending" if actual else "resolved",
+            applied_at=self.current_time,
+            resolved_at=None if actual else self.current_time,
+            application_note="confirmed-via-bridge",
+        )
+        self.event_records[event.event_id] = runtime
+        if actual:
+            self.event_queue.append(event.event_id)
+        self.last_event = event
+        self.current_event = self._legacy_event_view(event, actual)
+
+    def _random_event_to_truth_event(self, event: RandomEvent) -> TruthEvent:
+        """Convert a RandomEvent tape event to a TruthEvent for the bridge."""
+        from event_runtime.events import EventType as RuntimeEventType, TruthEvent
+        type_map = {
+            RandomEventType.UAV_DAMAGE: RuntimeEventType.UAV_DAMAGE,
+            RandomEventType.TARGET_DISCOVERED: RuntimeEventType.TARGET_DISCOVERED,
+            RandomEventType.TARGET_DESTROYED: RuntimeEventType.TARGET_DESTROYED,
+            RandomEventType.REGION_VACANCY: RuntimeEventType.REGION_VACANCY,
+        }
+        return TruthEvent(
+            event_id=event.event_id,
+            event_type=type_map[event.event_type],
+            source_event=event.source_event,
+            occurred_at=event.occurred_at,
+            affected_uavs=event.affected_uavs,
+            affected_regions=event.affected_regions,
+            affected_targets=event.affected_targets,
+            severity=event.severity,
+            event_seed=event.event_seed,
+            state_version=event.state_version,
+        )
+
+    def _apply_random_event(self, event: RandomEvent, *, increment_version: bool = True) -> None:
         actual: set[int] = set()
         note = "applied"
         kind = event.event_type
@@ -280,7 +386,8 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
             self.event_queue.append(event.event_id)
         self.last_event = event
         self.current_event = self._legacy_event_view(event, actual)
-        self.graph_version += 1
+        if increment_version:
+            self.graph_version += 1
         self.communication_trigger_count += 1
         self.communication_bytes += len(json.dumps(event.to_dict(), sort_keys=True).encode("utf-8"))
 

@@ -377,6 +377,7 @@ class RandomEventScheduler:
             lambda current, event: current.apply(event).with_canonical_recovery()
         )
 
+        burst_cluster_observed_at: float | None = None
         for index in range(count):
             per_event_seed = master_rng.getrandbits(63)
             event_rng = random.Random(per_event_seed)
@@ -386,10 +387,19 @@ class RandomEventScheduler:
                 else:
                     interval = event_rng.uniform(profile.interval_min, profile.interval_max)
                 occurred_at += interval
-            observed_at = occurred_at + event_rng.uniform(
-                profile.observation_delay_min,
-                profile.observation_delay_max,
-            )
+            if mode == "burst" and index % 3 != 0 and burst_cluster_observed_at is not None:
+                # Burst cluster members share the cluster leader's observed_at:
+                # all events in a 100ms burst window arrive together so they
+                # can be merged into one atomic batch (single graph_version
+                # increment, single policy call).
+                observed_at = burst_cluster_observed_at
+            else:
+                observed_at = occurred_at + event_rng.uniform(
+                    profile.observation_delay_min,
+                    profile.observation_delay_max,
+                )
+                if mode == "burst" and index % 3 == 0:
+                    burst_cluster_observed_at = observed_at
             event = self.sample_event(
                 state,
                 rng=event_rng,

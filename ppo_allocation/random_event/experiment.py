@@ -960,7 +960,37 @@ def run_smoke(args: argparse.Namespace) -> dict[str, Any]:
     return smoke
 
 
+def _check_p0_gate() -> None:
+    """Refuse to train unless the machine-generated P0 gate is green.
+
+    The gate (scripts/build_p0_gate.py) is the ONLY authority for
+    ``training_allowed``; this check re-reads handoff/P0_GATE.json and aborts
+    if the gate was not machine-generated, is stale, or has any FAIL/PARTIAL
+    check.
+    """
+
+    gate_path = PPO_DIR.parent / "handoff" / "P0_GATE.json"
+    if not gate_path.exists():
+        raise SystemExit(
+            "P0 gate missing. Run `python scripts/build_p0_gate.py` before training."
+        )
+    gate = json.loads(gate_path.read_text(encoding="utf-8"))
+    if gate.get("generated_by") != "scripts/build_p0_gate.py":
+        raise SystemExit(
+            "P0 gate was not machine-generated (scripts/build_p0_gate.py). "
+            "Refusing to train; manual gate edits are prohibited."
+        )
+    if not gate.get("training_allowed"):
+        violations = "; ".join(gate.get("violations", []))
+        raise SystemExit(
+            f"P0 gate is RED (training_allowed=false). Violations: {violations}. "
+            "Fix issues and rerun `python scripts/build_p0_gate.py`."
+        )
+
+
 def run_train(args: argparse.Namespace) -> dict[str, Any]:
+    # Phase H: training entry point must read the P0 gate and refuse on red.
+    _check_p0_gate()
     output_dir = _relative_path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     result = train_variants(
@@ -1038,8 +1068,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     train = subparsers.add_parser("train", help="train GPPO-NoGate and/or GPPO-Adaptive on CPU")
     train.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))
-    train.add_argument("--variants", default="GPPO-NoGate,GPPO-Adaptive")
-    train.add_argument("--seeds", default="1,2,3")
+    train.add_argument("--variants", default="PPO-MLP,GPPO-NoGate,GPPO-Adaptive")
+    train.add_argument("--seeds", default="1101,2202,3303")
     train.add_argument("--timesteps", type=int, default=2000)
     train.add_argument("--events-per-episode", type=int, default=5)
     train.add_argument("--rollout-steps", type=int, default=128)

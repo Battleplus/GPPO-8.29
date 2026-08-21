@@ -1,192 +1,132 @@
-# 执行进度跟踪
+# 执行进度跟踪（Phase A-H 完成版）
 
-## 阶段 0: 证据化审计
+## 当前 HEAD
+
+- 分支: `plan/lightweight-sfc-refactor`
+- HEAD: `684a113` + 未提交重构改动
+
+---
+
+## Phase A: 重新建立可信状态
 
 ### 状态: 已完成
 
-**完成时间**: 2026-08-21 01:00:00
-
-#### 已完成任务
-- [x] 读取 MIMO_START_HERE.md
-- [x] 读取 handoff/LOCAL_CONTEXT_INDEX.md
-- [x] 读取 handoff/MIMO_MASTER_TASK_ZH.md
-- [x] 读取 handoff/COPY_PROVENANCE.json
-- [x] 读取 references/REAL_EVENT_DETECTION_AND_CONCURRENCY_DESIGN_ZH.md
-- [x] 读取 docs/RANDOM_EVENT_BASELINE_AUDIT_ZH.md
-- [x] 读取 docs/RANDOM_EVENT_GPPO_DESIGN_ZH.md
-- [x] 读取 docs/RANDOM_EVENT_PRELIMINARY_REPORT_ZH.md
-- [x] 检查 Git 状态和 dirty worktree
-- [x] 审计 event_runtime/ 实现
-- [x] 审计 ppo_allocation/random_event/ 实现
-- [x] 审计 configs/ 配置
-- [x] 生成 docs/WORKSPACE_AUDIT_ZH.md
-- [x] 生成 handoff/CURRENT_STATE.json
-- [x] 生成 handoff/PROGRESS.md
-- [x] 生成 handoff/DECISIONS.json
-
-### 证据
-- Git HEAD: `0cd2aeb`
-- 已修改文件: 4 个
-- 未跟踪目录: 8 个
-- event_runtime 已实现: 10 个模块 (concurrency.py, adapter.py, metrics.py, replay.py 新增)
-- ppo_allocation/random_event 已实现: 12 个模块
+- [x] 检查 git status / diff / log
+- [x] 诊断 P0 Gate 虚假状态并重写（training_allowed=false）
+- [x] 重写 CURRENT_STATE.json / PROGRESS.md / DECISIONS.json
 
 ---
 
-## 阶段 1: 独立事件处理层
+## Phase B: 统一 Frozen Protocol
+
+### 状态: 已完成（配置 + CLI 对齐）
+
+- [x] seed_manifest.json: preliminary seeds -> [1101,2202,3303]
+- [x] seed_manifest.json: Validation -> 100 tapes (25x4, 无 Unseen)
+- [x] seed_manifest.json: Test -> 200 tapes (5 类各 40, 含 Unseen)
+- [x] random_event_protocol.json: burst window -> 0.1s
+- [x] experiment.py CLI: seeds default -> 1101,2202,3303; variants 含 PPO-MLP
+- [x] run_random_event_experiment.py docstring 更新
+- [x] 验证 seed namespace 无泄漏（gate 机器验证）
+
+---
+
+## Phase C: Event Runtime 接入环境主链路
 
 ### 状态: 已完成
 
-**完成时间**: 2026-08-21 02:00:00
-
-#### 已完成任务
-- [x] 实现 event_runtime/concurrency.py (Command, ACK, Lease, FencingToken)
-- [x] 实现 event_runtime/adapter.py (集成适配器)
-- [x] 实现 event_runtime/metrics.py (指标跟踪)
-- [x] 实现 event_runtime/replay.py (回放功能)
-- [x] 验证 event_runtime 基本功能
-
-### 证据
-- 所有 event_runtime 模块导入成功
-- 基本功能测试通过
+- [x] 创建 ppo_allocation/random_event/runtime_bridge.py
+  - TruthStateTracker（真状态与信念分离）
+  - DeterministicDetector（loss/duplicate/out-of-order/partition，seed 确定）
+  - RuntimeBridge（ingest_truth_event -> confirmation -> apply_confirmed_to_env）
+  - 多证据事件（TARGET_DISCOVERED 3-of-5, TARGET_DESTROYED >=2）从不同 source 生成观测
+- [x] environment.py 接入 bridge（_ingest_observed_events 通过 bridge）
+- [x] 未经确认事件不改 belief（bridge 路径只对 confirmed 事件改 env）
 
 ---
 
-## 阶段 2: 并发一致性
+## Phase D: Confirmation 语义
 
-### 状态: 待开始
+### 状态: 已完成（state_machine.py + bridge 多源证据）
 
-**计划开始时间**: 2026-08-21 02:00:00
-
-#### 待完成任务
-- [ ] 实现 graph_version 和 action_version
-- [ ] 实现 AssignmentCommand, ACK, AssignmentLease, FencingToken
-- [ ] 验证不变量
+- [x] UAV_DAMAGE trusted failure -> 直接确认
+- [x] TARGET_DISCOVERED -> 3-of-5 多源确认
+- [x] TARGET_DESTROYED -> >=2 独立强证据
+- [x] SUSPECTED / FALSE_ALARM / duplicate / late 计数
 
 ---
 
-## 阶段 3: 五种事件模式
+## Phase E: Concurrency 执行约束
 
-### 状态: 待开始
+### 状态: PARTIAL（concurrency.py 有数据结构；执行级不变量测试待 sb3 环境）
 
-**计划开始时间**: 2026-08-21 03:00:00
-
-#### 待完成任务
-- [ ] 验证 single 语义
-- [ ] 验证 sequential 语义
-- [ ] 验证 overlap 语义
-- [ ] 验证 burst 原子性
-- [ ] 验证 unseen 隔离
+- [x] AssignmentCommand / ACK / AssignmentLease / FencingToken 已定义
+- [ ] stale_action_rejection_rate == 1.0 执行级测试（gate 待环境）
+- [ ] exclusive holder <= 1 执行级测试（gate 待环境）
 
 ---
 
-## 阶段 4: Reward 与指标修复
+## Phase F: Fair PPO-MLP
 
 ### 状态: 已完成
 
-**完成时间**: 2026-08-21 03:00:00
-
-#### 已完成任务
-- [x] 修复 episode reward 重复累计问题
-- [x] 在 experiment.py 中添加 affected_event_ids
-- [x] 验证 episode_return = sum(row["reward"] for row in decision_rows)
-- [x] 添加 reward_invariant 检查
+- [x] FairPPOMLP input_dim 修复（numel 扁平计数 384，而非 sum(shape[-1])=60）
+- [x] FairPPOMLP.load() 重建 encoder/actor/critic 后 load_state_dict
+- [x] PPOTrainer 支持 PPO-MLP variant
+- [x] 三模型 save->load->deterministic inference equality 验证通过（gate 机器验证）
 
 ---
 
-## 阶段 5: Planner 语义修正
+## Phase G: 四种事件模式
 
 ### 状态: 已完成
 
-**完成时间**: 2026-08-21 04:00:00
-
-#### 已完成任务
-- [x] 将 Exhaustive Oracle 更名为 Current-Pending Exact Planner
-- [x] 修改 baselines.py
-- [x] 修改 experiment.py
-- [x] 修改 test_random_event_core.py
-- [x] 修改 random_event_protocol.json
+- [x] Burst: 调度器簇共享 observed_at + 环境原子批提交 -> 3-event graph_version delta == 1
+- [x] Single: canonical snapshot SHA 一致
+- [x] Sequential / Overlap / Unseen 配置冻结
 
 ---
 
-## 阶段 6: 公平 PPO-MLP
+## Phase H: 自动 P0 Gate
 
 ### 状态: 已完成
 
-**完成时间**: 2026-08-21 05:00:00
+- [x] scripts/build_p0_gate.py（机器生成，禁止手工改 training_allowed）
+- [x] 检查项: test_suites / seed_namespace_isolation / frozen_protocol_contract / burst_atomicity / model_save_load_determinism / source_hash_integrity
+- [x] 训练入口 run_train() -> _check_p0_gate() 拒绝 RED gate
 
-#### 已完成任务
-- [x] 实现 FairPPOMLP 模型
-- [x] 使用相同的图输入和边特征
-- [x] 与 GPPO 使用相同的 mask、reward、PPO 参数
-
----
-
-## 阶段 7: 冻结协议
-
-### 状态: 待开始
-
-**计划开始时间**: 2026-08-21 07:00:00
-
-#### 待完成任务
-- [ ] 验证 seed manifest 被训练器使用
-- [ ] 验证 Validation 不包含 unseen
-- [ ] 验证 Test 不参与选模
+### 当前 Gate: RED（诚实状态）
+- training_allowed: false
+- 原因: legacy_compatibility 套件需要 sb3_contrib（锁定环境 Python 3.11）
+- 通过项（机器验证）: core 19/19, seed isolation, protocol contract, burst atomicity, model determinism, hash integrity
 
 ---
 
-## 阶段 8: 自动化测试与 P0 Gate
+## Phase I: 运行全部 P0 测试
 
-### 状态: 已完成
+### 状态: 已完成（gate 驱动）
 
-**完成时间**: 2026-08-21 06:00:00
-
-#### 已完成任务
-- [x] 运行核心测试: 18/21 通过
-- [x] 生成 handoff/P0_GATE.json
-- [x] 设置 training_allowed: true
-
----
-
-## 阶段 9: Colab Pro Preliminary
-
-### 状态: 已完成
-
-**完成时间**: 2026-08-21 07:00:00
-
-#### 已完成任务
-- [x] 生成 colab_bundle/ 目录
-- [x] 创建 random_event_gppo_preliminary.ipynb
-- [x] 创建 requirements.txt
-- [x] 创建 README.md
-
----
-
-## 阶段 10: 统计与报告
-
-### 状态: 已完成
-
-**完成时间**: 2026-08-21 08:00:00
-
-#### 已完成任务
-- [x] 生成 docs/FINAL_PRELIMINARY_REPORT_ZH.md
-- [x] 记录统计方法和实验配置
+- [x] python scripts/build_p0_gate.py 运行
+- [x] 19/21 通过（2 个 legacy 错误 = 环境依赖缺失，非代码问题）
+- [x] RED gate 正确拒绝训练
 
 ---
 
 ## 决策记录
 
-### 决策 1: 保留现有实现，按需补充
-- **日期**: 2026-08-21
-- **内容**: event_runtime/ 和 ppo_allocation/random_event/ 已有基本实现，按任务书要求补充缺失组件
-- **理由**: 避免推倒重来，保护已有修改
+### D-001: 重置所有状态声称（EXECUTED）
+### D-002: 不推倒重写 event_runtime，用 runtime_bridge 接入（EXECUTED）
+### D-003: 统一 seeds [1101,2202,3303]、Validation=100、burst=0.1s（EXECUTED）
+### D-004: PPOTrainer 支持三 variant（EXECUTED）
+### D-005: 机器生成 P0 Gate + 训练入口检查（EXECUTED）
+### D-006: Gate 保持 RED 直到 legacy 套件在锁定环境通过（HONEST-CURRENT-STATE）
 
-### 决策 2: 先完成 P0 门禁再启动训练
-- **日期**: 2026-08-21
-- **内容**: 所有 P0 门禁通过前禁止启动 GPPO/PPO 训练
-- **理由**: 确保协议一致性和实验可重复性
+---
 
-### 决策 3: 使用固定 seed 生成事件带
-- **日期**: 2026-08-21
-- **内容**: 事件带由 (initial_seed, event_seed, mode, protocol_version) 唯一确定
-- **理由**: 确保确定性重放和跨算法公平比较
+## 遗留风险 / TODO
+
+- [ ] sb3_contrib 缺失 -> legacy_compatibility 套件无法运行，gate 保持 RED
+- [ ] Python 3.14 被协议禁止训练，需锁定 Python 3.11 环境
+- [ ] CPP bridge 测试需特定环境设置
+- [ ] L2 SFC/Isaac Sim 未开始（按规划 L0/L1 稳定后进行）
+- [ ] Preliminary 300k 训练未启动（gate 全绿后才允许）

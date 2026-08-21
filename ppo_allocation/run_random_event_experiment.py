@@ -5,7 +5,7 @@ Examples (run from ``ppo_allocation``)::
     python run_random_event_experiment.py smoke
     python run_random_event_experiment.py protocol-bank --tier preliminary --split validation
     python run_random_event_experiment.py protocol-bank --tier preliminary --split test
-    python run_random_event_experiment.py train --seeds 1,2,3 --timesteps 2000
+    python run_random_event_experiment.py train --seeds 1101,2202,3303 --timesteps 2000
     python run_random_event_experiment.py evaluate
 """
 

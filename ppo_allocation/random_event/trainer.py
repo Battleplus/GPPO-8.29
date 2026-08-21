@@ -19,8 +19,10 @@ from torch import nn
 
 from .graph import HeteroGraphState, build_graph_state
 from .models import (
+    FairPPOMLP,
     GraphActorCritic,
     make_adaptive_model,
+    make_fair_ppo_mlp,
     make_no_gate_model,
 )
 
@@ -200,10 +202,17 @@ def _explained_variance(prediction: np.ndarray, target: np.ndarray) -> float:
 
 
 class PPOTrainer:
-    """End-to-end PPO for ``GPPO-NoGate`` and ``GPPO-Adaptive``.
+    """End-to-end PPO for ``PPO-MLP``, ``GPPO-NoGate`` and ``GPPO-Adaptive``.
 
     The model is initialized lazily from the first graph, so constructing a
     trainer does not reset the environment or consume an event tape.
+
+    All three variants share the same environment, graph observation contract,
+    action space, mask, reward, PPO hyperparameters, seeds, Validation/Test
+    banks and checkpoint schedule.  Only the network architecture differs:
+    - PPO-MLP       = canonical flattened graph -> MLP
+    - GPPO-NoGate   = graph -> AHGNN (no adaptive gates)
+    - GPPO-Adaptive = graph -> AHGNN + adaptive gates
     """
 
     def __init__(
@@ -211,7 +220,7 @@ class PPOTrainer:
         env: Any,
         variant: str = "GPPO-Adaptive",
         config: PPOConfig | None = None,
-        model: GraphActorCritic | None = None,
+        model: GraphActorCritic | FairPPOMLP | None = None,
     ) -> None:
         self.env = env
         self.variant = self._normalise_variant(variant)
@@ -220,7 +229,7 @@ class PPOTrainer:
         self.model = model.to(self.device) if model is not None else None
         if self.model is not None:
             expected_gate = self.variant == "GPPO-Adaptive"
-            if bool(self.model.config.adaptive_gate) != expected_gate:
+            if isinstance(self.model, GraphActorCritic) and bool(self.model.config.adaptive_gate) != expected_gate:
                 raise ValueError("variant and supplied model adaptive_gate setting disagree")
         self.optimizer: torch.optim.Optimizer | None = None
         self.history: list[dict[str, Any]] = []
@@ -237,6 +246,9 @@ class PPOTrainer:
     def _normalise_variant(value: str) -> str:
         compact = value.strip().lower().replace("_", "-")
         aliases = {
+            "ppo-mlp": "PPO-MLP",
+            "ppomlp": "PPO-MLP",
+            "fair-ppo-mlp": "PPO-MLP",
             "gppo-adaptive": "GPPO-Adaptive",
             "adaptive": "GPPO-Adaptive",
             "gppo-nogate": "GPPO-NoGate",
@@ -245,7 +257,7 @@ class PPOTrainer:
             "no-gate": "GPPO-NoGate",
         }
         if compact not in aliases:
-            raise ValueError("variant must be GPPO-Adaptive or GPPO-NoGate")
+            raise ValueError("variant must be PPO-MLP, GPPO-Adaptive or GPPO-NoGate")
         return aliases[compact]
 
     @staticmethod
@@ -260,11 +272,13 @@ class PPOTrainer:
         assert self.model is not None
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
 
-    def initialize(self, graph: HeteroGraphState) -> GraphActorCritic:
+    def initialize(self, graph: HeteroGraphState) -> GraphActorCritic | FairPPOMLP:
         """Create the requested model variant after observing node dimensions."""
 
         if self.model is None:
-            if self.variant == "GPPO-Adaptive":
+            if self.variant == "PPO-MLP":
+                self.model = make_fair_ppo_mlp(graph)
+            elif self.variant == "GPPO-Adaptive":
                 self.model = make_adaptive_model(graph)
             else:
                 self.model = make_no_gate_model(graph)
@@ -515,15 +529,20 @@ class PPOTrainer:
     ) -> tuple["PPOTrainer", dict[str, Any]]:
         """Restore model and trainer metadata from a model-owned checkpoint."""
 
-        model, metadata = GraphActorCritic.load(path, map_location=device or "cpu")
+        import torch as _torch
+        payload = _torch.load(Path(path), map_location=device or "cpu", weights_only=False)
+        fmt = payload.get("format")
+        if fmt == "fair-ppo-mlp-v1" or fmt == "fair-ppo-mlp-v2":
+            model, metadata = FairPPOMLP.load(path, map_location=device or "cpu")
+        elif fmt == "random-event-gppo-v1":
+            model, metadata = GraphActorCritic.load(path, map_location=device or "cpu")
+        else:
+            raise ValueError(f"unsupported checkpoint format: {fmt}")
         config_values = dict(metadata.get("ppo_config", {}))
         if device is not None:
             config_values["device"] = device
         config = PPOConfig(**config_values) if config_values else PPOConfig(device=device or "cpu")
-        variant = metadata.get(
-            "variant",
-            "GPPO-Adaptive" if model.config.adaptive_gate else "GPPO-NoGate",
-        )
+        variant = metadata.get("variant", cls._normalise_variant_from_model(model))
         trainer = cls(env=env, variant=variant, config=config, model=model)
         trainer.total_steps = int(metadata.get("total_steps", 0))
         trainer.update_count = int(metadata.get("update_count", 0))
@@ -532,6 +551,14 @@ class PPOTrainer:
         if optimizer_state is not None and trainer.optimizer is not None:
             trainer.optimizer.load_state_dict(optimizer_state)
         return trainer, metadata
+
+    @staticmethod
+    def _normalise_variant_from_model(model: Any) -> str:
+        if isinstance(model, FairPPOMLP):
+            return "PPO-MLP"
+        if isinstance(model, GraphActorCritic):
+            return "GPPO-Adaptive" if model.config.adaptive_gate else "GPPO-NoGate"
+        return "GPPO-Adaptive"
 
 
 __all__ = ["PPOConfig", "PPOTrainer", "TrajectoryBuffer"]
