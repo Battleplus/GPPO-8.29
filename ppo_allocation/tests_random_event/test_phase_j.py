@@ -15,6 +15,7 @@ Covers:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -26,6 +27,7 @@ _REPO_ROOT = str(Path(__file__).resolve().parents[2])
 if _REPO_ROOT not in sys.path:
     sys.path.append(_REPO_ROOT)
 
+import numpy as np
 import torch
 
 from ppo_allocation.random_event.environment import (
@@ -349,6 +351,7 @@ class ValidationMetricIntegrationTests(unittest.TestCase):
         event = {
             "weighted_uncovered": 2.0, "normalized_distance": 1.0,
             "load_gap": 0.5, "switch_count": 2, "recovery_delay": 3.0,
+            "fixed_j": 2.0 * 5.0 + 1.0 + 0.5 + 2.0 * 0.25 + 3.0 * 0.5,
         }
         event.update(overrides)
         return {"events": [event]}
@@ -374,7 +377,9 @@ class ValidationMetricIntegrationTests(unittest.TestCase):
         candidate_a = extract_validation_metrics(
             self._episode(final_infeasible_count=1, final_infeasible_rate=1.0,
                           recovery_delay=None, recovery_delay_observed_count=0),
-            self._trace(recovery_delay=None), self._checkpoint()
+            self._trace(recovery_delay=None, weighted_uncovered=4.0,
+                        fixed_j=4.0 * 5.0 + 1.0 + 0.5 + 2.0 * 0.25 + 200.0 * 0.5),
+            self._checkpoint()
         )
         candidate_b = extract_validation_metrics(
             self._episode(final_infeasible_count=0, final_infeasible_rate=0.0),
@@ -563,6 +568,283 @@ class TestIsolationGuardTests(unittest.TestCase):
             consumed_path.write_text(json.dumps({"consumed": True}))
             data = json.loads(consumed_path.read_text())
             self.assertTrue(data["consumed"])
+
+
+# ---------------------------------------------------------------------------
+# Frozen train contract: mode cycle, seed coverage, range exhaustion
+# ---------------------------------------------------------------------------
+class FrozenTrainContractTests(unittest.TestCase):
+    def _manifest(self):
+        return json.loads((Path(_REPO_ROOT) / "configs" / "seed_manifest.json").read_text(encoding="utf-8"))
+
+    def test_formal_train_mode_cycle_matches_frozen_manifest(self):
+        from ppo_allocation.random_event.experiment import _load_frozen_train_modes
+        manifest = self._manifest()
+        frozen_cycle = tuple(manifest["preliminary"]["train"]["mode_cycle"])
+        self.assertEqual(_load_frozen_train_modes(), frozen_cycle)
+        self.assertEqual(frozen_cycle, ("sequential", "overlap", "burst"))
+        self.assertNotIn("single", frozen_cycle)
+
+    def test_formal_train_seed_coverage_is_sufficient_for_300k(self):
+        manifest = self._manifest()
+        reserved = int(manifest["preliminary"]["train"]["episodes_per_training_seed"])
+        budget = int(
+            manifest["preliminary"]["train"]["reserved_coverage_assertions"]["formal_budget_decision_steps"]
+        )
+        self.assertGreaterEqual(reserved, budget)
+        for training_seed in (1101, 2202, 3303):
+            inst = manifest["preliminary"]["train"]["instance_seeds_by_training_seed"][str(training_seed)]
+            evt = manifest["preliminary"]["train"]["event_seeds_by_training_seed"][str(training_seed)]
+            self.assertEqual(int(inst["count"]), reserved)
+            self.assertEqual(int(inst["start"]), training_seed * 1_000_003)
+            self.assertEqual(int(evt["start"]), training_seed * 10_000_019)
+            # Formula for the final reserved episode stays inside the range.
+            last_index = reserved - 1
+            self.assertLessEqual(
+                training_seed * 1_000_003 + last_index,
+                int(inst["start"]) + int(inst["count"]) - 1,
+            )
+
+    def test_train_seed_range_exhaustion_hard_fails(self):
+        from ppo_allocation.random_event.experiment import CyclingTrainingEnv
+        env = CyclingTrainingEnv(seed=1101, modes=("sequential",), events_per_episode=1, max_resets=2)
+        env.reset()
+        env.reset()
+        with self.assertRaises(RuntimeError):
+            env.reset()
+        env.close()
+
+    def test_last_allowed_reset_passes(self):
+        from ppo_allocation.random_event.experiment import CyclingTrainingEnv
+        env = CyclingTrainingEnv(seed=3303, modes=("sequential",), events_per_episode=1, max_resets=2)
+        env.reset()
+        env.reset()
+        self.assertEqual(env._reset_index, 2)
+        env.close()
+
+
+# ---------------------------------------------------------------------------
+# Formal Test partial resume / completed rerun / ambiguous state
+# ---------------------------------------------------------------------------
+class FormalTestResumeTests(unittest.TestCase):
+    def _freeze_payload(self, gate, root):
+        freezes = []
+        for variant in ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"):
+            for seed in (1101, 2202, 3303):
+                ckpt_path = root / "preliminary" / "models" / f"{variant}-{seed}.pt"
+                ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+                ckpt_path.write_bytes(b"ckpt")
+                freezes.append({
+                    "variant": variant, "training_seed": seed,
+                    "selected_step": 25000, "checkpoint_path": str(ckpt_path),
+                    "checkpoint_sha256": hashlib.sha256(b"ckpt").hexdigest(),
+                    "source_sha": gate["source_tree_hash"],
+                    "protocol_sha": gate["protocol_sha256"],
+                    "seed_manifest_sha": gate["seed_manifest_sha256"],
+                    "validation_manifest_sha": "v" * 64,
+                    "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                    "selected_at": "now",
+                })
+        return {
+            "formal": True, "freeze_count": 9, "freezes": freezes,
+            "source_tree_hash": gate["source_tree_hash"],
+            "attested_source_commit_sha": gate["attested_source_commit_sha"],
+            "protocol_sha256": gate["protocol_sha256"],
+            "seed_manifest_sha256": gate["seed_manifest_sha256"],
+        }
+
+    def _test_bank(self, gate, root):
+        labels = ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+        entries = []
+        for label in labels:
+            for i in range(40):
+                entries.append({
+                    "tape_id": f"{label}-{i}", "set_name": label,
+                    "mode": "single" if label == "Test-Unseen" else label.removeprefix("Test-").lower(),
+                    "path": "x", "sha256": "a", "canonical_tape_sha256": "b",
+                })
+        manifest = {
+            "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
+            "expected_tape_count": 200, "tape_count": 200,
+            "checkpoint_selection": False, "reward_tuning": False,
+            "seed_manifest_sha256": gate["seed_manifest_sha256"],
+            "protocol_sha256": gate["protocol_sha256"],
+            "entries": entries,
+        }
+        manifest_path = root / "preliminary" / "tapes" / "preliminary_test_protocol" / "manifest.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(manifest))
+        return manifest_path, hashlib.sha256(json.dumps(manifest).encode()).hexdigest()
+
+    def _run_test(self, root, gate, freeze_payload, manifest_sha):
+        import ppo_allocation.random_event.phase_j as phase_j
+        from unittest.mock import patch
+        from ppo_allocation.random_event.metrics import EpisodeMetrics
+
+        def fake_episode():
+            from dataclasses import fields
+            values = {}
+            for field in fields(EpisodeMetrics):
+                if field.name in {"tape_id", "episode_id", "algorithm"}:
+                    values[field.name] = "x"
+                elif field.name in {"event_success_rate", "legal_coverage_rate", "weighted_uncovered", "recovery_delay", "normalized_distance", "load_gap", "inference_latency_ms", "event_to_action_latency_ms", "communication_suppression_rate", "pre_mask_invalid_probability", "mask_rate", "gate_mean", "gate_variance", "value_error", "value_squared_error", "avg_reward"}:
+                    values[field.name] = None
+                else:
+                    values[field.name] = 0
+            values.update({"tape_id": "t", "episode_id": "e", "algorithm": "X", "event_count": 1, "fixed_j": 1.0})
+            return EpisodeMetrics(**values)
+
+        class _FakeModel:
+            def eval(self):
+                return self
+        with patch.object(phase_j, "_check_p0_gate_strict", return_value=gate), \
+             patch.object(phase_j, "_validate_hashes_match"), \
+             patch.object(phase_j.torch, "load", return_value={"format": "graph-actor-critic-v1"}), \
+             patch.object(phase_j.GraphActorCritic, "load", return_value=(_FakeModel(), {})), \
+             patch.object(phase_j, "load_tape_bank", return_value=({}, [])), \
+             patch.object(phase_j, "run_episode", return_value=(fake_episode(), {"reward_invariant": True, "decisions": [], "events": []})):
+            return phase_j.preliminary_test(root)
+
+    def test_partial_resume_skips_consumed_and_runs_rest(self):
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "preliminary").mkdir(parents=True, exist_ok=True)
+            freeze_payload = self._freeze_payload(gate, root)
+            (root / "preliminary" / "frozen_manifests.json").write_text(json.dumps(freeze_payload))
+            manifest_path, manifest_sha = self._test_bank(gate, root)
+            # Create lock
+            lock = {
+                "test_manifest_sha256": manifest_sha,
+                "source_tree_hash": gate["source_tree_hash"],
+                "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                "protocol_sha256": gate["protocol_sha256"],
+                "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                "freeze_manifest_sha256": hashlib.sha256(json.dumps(freeze_payload).encode()).hexdigest(),
+                "completed": False,
+            }
+            (root / "preliminary" / "formal_test_bank_lock.json").write_text(json.dumps(lock))
+            # Simulate: first 2 already consumed under the same provenance.
+            keys = []
+            for freeze in freeze_payload["freezes"][:2]:
+                key = f"{freeze['variant']}_seed{freeze['training_seed']}_{freeze['checkpoint_sha256'][:12]}_{manifest_sha}"
+                keys.append(key)
+            ledger = {
+                "schema_version": 1, "completed": False, "test_manifest_sha256": manifest_sha,
+                "entries": {key: {
+                    "consumed": True, "variant": freeze_payload["freezes"][i]["variant"],
+                    "training_seed": freeze_payload["freezes"][i]["training_seed"],
+                    "checkpoint_sha": freeze_payload["freezes"][i]["checkpoint_sha256"],
+                    "test_manifest_sha": manifest_sha,
+                    "freeze_manifest_sha": lock["freeze_manifest_sha256"],
+                    "source_tree_hash": gate["source_tree_hash"],
+                    "protocol_sha256": gate["protocol_sha256"],
+                    "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                } for i, key in enumerate(keys)},
+            }
+            (root / "preliminary" / "test_ledger.json").write_text(json.dumps(ledger))
+            result = self._run_test(root, gate, freeze_payload, manifest_sha)
+            # 2 skipped (resumed), 7 evaluated.
+            resumed = [r for r in result["results"] if r.get("resumed")]
+            evaluated = [r for r in result["results"] if not r.get("resumed")]
+            self.assertEqual(len(resumed), 2)
+            self.assertEqual(len(evaluated), 7)
+            ledger_after = json.loads((root / "preliminary" / "test_ledger.json").read_text())
+            self.assertTrue(ledger_after["completed"])
+            lock_after = json.loads((root / "preliminary" / "formal_test_bank_lock.json").read_text())
+            self.assertTrue(lock_after["completed"])
+
+    def test_completed_test_rerun_rejected(self):
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "preliminary").mkdir(parents=True, exist_ok=True)
+            freeze_payload = self._freeze_payload(gate, root)
+            (root / "preliminary" / "frozen_manifests.json").write_text(json.dumps(freeze_payload))
+            manifest_path, manifest_sha = self._test_bank(gate, root)
+            lock = {
+                "test_manifest_sha256": manifest_sha,
+                "source_tree_hash": gate["source_tree_hash"],
+                "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                "protocol_sha256": gate["protocol_sha256"],
+                "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                "freeze_manifest_sha256": "f" * 64,
+                "completed": True,
+            }
+            (root / "preliminary" / "formal_test_bank_lock.json").write_text(json.dumps(lock))
+            with self.assertRaises(SystemExit):
+                self._run_test(root, gate, freeze_payload, manifest_sha)
+
+    def test_ambiguous_running_test_state_rejected(self):
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "preliminary").mkdir(parents=True, exist_ok=True)
+            freeze_payload = self._freeze_payload(gate, root)
+            (root / "preliminary" / "frozen_manifests.json").write_text(json.dumps(freeze_payload))
+            manifest_path, manifest_sha = self._test_bank(gate, root)
+            lock = {
+                "test_manifest_sha256": manifest_sha,
+                "source_tree_hash": gate["source_tree_hash"],
+                "attested_source_commit_sha": gate["attested_source_commit_sha"],
+                "protocol_sha256": gate["protocol_sha256"],
+                "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                "freeze_manifest_sha256": "f" * 64,
+                "completed": False,
+            }
+            (root / "preliminary" / "formal_test_bank_lock.json").write_text(json.dumps(lock))
+            freeze = freeze_payload["freezes"][0]
+            key = f"{freeze['variant']}_seed{freeze['training_seed']}_{freeze['checkpoint_sha256'][:12]}_{manifest_sha}"
+            state_dir = root / "preliminary" / "test_state"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            (state_dir / f"{key}.json").write_text(json.dumps({"state": "running"}))
+            with self.assertRaises(SystemExit):
+                self._run_test(root, gate, freeze_payload, manifest_sha)
+
+
+# ---------------------------------------------------------------------------
+# Multi-event early termination remains validation-rankable
+# ---------------------------------------------------------------------------
+class EarlyTerminationRankableTests(unittest.TestCase):
+    def test_unobserved_second_event_is_rankable(self):
+        from dataclasses import fields
+        from ppo_allocation.random_event.metrics import EpisodeMetrics
+        from ppo_allocation.random_event.phase_j import extract_validation_metrics, _lexicographic_select, CheckpointRecord
+        values = {}
+        for field in fields(EpisodeMetrics):
+            if field.name in {"tape_id", "episode_id", "algorithm"}:
+                values[field.name] = "x"
+            elif field.name in {"event_success_rate", "legal_coverage_rate", "weighted_uncovered", "recovery_delay", "normalized_distance", "load_gap", "inference_latency_ms", "event_to_action_latency_ms", "communication_suppression_rate", "pre_mask_invalid_probability", "mask_rate", "gate_mean", "gate_variance", "value_error", "value_squared_error", "avg_reward"}:
+                values[field.name] = None
+            else:
+                values[field.name] = 0
+        values.update({
+            "tape_id": "t", "episode_id": "e", "algorithm": "PPO-MLP",
+            "event_count": 2, "final_infeasible_count": 1, "final_infeasible_rate": 0.5,
+            "cumulative_uncovered_time": 4.0, "recovery_delay": None,
+            "recovery_delay_observed_count": 0, "fixed_j": 10.0,
+        })
+        episode = EpisodeMetrics(**values)
+        # Event 1 was never observed: no decision rows, fixed_j censored from
+        # final snapshot; Event 2 similarly unresolved.
+        trace = {"events": [
+            {"fixed_j": 6.0, "recovery_delay": None},
+            {"fixed_j": 4.0, "recovery_delay": None},
+        ]}
+        ckpt = CheckpointRecord(
+            variant="PPO-MLP", training_seed=1101, decision_steps=64,
+            checkpoint_path="x.pt", checkpoint_sha256="a" * 64,
+            source_tree_hash="b" * 64, attested_source_commit_sha="c" * 40,
+            protocol_sha256="d" * 64, seed_manifest_sha256="e" * 64,
+            ppo_config={}, rng_state={}, created_at="now",
+        )
+        metrics = extract_validation_metrics(episode, trace, ckpt)
+        self.assertTrue(np.isfinite(metrics.final_infeasible_rate))
+        self.assertTrue(np.isfinite(metrics.cumulative_weighted_vacancy))
+        self.assertTrue(np.isfinite(metrics.recovery_latency))
+        self.assertTrue(np.isfinite(metrics.fixed_j))
+        selected, _ = _lexicographic_select([metrics])
+        self.assertEqual(selected.checkpoint_sha256, ckpt.checkpoint_sha256)
 
 
 # ---------------------------------------------------------------------------

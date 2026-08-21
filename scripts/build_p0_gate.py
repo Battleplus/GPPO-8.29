@@ -187,7 +187,14 @@ def run_tests() -> dict:
 
 
 def verify_seed_isolation() -> dict:
-    """Expand seed ranges and assert train/validation/test namespaces disjoint."""
+    """Expand seed ranges and assert train/validation/test namespaces disjoint.
+
+    Also enforces the Phase J frozen train contract:
+    - formal train mode cycle == manifest preliminary.train.mode_cycle
+    - runtime seed formula == manifest runtime_mapping (instance/event)
+    - reserved episode count is sufficient for the frozen 300k budget under
+      the worst-case 1 accepted decision per episode
+    """
     manifest = json.loads(SEED_MANIFEST_PATH.read_text(encoding="utf-8"))
     preliminary = manifest["preliminary"]
 
@@ -215,13 +222,68 @@ def verify_seed_isolation() -> dict:
         "train_vs_test": sorted(train & test),
         "validation_vs_test": sorted(validation & test),
     }
-    ok = not any(overlaps.values())
+
+    # --- Phase J frozen train contract ---
+    train_block = preliminary["train"]
+    frozen_mode_cycle = tuple(train_block["mode_cycle"])
+    # Runtime formula must match the manifest exactly (episode_index range).
+    mapping = train_block.get("runtime_mapping", {})
+    formula_ok = (
+        mapping.get("instance_seed") == "training_seed*1000003+episode_index"
+        and mapping.get("event_seed") == "training_seed*10000019+episode_index"
+        and int(mapping.get("episode_index_start", 0)) == 0
+    )
+    # Reserved count must cover the frozen 300k budget under the worst-case
+    # 1 accepted decision per episode.
+    reserved = int(train_block.get("episodes_per_training_seed", 0))
+    budget = int(manifest["preliminary"]["train"].get("reserved_coverage_assertions", {})
+                   .get("formal_budget_decision_steps", 300000))
+    coverage_ok = reserved >= budget
+    # Formal train mode cycle must be exactly the frozen cycle (no single).
+    mode_cycle_ok = (
+        frozen_mode_cycle == ("sequential", "overlap", "burst")
+        and "single" not in frozen_mode_cycle
+    )
+    # Sanity: each training seed's expanded count matches the frozen reservation.
+    counts_ok = all(
+        int(spec["count"]) == reserved
+        for spec in list(train_block["instance_seeds_by_training_seed"].values())
+        + list(train_block["event_seeds_by_training_seed"].values())
+    )
+    # Verify the actual start values match the formula for all 3 training seeds.
+    starts_ok = True
+    formula_checks = {}
+    for training_seed, spec in train_block["instance_seeds_by_training_seed"].items():
+        expected = int(training_seed) * 1_000_003 + 0
+        starts_ok = starts_ok and int(spec["start"]) == expected
+        formula_checks[f"instance_seed_{training_seed}"] = int(spec["start"]) == expected
+    for training_seed, spec in train_block["event_seeds_by_training_seed"].items():
+        expected = int(training_seed) * 10_000_019 + 0
+        starts_ok = starts_ok and int(spec["start"]) == expected
+        formula_checks[f"event_seed_{training_seed}"] = int(spec["start"]) == expected
+
+    ok = (
+        not any(overlaps.values())
+        and formula_ok
+        and coverage_ok
+        and mode_cycle_ok
+        and counts_ok
+        and starts_ok
+    )
     return {
         "passed": ok,
         "train_count": len(train),
         "validation_count": len(validation),
         "test_count": len(test),
         "overlaps": overlaps,
+        "train_mode_cycle": list(frozen_mode_cycle),
+        "train_mode_cycle_ok": mode_cycle_ok,
+        "runtime_formula_ok": formula_ok,
+        "reserved_episodes_per_seed": reserved,
+        "formal_budget_decision_steps": budget,
+        "seed_coverage_ok": coverage_ok,
+        "seed_start_formula_ok": starts_ok,
+        "seed_start_formula_checks": formula_checks,
     }
 
 

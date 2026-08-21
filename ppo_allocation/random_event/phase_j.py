@@ -233,29 +233,25 @@ def _require_finite_metric(value: Any, name: str) -> float:
 def compute_fixed_j_from_episode(episode: EpisodeMetrics, trace: dict[str, Any]) -> float:
     """Compute the frozen fixed-J metric from real event metric rows.
 
-    The function intentionally does not read a guessed/fallback field.  Every
-    event contributes the five frozen cost components; a missing recovery
-    latency is a failed validation evaluation rather than an artificial zero.
+    The per-event ``fixed_j`` is materialised at episode finalisation by
+    ``run_episode`` (metrics.EventMetrics.fixed_j): every event contributes the
+    five frozen cost components, and an event that never produced a decision
+    uses the final environment snapshot plus the frozen 200s recovery horizon
+    instead of an implicit None->0 coercion.  This function only verifies and
+    sums those materialised values.
     """
     rows = trace.get("events")
     if not isinstance(rows, list) or len(rows) != int(episode.event_count):
         raise ValueError("trace.events must contain one metric row per episode event")
     total = 0.0
-    for index, row in enumerate(rows):
-        recovery_delay = row.get("recovery_delay")
-        censored = recovery_delay is None
-        if censored:
-            # Explicit finite right-censoring rule from the frozen protocol.
-            # This preserves rankability without pretending that recovery took
-            # zero time.
-            recovery_delay = UNCENSORED_RECOVERY_PENALTY_SECONDS
-        total += compute_fixed_j_from_components(
-            uncovered=row.get("weighted_uncovered"),
-            distance=row.get("normalized_distance"),
-            load_gap=row.get("load_gap"),
-            switches=row.get("switch_count"),
-            recovery_delay=recovery_delay,
-        )
+    for row in rows:
+        value = row.get("fixed_j")
+        if value is None:
+            raise ValueError(
+                "trace event row is missing materialised fixed_j; "
+                "run_episode must finalise every event with an explicit fixed-J value"
+            )
+        total += _require_finite_metric(value, "fixed_j")
     return float(total)
 
 
@@ -354,12 +350,30 @@ def preliminary_train(
         "resume_supported": False,
     }
 
+    from .experiment import _load_frozen_train_episode_cap, _load_frozen_train_modes
+    train_modes = _load_frozen_train_modes()
+    train_cap = _load_frozen_train_episode_cap()
+    if formal:
+        frozen_cycle = tuple(_load_frozen_train_modes())
+        if tuple(train_modes) != frozen_cycle:
+            raise SystemExit(
+                "formal training mode cycle does not match frozen seed_manifest preliminary.train.mode_cycle"
+            )
+        # The reserved train namespace must cover the full budget even under
+        # the worst-case 1 accepted decision per episode.
+        if train_cap < protocol.budget:
+            raise SystemExit(
+                f"frozen train seed reservation {train_cap} < formal budget {protocol.budget}; "
+                "formal training would leave the frozen namespace"
+            )
+
     for variant in protocol.variants:
         for seed in protocol.training_seeds:
             env = CyclingTrainingEnv(
                 seed=seed,
-                modes=MODES,
+                modes=train_modes,
                 events_per_episode=protocol.events_per_tape,
+                max_resets=train_cap,
             )
             # Copy every frozen PPO hyperparameter; only the run seed differs.
             config_values = asdict(ppo_config)
@@ -385,6 +399,8 @@ def preliminary_train(
                     "training_seed": seed,
                     "decision_steps": target_step,
                     "budget": protocol.budget,
+                    "training_modes": list(train_modes),
+                    "max_resets": train_cap,
                 })
                 # Re-hash after save (Phase J requirement 9)
                 ckpt_sha = _sha256_file(ckpt_path)
@@ -957,6 +973,30 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
         "schema_version": 1, "entries": {}, "completed": False,
     }
     entries_ledger = ledger.setdefault("entries", {})
+    state_dir = output_dir / "preliminary" / "test_state"
+
+    # Partial-resume invariant: every consumed entry must belong to this exact
+    # locked manifest, freeze, checkpoint SHA and provenance.  Any drift is a
+    # hard failure, never a silent re-run.
+    for key, entry in entries_ledger.items():
+        if not entry.get("consumed"):
+            continue
+        for field, expected in (
+            ("checkpoint_sha", None),
+            ("test_manifest_sha", test_manifest_sha),
+            ("freeze_manifest_sha", freeze_sha),
+            ("source_tree_hash", gate.get("source_tree_hash")),
+            ("protocol_sha256", gate.get("protocol_sha256")),
+            ("seed_manifest_sha256", gate.get("seed_manifest_sha256")),
+        ):
+            value = entry.get(field)
+            if field == "checkpoint_sha":
+                expected = None  # resolved per-key below
+            if expected is not None and value != expected:
+                raise SystemExit(
+                    f"consumed Test entry {key} has mismatched {field}; "
+                    "refusing partial resume against a different manifest/provenance"
+                )
 
     all_results = []
     for freeze in freezes:
@@ -964,11 +1004,38 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             f"{freeze['variant']}_seed{freeze['training_seed']}_"
             f"{freeze['checkpoint_sha256'][:12]}_{test_manifest_sha}"
         )
-        if entries_ledger.get(key, {}).get("consumed"):
-            raise SystemExit(
-                f"formal Test combination already consumed: {key}; "
-                "use an explicit developer retest path"
-            )
+        entry = entries_ledger.get(key)
+        if entry is not None and entry.get("consumed"):
+            if entry.get("checkpoint_sha") != freeze["checkpoint_sha256"]:
+                raise SystemExit(f"consumed Test entry {key} checkpoint SHA changed; refusing resume")
+            # Same locked manifest + checkpoint + provenance: skip, never re-run.
+            all_results.append({
+                "variant": freeze["variant"], "seed": freeze["training_seed"],
+                "resumed": True, "tape_count": 200,
+            })
+            continue
+        # A crashed (running, never consumed) checkpoint is ambiguous: the
+        # evaluation may or may not have completed.  Hard fail for manual
+        # audit instead of silently re-running a formal Test.
+        state_path = state_dir / f"{key}.json"
+        if state_path.exists():
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if state.get("state") != "consumed":
+                raise SystemExit(
+                    f"formal Test checkpoint {key} is in ambiguous state "
+                    f"{state.get('state')!r}; manual audit required before resume"
+                )
+        _json_file(state_path, {
+            "state": "running",
+            "key": key,
+            "checkpoint_sha": freeze["checkpoint_sha256"],
+            "test_manifest_sha": test_manifest_sha,
+            "freeze_manifest_sha": freeze_sha,
+            "source_tree_hash": gate.get("source_tree_hash"),
+            "protocol_sha256": gate.get("protocol_sha256"),
+            "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+            "at": _utc_now(),
+        })
 
         # Verify checkpoint SHA matches freeze
         ckpt_path = _relative_path(freeze["checkpoint_path"])
@@ -1026,9 +1093,27 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "training_seed": freeze["training_seed"],
             "checkpoint_sha": freeze["checkpoint_sha256"],
             "test_manifest_sha": test_manifest_sha,
+            "freeze_manifest_sha": freeze_sha,
+            "source_tree_hash": gate.get("source_tree_hash"),
+            "protocol_sha256": gate.get("protocol_sha256"),
+            "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
             "at": _utc_now(),
             "result_path": _relative_label(result_path),
         }
+        # Mark consumed only after the result file is durably written, then
+        # flip the state file.  A crash before this point leaves state=running,
+        # which the resume path treats as ambiguous and hard-fails.
+        _json_file(state_path, {
+            "state": "consumed",
+            "key": key,
+            "checkpoint_sha": freeze["checkpoint_sha256"],
+            "test_manifest_sha": test_manifest_sha,
+            "freeze_manifest_sha": freeze_sha,
+            "source_tree_hash": gate.get("source_tree_hash"),
+            "protocol_sha256": gate.get("protocol_sha256"),
+            "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+            "at": _utc_now(),
+        })
         all_results.append({"variant": freeze["variant"], "seed": freeze["training_seed"], "tape_count": len(results)})
         # Persist each completed checkpoint so a partial run can resume only
         # against this exact locked manifest.

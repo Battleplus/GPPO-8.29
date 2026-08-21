@@ -39,6 +39,7 @@ from .events import EventTape
 from .legacy_adapter import LegacyMLPPPOPolicy
 from .metrics import (
     EventMetricAccumulator,
+    _mean,
     aggregate_episode,
     aggregate_tapes,
     paired_metric_report,
@@ -46,7 +47,7 @@ from .metrics import (
     write_metrics_json,
 )
 from .models import GraphActorCritic
-from .reward import compute_cost
+from .reward import compute_cost, compute_fixed_j_from_components
 from .scheduler import (
     RandomEventScheduler,
     TimingProfile,
@@ -468,11 +469,29 @@ def load_tape_bank(manifest_path: str | Path) -> tuple[dict[str, Any], list[tupl
 
 
 class CyclingTrainingEnv(RandomEventAllocationEnv):
-    """Training env that deterministically changes seed and mode every reset."""
+    """Training env that deterministically changes seed and mode every reset.
 
-    def __init__(self, *, seed: int, modes: Sequence[str], events_per_episode: int):
+    ``modes`` is the frozen preliminary train mode cycle (sequential, overlap,
+    burst) loaded from ``seed_manifest.json`` by ``preliminary_train``; the
+    generic evaluation ``MODES`` constant must NOT be passed here.
+
+    ``max_resets`` enforces the frozen train-seed namespace: the manifest
+    reserves ``episodes_per_training_seed`` episode indices per training seed.
+    Once exhausted the env hard-FAILs instead of silently producing an
+    unregistered training seed.
+    """
+
+    def __init__(
+        self,
+        *,
+        seed: int,
+        modes: Sequence[str],
+        events_per_episode: int,
+        max_resets: int = 300_000,
+    ):
         self._training_seed = int(seed)
         self._training_modes = tuple(modes)
+        self._max_resets = int(max_resets)
         self._reset_index = 0
         super().__init__(
             initial_seed=seed,
@@ -483,12 +502,39 @@ class CyclingTrainingEnv(RandomEventAllocationEnv):
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         index = self._reset_index
+        if index >= self._max_resets:
+            raise RuntimeError(
+                f"CyclingTrainingEnv seed {self._training_seed}: reset_index {index} "
+                f"reached frozen reserved cap {self._max_resets}; refusing to leave "
+                f"the frozen train-seed namespace"
+            )
         self._reset_index += 1
         self.initial_seed = self._training_seed * 1_000_003 + index
         self.event_seed = self._training_seed * 10_000_019 + index
         self.mode = self._training_modes[index % len(self._training_modes)]
         self.supplied_tape = None
         return super().reset(seed=self.initial_seed, options=options)
+
+
+def _load_frozen_train_modes() -> tuple[str, ...]:
+    """Return the frozen preliminary train mode cycle from seed_manifest.json.
+
+    The manifest is the single source of truth for the training mode sequence;
+    the generic evaluation MODES constant must never be used for training.
+    """
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "seed_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    cycle = tuple(manifest["preliminary"]["train"]["mode_cycle"])
+    if not cycle or any(mode not in MODES for mode in cycle):
+        raise ValueError("frozen preliminary train mode_cycle is invalid")
+    return cycle
+
+
+def _load_frozen_train_episode_cap() -> int:
+    """Return the frozen per-training-seed episode reservation from the manifest."""
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "seed_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    return int(manifest["preliminary"]["train"]["episodes_per_training_seed"])
 
 
 def train_variants(
@@ -506,9 +552,14 @@ def train_variants(
         raise ValueError("timesteps must be positive")
     model_dir = output_dir / "models"
     records: list[dict[str, Any]] = []
+    train_modes = _load_frozen_train_modes()
+    train_cap = _load_frozen_train_episode_cap()
     for variant in variants:
         for seed in seeds:
-            env = CyclingTrainingEnv(seed=seed, modes=MODES, events_per_episode=events_per_episode)
+            env = CyclingTrainingEnv(
+                seed=seed, modes=train_modes, events_per_episode=events_per_episode,
+                max_resets=train_cap,
+            )
             config = PPOConfig(
                 rollout_steps=min(int(rollout_steps), int(timesteps)),
                 update_epochs=int(update_epochs),
@@ -526,7 +577,7 @@ def train_variants(
                 checkpoint,
                 extra={
                     "experiment": "random_event_gppo",
-                    "training_modes": list(MODES),
+                    "training_modes": list(train_modes),
                     "events_per_episode": events_per_episode,
                     "elapsed_seconds": elapsed,
                 },
@@ -801,6 +852,7 @@ def run_episode(
             first_action_pending.discard(event_id)
         graph = graph_after
 
+    final_cost = compute_cost(env)
     event_metrics = []
     for event in tape.events:
         runtime = env.event_records.get(event.event_id)
@@ -817,13 +869,37 @@ def run_episode(
         recovery_delay = None
         if runtime is not None and runtime.resolved_at is not None:
             recovery_delay = max(0.0, float(runtime.resolved_at - event.observed_at))
+        # Frozen censoring rule: an event that never produced a decision (e.g.
+        # it was never observed because an earlier event terminated the episode)
+        # derives its fixed-J components from the final environment snapshot.
+        # recovery_delay uses the explicit frozen 200s horizon penalty, never
+        # an implicit None->0 coercion.  This keeps fixed J finite and the
+        # checkpoint lexicographically rankable even with unresolved events.
+        censored = accumulator._decision_count == 0
+        if censored:
+            fixed_j = compute_fixed_j_from_components(
+                uncovered=final_cost.uncovered,
+                distance=final_cost.distance,
+                load_gap=final_cost.load_gap,
+                switches=final_cost.switches,
+                recovery_delay=200.0,
+            )
+        else:
+            fixed_j = compute_fixed_j_from_components(
+                uncovered=accumulator._uncovered[-1] if accumulator._uncovered else final_cost.uncovered,
+                distance=_mean(accumulator._distance),
+                load_gap=_mean(accumulator._load_gap),
+                switches=float(accumulator._switch_count),
+                recovery_delay=recovery_delay if recovery_delay is not None else 200.0,
+            )
         event_metrics.append(
             accumulator.finalize(
                 success=success,
                 recovery_delay=recovery_delay,
                 final_infeasible=(not success and bool(info.get("final_infeasible", False))),
                 final_legal_coverage_rate=_coverage(env),
-                final_weighted_uncovered=compute_cost(env).uncovered,
+                final_weighted_uncovered=final_cost.uncovered,
+                fixed_j=fixed_j,
             )
         )
     episode = aggregate_episode(event_metrics, algorithm=algorithm, tape_id=tape_id, episode_id=episode_id)

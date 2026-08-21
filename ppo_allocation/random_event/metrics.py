@@ -113,6 +113,7 @@ class EventMetrics:
     temporary_infeasible: bool
     final_infeasible: bool
     event_return: float
+    fixed_j: float
     avg_reward: float | None
     decision_count: int
     inference_latency_ms: float | None
@@ -158,6 +159,7 @@ class EpisodeMetrics:
     final_infeasible_count: int
     final_infeasible_rate: float | None
     episode_return: float
+    fixed_j: float
     avg_reward: float | None
     decision_count: int
     inference_latency_ms: float | None
@@ -298,6 +300,7 @@ class EventMetricAccumulator:
         final_infeasible: bool | None = None,
         final_legal_coverage_rate: float | None = None,
         final_weighted_uncovered: float | None = None,
+        fixed_j: float = 0.0,
     ) -> EventMetrics:
         """Freeze the active event into a JSON-ready record."""
 
@@ -333,6 +336,7 @@ class EventMetricAccumulator:
             temporary_infeasible=self._temporary_infeasible,
             final_infeasible=final_flag,
             event_return=_sum(self._rewards),
+            fixed_j=float(fixed_j),
             avg_reward=_mean(self._rewards),
             decision_count=self._decision_count,
             inference_latency_ms=_mean(self._inference_ms),
@@ -375,6 +379,7 @@ def aggregate_episode(
     count = len(rows)
     decisions = int(_sum(row.get("decision_count", 0) for row in rows))
     event_return = _sum(row.get("event_return") for row in rows)
+    fixed_j = _sum(row.get("fixed_j") for row in rows)
     opportunities = int(_sum(row.get("communication_opportunities", 0) for row in rows))
     suppressed = min(int(_sum(row.get("communication_suppressed", 0) for row in rows)), opportunities)
     delays = [row.get("recovery_delay") for row in rows if _finite(row.get("recovery_delay")) is not None]
@@ -400,6 +405,7 @@ def aggregate_episode(
         final_infeasible_count=sum(bool(row.get("final_infeasible", False)) for row in rows),
         final_infeasible_rate=(_mean(bool(row.get("final_infeasible", False)) for row in rows) if rows else None),
         episode_return=event_return,
+        fixed_j=fixed_j,
         avg_reward=(event_return / decisions if decisions else None),
         decision_count=decisions,
         inference_latency_ms=_weighted_event_mean(rows, "inference_latency_ms", "decision_count"),
