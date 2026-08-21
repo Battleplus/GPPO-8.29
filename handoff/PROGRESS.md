@@ -1,36 +1,55 @@
 # Phase J / P0 Final Progress
 
-## Final commits
+## Final commits (S3 round)
 - Branch: `plan/lightweight-sfc-refactor`
-- Source S2: `6943a92f7e3663fc469eea98ad730e64784a0148`
-- Evidence E2: pending until this evidence commit is created
+- Source S3: `f87fd5acc3cc458127099ccca90f3d09a092a4a9`
+- Evidence E3: pending until this evidence commit is created
 - Formal Preliminary 300k: **NOT STARTED**
 
-## S2 blocker fixes
-- Unrecovered Validation events remain rankable. Level 1 always uses final infeasible count/rate. Level 3 uses observed recovery-delay sum plus a frozen 200.0-second censoring penalty per unresolved event. Level 4 uses the same explicit penalty in frozen J; `None` is never silently treated as zero.
-- Formal freeze requires `selection.formal=true`, reruns the formal Validation manifest contract, and matches source-tree, attested-commit, protocol, seed-manifest, and Validation manifest SHA.
-- Formal Test requires a formal freeze with exactly the nine variant/seed keys and matching aggregate/entry provenance.
-- Official Test generation is protected by `formal_test_bank_lock.json`; existing locks cannot regenerate the manifest. The lock includes Test manifest SHA, freeze manifest SHA, source tree, attested source commit, protocol, and seed-manifest hashes.
-- Formal Test accepts partial resume only for unconsumed ledger entries against the same lock. A completed lock is terminal.
-- The public `protocol-bank --tier preliminary --split test` command routes through the guarded Phase J Test generator and rejects before freeze.
-- Trainer/evaluation tests inject one stale submission, verify re-inference, and verify no stale transition/reward/event metric is recorded.
+## S3 blocker fixes (final pre-300k closeout)
+- Frozen train mode cycle: `preliminary_train` now loads
+  `seed_manifest.preliminary.train.mode_cycle` (sequential/overlap/burst) and
+  passes it to `CyclingTrainingEnv`; the generic evaluation `MODES` constant
+  is no longer used for training.
+- Train seed namespace: `episodes_per_training_seed` expanded 1000 -> 300000
+  so the frozen 300k decision budget fits inside the reserved namespace even
+  under the worst-case 1 accepted decision per episode. Seed ranges for
+  1101/2202/3303 and the runtime formula
+  `training_seed*1000003+episode_index` /
+  `training_seed*10000019+episode_index` are unchanged and machine-checked.
+- `CyclingTrainingEnv.reset()` hard-FAILs once `reset_index >= max_resets`
+  (frozen reserved cap) instead of silently leaving the train namespace.
+- Per-event `fixed_j` is materialised in `EventMetrics` at episode
+  finalisation. An event that never produced a decision (unobserved, or an
+  earlier event caused final infeasible termination) uses the final
+  environment cost snapshot plus the frozen 200s recovery horizon; `None` is
+  never silently treated as zero. `extract_validation_metrics` verifies and
+  sums the materialised values, so multi-event early termination stays
+  lexicographically rankable.
+- Formal Test partial resume: consumed ledger entries are skipped only when
+  their checkpoint/test/freeze/source/protocol/seed provenance matches the
+  current lock; every unconsumed checkpoint is written as state=running
+  before evaluation and flipped to state=consumed only after the result file
+  is durable. A completed lock or a leftover running state hard-fails.
 
-## Verification on S2
-- Locked environment: Python 3.11.5; torch 2.5.0+cpu; numpy 2.0.2; sb3-contrib 2.9.0; stable-baselines3 2.9.0; gymnasium 1.3.0.
-- Full suite: **102/102 PASS**.
-- Fresh developer dry-run: **PASS**, 18 checkpoints -> 9 selected -> 9 frozen; official Test namespace untouched.
-- Final smoke: **PASS**, 20 Single + 20 Sequential + 20 Overlap + 20 Burst = 80; metadata commit equals S2.
-- P0 Gate: `training_allowed=true`, `violations=[]`, top-level `test_count=102`.
+## Verification on S3
+- Locked environment: Python 3.11.5; torch 2.5.0+cpu; numpy 2.0.2;
+  sb3-contrib 2.9.0; stable-baselines3 2.9.0; gymnasium 1.3.0.
+- Full suite: **110/110 PASS** (8 new tests added this round).
+- Fresh developer dry-run: **PASS**, 18 checkpoints -> 9 selected -> 9 frozen;
+  official Test namespace untouched.
+- Final smoke: **PASS**, 20 Single + 20 Sequential + 20 Overlap + 20 Burst =
+  80; metadata git_commit equals S3.
+- P0 Gate: `training_allowed=true`, `violations=[]`, top-level
+  `test_count=110`, attested_source_commit_sha == S3.
 - `_check_p0_gate()` on the evidence descendant: PASS.
 
-## Hashes
-- attested/source commit: `6943a92f7e3663fc469eea98ad730e64784a0148`
-- source_tree_hash: `d6370e4aab14a496b89914298f4b48ccf1987d81a87db2af4254f5e51d342a9e`
-- protocol_sha256: `ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f`
-- seed_manifest_sha256: `4fa2ab0ef3615b41d98ce4b1eca5072416ef326aa105a339ab23939a604ca615`
-- smoke_summary_sha256: `55507a932cb0c0802ddd57c539aed10cfb6276a9610eed704760d4d8d3ce63de`
-- smoke_manifest_sha256: `58668ae1a88bcfb5c64568c718a71986c2df3ad83f1f90663b18fd6acbebd421`
-- smoke_environment_metadata_sha256: `7d010b9d34d90841ae1bdfd1c0fa45d9f8ac7eb80bf08cb21347ddf19f20f54f`
+## S3 Gate hashes
+- attested/source commit: `f87fd5acc3cc458127099ccca90f3d09a092a4a9`
+- seed_namespace_isolation check: train_mode_cycle_ok, runtime_formula_ok,
+  seed_coverage_ok, seed_start_formula_ok all true; train/validation/test
+  namespaces disjoint.
+- smoke metadata git_commit == `f87fd5acc3cc458127099ccca90f3d09a092a4a9`
 
 ## Remaining
 - Formal Preliminary training/Validation/Freeze/Test have not been run.
