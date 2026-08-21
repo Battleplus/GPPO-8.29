@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -181,26 +182,38 @@ def _validate_hashes_match(gate: dict[str, Any], stage: str) -> None:
     gate_path = Path(__file__).resolve().parents[2] / "handoff" / "P0_GATE.json"
     root = Path(__file__).resolve().parents[2]
 
-    # Recompute source hashes
-    from scripts.build_p0_gate import SOURCE_FILES, sha256_file
+    # Recompute the exact Git blobs from the attested commit. This avoids
+    # platform line-ending differences and prevents disk bytes from becoming a
+    # second, untracked source of truth.
+    attested = gate.get("attested_source_commit_sha")
+    frozen_sources = gate.get("source_hashes", {}).get("source", {})
+    if not attested or not frozen_sources:
+        raise SystemExit(f"{stage}: incomplete source attestation")
     current_sources = {}
-    for rel in SOURCE_FILES:
-        path = root / rel
-        current_sources[rel] = sha256_file(path) if path.exists() else "MISSING"
+    for rel in frozen_sources:
+        try:
+            blob = subprocess.check_output(["git", "show", f"{attested}:{rel}"], cwd=root)
+            current_sources[rel] = hashlib.sha256(blob).hexdigest()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"{stage}: missing attested source {rel}") from exc
     current_tree = hashlib.sha256(
         "".join(f"{k}:{v}\n" for k, v in sorted(current_sources.items())).encode()
     ).hexdigest()
 
-    if current_tree != gate.get("source_tree_hash"):
+    if current_sources != frozen_sources or current_tree != gate.get("source_tree_hash"):
         raise SystemExit(f"{stage}: source_tree_hash drifted — rerun gate")
 
-    # Check protocol
-    from scripts.build_p0_gate import PROTOCOL_PATH, SEED_MANIFEST_PATH
-    current_protocol = sha256_file(PROTOCOL_PATH)
-    current_seed_manifest = sha256_file(SEED_MANIFEST_PATH)
-    if current_protocol != gate.get("protocol_sha256"):
+    def git_hash(relative: str) -> str:
+        try:
+            return hashlib.sha256(
+                subprocess.check_output(["git", "show", f"{attested}:{relative}"], cwd=root)
+            ).hexdigest()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"{stage}: missing attested {relative}") from exc
+
+    if git_hash("configs/random_event_protocol.json") != gate.get("protocol_sha256"):
         raise SystemExit(f"{stage}: protocol hash drifted — rerun gate")
-    if current_seed_manifest != gate.get("seed_manifest_sha256"):
+    if git_hash("configs/seed_manifest.json") != gate.get("seed_manifest_sha256"):
         raise SystemExit(f"{stage}: seed_manifest hash drifted — rerun gate")
 
 
@@ -825,6 +838,15 @@ def _validate_test_manifest(manifest_path: Path, gate: dict[str, Any]) -> tuple[
         set_counts[label] = set_counts.get(label, 0) + 1
     if set_counts != expected_sets:
         raise SystemExit(f"Test set counts mismatch: {set_counts}")
+    for entry in payload.get("entries", []):
+        label = entry.get("set_name")
+        if label == "Test-Unseen":
+            if entry.get("mode") not in MODES:
+                raise SystemExit("Test-Unseen contains an unsupported timing mode")
+        elif label in expected_sets:
+            expected_mode = label.removeprefix("Test-").lower()
+            if entry.get("mode") != expected_mode:
+                raise SystemExit(f"{label} contains mode {entry.get('mode')!r}")
     return payload, _sha256_file(manifest_path)
 
 

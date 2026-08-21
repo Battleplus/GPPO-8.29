@@ -513,7 +513,10 @@ class ProvenanceGuardTests(unittest.TestCase):
             manifest_path = output / "preliminary" / "tapes" / "preliminary_test_protocol" / "manifest.json"
             labels = ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
             def fake_generate(*args, **kwargs):
-                entries = [{"set_name": label, "mode": "single"} for label in labels for _ in range(40)]
+                entries = [
+                    {"set_name": label, "mode": ("single" if label == "Test-Unseen" else label.removeprefix("Test-").lower())}
+                    for label in labels for _ in range(40)
+                ]
                 payload = {
                     "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
                     "expected_tape_count": 200, "tape_count": 200,
