@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "decisions": [
     {
       "id": "D-007",
@@ -37,17 +37,25 @@
       "id": "D-011",
       "date": "2026-08-21",
       "phase": "H",
-      "decision": "Gate records current git commit and complete source/config hashes without implicit re-baselining",
-      "rationale": "Training must be refused if current HEAD or any attested source/config hash differs.",
+      "decision": "Bind P0 evidence to committed Git blobs and require a clean protected tree",
+      "rationale": "A green gate must attest the Git tree at its source commit, while evidence-only descendants remain valid.",
       "status": "EXECUTED"
     },
     {
       "id": "D-012",
       "date": "2026-08-21",
-      "phase": "I",
-      "decision": "Keep training_allowed=false until locked Python 3.11 legacy/C++ compatibility is actually rerun",
-      "rationale": "The current environment has not established sb3_contrib and C++ bridge compatibility; no assumptions are promoted to PASS.",
-      "status": "HONEST-CURRENT-STATE"
+      "phase": "J",
+      "decision": "Formal Preliminary uses exactly 3 variants × 3 seeds × 12 checkpoints; resume is unsupported",
+      "rationale": "The frozen budget and checkpoint schedule cannot be changed implicitly; developer dry-run is a separate non-formal namespace.",
+      "status": "EXECUTED"
+    },
+    {
+      "id": "D-013",
+      "date": "2026-08-21",
+      "phase": "J",
+      "decision": "Validation uses fixed five-level metrics and Test is ledger-gated after nine-checkpoint freeze",
+      "rationale": "Missing metrics fail selection rather than becoming zero, and Test cannot influence selection or be consumed twice.",
+      "status": "EXECUTED"
     }
   ]
 }
