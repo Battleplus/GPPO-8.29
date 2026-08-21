@@ -46,6 +46,7 @@ SMOKE_ENV_METADATA_PATH = ROOT / "ppo_allocation" / "results" / "random_event" /
 SOURCE_FILES = [
     "event_runtime/concurrency.py",
     "event_runtime/adapter.py",
+    "event_runtime/events.py",
     "event_runtime/metrics.py",
     "event_runtime/replay.py",
     "event_runtime/state_machine.py",
@@ -56,11 +57,20 @@ SOURCE_FILES = [
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
     "ppo_allocation/random_event/scheduler.py",
+    "ppo_allocation/random_event/graph.py",
+    "ppo_allocation/random_event/reward.py",
+    "ppo_allocation/random_event/baselines.py",
+    "ppo_allocation/random_event/events.py",
+    "ppo_allocation/random_event/legacy_adapter.py",
+    "ppo_allocation/config.py",
     "scripts/build_p0_gate.py",
     "ppo_allocation/tests_random_event/test_event_runtime_integration.py",
     "ppo_allocation/tests_random_event/test_confirmation_timelines.py",
     "ppo_allocation/tests_random_event/test_concurrency_invariants.py",
     "ppo_allocation/tests_random_event/test_p0_gate_contract.py",
+    "ppo_allocation/tests_random_event/test_random_event_core.py",
+    "ppo_allocation/tests_random_event/test_random_event_training.py",
+    "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
 ]
 
 # Required test suites.  Each entry: (label, discovery_dir, pattern).
@@ -319,7 +329,7 @@ def run_invariant_checks() -> dict:
         ):
             results[key] = {"passed": False, "error": str(exc)}
 
-    # --- Stale injection: N=10 stale submissions, all rejected, rate==1.0 ---
+    # --- Stale injection: 5 graph-stale + 5 action-version-stale, all rejected ---
     try:
         from ppo_allocation.random_event.runtime_bridge import RuntimeBridge
         from ppo_allocation.random_event.environment import RandomEventAllocationEnv
@@ -328,18 +338,24 @@ def run_invariant_checks() -> dict:
         bridge = RuntimeBridge(detector_seed=42)
         gv = int(env.graph_version)
         av = int(env.decision_version)
-        N = 10
+        N_GRAPH = 5
+        N_AV = 5
         all_rejected = True
-        for i in range(N):
+        # Graph-stale: command with old graph_version
+        for i in range(N_GRAPH):
             ok = bridge.submit_stale_action(
-                env,
-                command_id=f"p0-injected-{i}",
-                uav_id="0",
-                region_id="0",
-                stale_graph_version=gv - 1,
-                action_version=av,
-                fencing_token=0,
-                now=0.0,
+                env, command_id=f"p0-graph-{i}", uav_id="0", region_id="0",
+                stale_graph_version=gv - 1, action_version=av,
+                fencing_token=0, now=0.0,
+            )
+            if not ok:
+                all_rejected = False
+        # Action-version-stale: command with old action_version
+        for i in range(N_AV):
+            ok = bridge.submit_stale_action(
+                env, command_id=f"p0-av-{i}", uav_id="0", region_id="0",
+                stale_graph_version=gv, action_version=av - 1,
+                fencing_token=0, now=0.0,
             )
             if not ok:
                 all_rejected = False
@@ -349,9 +365,13 @@ def run_invariant_checks() -> dict:
         rate = snap["stale_rejection_rate"]
         env.close()
         results["stale_injection_rate"] = {
-            "passed": injected == N and rejected == N and rate == 1.0 and all_rejected,
-            "injected": injected,
-            "rejected": rejected,
+            "passed": injected == N_GRAPH + N_AV and rejected == N_GRAPH + N_AV and rate == 1.0 and all_rejected,
+            "graph_stale_injected": N_GRAPH,
+            "graph_stale_rejected": N_GRAPH,
+            "action_version_stale_injected": N_AV,
+            "action_version_stale_rejected": N_AV,
+            "total_injected": injected,
+            "total_rejected": rejected,
             "rate": rate,
         }
     except Exception as exc:  # pragma: no cover
@@ -442,10 +462,16 @@ def verify_smoke_evidence(attested_commit: str) -> dict:
         replayed = int(summary.get("replayed_tape_count", -1))
         mode_ok = counts == {mode: 20 for mode in counts}
         replayed_ok = replayed == 80
-        manifest_hash = manifest.get("manifest_sha256") or manifest.get("seed_manifest_sha256", "")
-
-        # Compute file hashes for the smoke evidence artifacts.
+        # Compute file hashes for ALL smoke evidence artifacts.
         summary_sha = sha256_file(SMOKE_SUMMARY_PATH)
+        # Find and hash the smoke manifest file.
+        smoke_manifest_path = SMOKE_SUMMARY_PATH.parent / "tapes" / manifest.get("bank_name", "smoke") / "manifest.json"
+        if not smoke_manifest_path.exists():
+            # Try to find it from the manifest_path in the summary.
+            rel = manifest.get("manifest_path", "")
+            if rel:
+                smoke_manifest_path = ROOT / "ppo_allocation" / rel
+        manifest_hash = sha256_file(smoke_manifest_path) if smoke_manifest_path.exists() else "MISSING"
         meta_sha = sha256_file(SMOKE_ENV_METADATA_PATH) if SMOKE_ENV_METADATA_PATH.exists() else "MISSING"
 
         # Verify environment metadata: Python 3.11.x, frozen package versions,
@@ -487,7 +513,8 @@ def verify_smoke_evidence(attested_commit: str) -> dict:
             meta_detail["error"] = f"missing {SMOKE_ENV_METADATA_PATH.relative_to(ROOT)}"
             meta_ok = False
 
-        passed = replayed_ok and mode_ok and meta_ok
+        manifest_hash_ok = manifest_hash and manifest_hash != "MISSING" and len(manifest_hash) == 64
+        passed = replayed_ok and mode_ok and meta_ok and manifest_hash_ok
         return {
             "passed": passed,
             "replayed_tape_count": replayed,

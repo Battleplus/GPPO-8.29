@@ -310,7 +310,6 @@ class RuntimeBridge:
     def _new_counters() -> dict[str, int]:
         return {
             "stale_rejected": 0,
-            "stale_attempted": 0,
             "injected_stale_submissions": 0,
             "injected_stale_rejected": 0,
             "duplicate_assignments": 0,
@@ -751,7 +750,6 @@ class RuntimeBridge:
             "injected_stale_submissions": injected,
             "injected_stale_rejected": injected_rejected,
             "stale_rejected": self._cc["stale_rejected"],
-            "stale_attempted": self._cc["stale_attempted"],
             "duplicate_assignments": self._cc["duplicate_assignments"],
             "late_ack_resurrections": self._cc["late_ack_resurrections"],
             "unaffected_interruptions": self._cc["unaffected_interruptions"],

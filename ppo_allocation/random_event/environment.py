@@ -61,6 +61,20 @@ class StaleDecisionError(RuntimeError):
     """Raised by the strict submission API when the graph changed in flight."""
 
 
+@dataclass(frozen=True)
+class DecisionContext:
+    """Snapshot of the decision-time state returned by ``begin_decision``.
+
+    Carries the graph, graph_version, and action_version that were current at
+    the instant the policy was asked to make a decision.  These values must be
+    passed back via ``submit_action`` so the execution layer can detect stale
+    submissions.
+    """
+    graph: HeteroGraphState
+    graph_version: int
+    action_version: int
+
+
 class RandomEventAllocationEnv(UAVTaskAllocationEnv):
     """Event-tape environment whose action is a single UAV--Region edge."""
 
@@ -408,31 +422,70 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
     # Versioned edge decisions
     # ------------------------------------------------------------------
 
-    def begin_decision(self) -> tuple[HeteroGraphState, int]:
-        graph = build_graph_state(self)
-        return graph, graph.graph_version
+    def begin_decision(self) -> DecisionContext:
+        """Snapshot the current decision context.
 
-    def submit_action(self, action: int, expected_graph_version: int, *, strict: bool = False):
-        if int(expected_graph_version) != self.graph_version:
+        Returns a frozen ``DecisionContext`` carrying the graph, graph_version,
+        and action_version at this instant.  The caller passes the context back
+        to ``submit_action`` so the execution layer can detect stale or
+        future-version submissions.
+        """
+        graph = build_graph_state(self)
+        return DecisionContext(
+            graph=graph,
+            graph_version=int(self.graph_version),
+            action_version=int(self.decision_version),
+        )
+
+    def submit_action(
+        self,
+        action: int,
+        expected_graph_version: int,
+        expected_action_version: int | None = None,
+        *,
+        strict: bool = False,
+    ):
+        """Submit a decision with staleness guards.
+
+        ``expected_graph_version`` must match ``self.graph_version`` exactly.
+        If ``expected_action_version`` is provided, it must also match
+        ``self.decision_version`` exactly.  A mismatch on either count causes
+        an immediate reject (reward=0, no state mutation, no PPO transition).
+
+        ``strict=True`` raises ``StaleDecisionError`` instead of returning a
+        zero-reward tuple.
+        """
+        gv = int(expected_graph_version)
+        if gv != self.graph_version:
             self.stale_rejection_count += 1
             if strict:
                 raise StaleDecisionError(
-                    f"decision used graph v{expected_graph_version}, current graph is v{self.graph_version}"
+                    f"decision used graph v{gv}, current graph is v{self.graph_version}"
                 )
             graph = build_graph_state(self)
             info = self._info(graph, stale_decision=True, rejected_action=int(action))
             return graph, 0.0, False, False, info
-        return self._step_current(int(action))
+        if expected_action_version is not None and int(expected_action_version) != self.decision_version:
+            self.stale_rejection_count += 1
+            if strict:
+                raise StaleDecisionError(
+                    f"decision used action_version={expected_action_version}, current is {self.decision_version}"
+                )
+            graph = build_graph_state(self)
+            info = self._info(graph, stale_decision=True, rejected_action=int(action))
+            return graph, 0.0, False, False, info
+        return self._step_current(int(action), expected_graph_version=gv, expected_action_version=int(expected_action_version) if expected_action_version is not None else None)
 
     def step(self, action):
         if isinstance(action, Mapping):
             return self.submit_action(
                 int(action["action"]),
                 int(action.get("graph_version", self.graph_version)),
+                expected_action_version=action.get("action_version"),
             )
         return self._step_current(int(action))
 
-    def _step_current(self, action: int):
+    def _step_current(self, action: int, *, expected_graph_version: int | None = None, expected_action_version: int | None = None):
         graph_before = build_graph_state(self)
         before_assignments = assignment_map(self)
         before_cost = compute_cost(self, self.cost_weights, reference_assignments=before_assignments)
@@ -458,8 +511,11 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
             command_accepted = True
             if self.runtime_bridge is not None:
                 bridge = self.runtime_bridge
-                bridge._cc["stale_attempted"] += 1
-                command_accepted = bridge.issue_assignment_command(self, uid, rid, self.current_time) is not None
+                command_accepted = bridge.issue_assignment_command(
+                    self, uid, rid, self.current_time,
+                    expected_graph_version=expected_graph_version,
+                    expected_action_version=expected_action_version,
+                ) is not None
                 if not command_accepted:
                     self.stale_rejection_count += 1
                     repaired = self.noop_action

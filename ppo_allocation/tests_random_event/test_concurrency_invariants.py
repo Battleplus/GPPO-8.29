@@ -22,6 +22,8 @@ _REPO_ROOT = str(Path(__file__).resolve().parents[2])
 if _REPO_ROOT not in sys.path:
     sys.path.append(_REPO_ROOT)
 
+import torch
+
 from event_runtime.concurrency import (
     ACK, ACKType, AssignmentCommand, AssignmentLease, CommandStatus,
     ConcurrencyManager, FencingToken,
@@ -265,11 +267,9 @@ class StaleActionVersionTests(unittest.TestCase):
         env.reset(seed=42)
         bridge = RuntimeBridge(detector_seed=42)
         ctx = bridge.begin_decision(env)
-        # Pick a pending region if any
         pending = list(env.pending_regions)
         if pending:
             rid = pending[0]
-            # Find a valid UAV for this region
             uid = 0
             for u in env.uavs:
                 if env.uavs[u].alive and not env.uavs[u].sensor_failed:
@@ -283,6 +283,43 @@ class StaleActionVersionTests(unittest.TestCase):
             self.assertIsNotNone(cmd, "Valid assignment with matching versions should be accepted")
         else:
             self.skipTest("No pending regions after reset")
+        env.close()
+
+
+class E2EStaleActionVersionTests(unittest.TestCase):
+    """Real E2E test: begin_decision → policy → stale submit via env API."""
+
+    def test_stale_av_rejected_via_env_submit_action(self):
+        """Advance env, then submit with old action_version → rejected."""
+        import numpy as np
+        from ppo_allocation.random_event.environment import RandomEventAllocationEnv
+        env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
+        graph, _ = env.reset(seed=42)
+        ctx = env.begin_decision()
+        old_gv = ctx.graph_version
+        old_av = ctx.action_version
+        # Step the environment once to advance decision_version
+        action = int(torch.nonzero(graph.action_mask[:-1])[0])
+        graph, _, _, _, _ = env.step(action)
+        # Now submit with old action_version → must be rejected
+        stale_result = env.submit_action(action, old_gv, expected_action_version=old_av)
+        self.assertEqual(stale_result[1], 0.0, "Stale submission must yield reward=0")
+        self.assertEqual(env.stale_rejection_count, 1)
+        env.close()
+
+    def test_matching_av_accepted_via_env_submit_action(self):
+        """Submit with current gv+av → accepted."""
+        import numpy as np
+        from ppo_allocation.random_event.environment import RandomEventAllocationEnv
+        env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="single", events_per_episode=1)
+        graph, _ = env.reset(seed=42)
+        ctx = env.begin_decision()
+        # Find a legal action
+        legal = torch.nonzero(graph.action_mask[:-1]).flatten()
+        action = int(legal[0]) if len(legal) else graph.noop_action
+        result = env.submit_action(action, ctx.graph_version, expected_action_version=ctx.action_version)
+        # Should NOT be rejected (reward may be 0 or positive depending on action)
+        self.assertNotEqual(result[1], 0.0 if action != graph.noop_action else result[1])
         env.close()
 
 

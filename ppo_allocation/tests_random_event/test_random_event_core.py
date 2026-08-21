@@ -406,11 +406,11 @@ class EnvironmentContractTests(unittest.TestCase):
             mode="overlap",
         )
         env.reset()
-        graph, version = env.begin_decision()
-        action = first_legal_edge(graph)
+        ctx = env.begin_decision()
+        action = first_legal_edge(ctx.graph)
         self.assertEqual(env.advance_time(0.5), ["E0001"])
         with self.assertRaises(StaleDecisionError):
-            env.submit_action(action, version, strict=True)
+            env.submit_action(action, ctx.graph_version, strict=True)
         self.assertEqual(env.stale_rejection_count, 1)
 
     def test_edge_mask_and_noop_contract(self):
