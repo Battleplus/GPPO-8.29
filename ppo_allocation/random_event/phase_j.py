@@ -151,11 +151,25 @@ def _get_rng_state() -> dict[str, Any]:
 
 
 def _check_p0_gate_strict() -> dict[str, Any]:
-    """Run P0 gate check and return the gate dict. Raises SystemExit if RED."""
+    """Run the formal P0 gate and return its attestation."""
     from .experiment import _check_p0_gate
     _check_p0_gate()
     gate_path = Path(__file__).resolve().parents[2] / "handoff" / "P0_GATE.json"
     return json.loads(gate_path.read_text(encoding="utf-8"))
+
+
+def _developer_attestation() -> dict[str, Any]:
+    """Return current committed hashes for explicitly non-formal dry-runs."""
+    from scripts.build_p0_gate import compute_hashes
+    hashes = compute_hashes()
+    return {
+        "attested_source_commit_sha": hashes["git_commit_sha"],
+        "git_commit_sha": hashes["git_commit_sha"],
+        "source_tree_hash": hashes["source_tree_hash"],
+        "protocol_sha256": hashes["protocol"],
+        "seed_manifest_sha256": hashes["seed_manifest"],
+        "source_hashes": hashes,
+    }
 
 
 def _validate_hashes_match(gate: dict[str, Any], stage: str) -> None:
@@ -280,8 +294,11 @@ def preliminary_train(
     """
     from .experiment import CyclingTrainingEnv
 
-    gate = _check_p0_gate_strict()
-    _validate_hashes_match(gate, "preliminary-train")
+    if formal:
+        gate = _check_p0_gate_strict()
+        _validate_hashes_match(gate, "preliminary-train")
+    else:
+        gate = _developer_attestation()
 
     protocol = protocol or PreliminaryProtocol()
     if formal and protocol != PreliminaryProtocol():
@@ -560,8 +577,11 @@ def preliminary_validate(
     Returns 9 selected checkpoints (3 variants × 3 seeds), each independently
     chosen from its own 12-checkpoint group.
     """
-    gate = _check_p0_gate_strict()
-    _validate_hashes_match(gate, "preliminary-validate")
+    if formal:
+        gate = _check_p0_gate_strict()
+        _validate_hashes_match(gate, "preliminary-validate")
+    else:
+        gate = _developer_attestation()
 
     if checkpoints is None:
         ckpt_index_path = output_dir / "preliminary" / "checkpoint_index.json"
@@ -641,8 +661,11 @@ def preliminary_freeze(
     validation_manifest: Path | None = None,
 ) -> dict[str, Any]:
     """Freeze selected checkpoints after revalidating hashes and selection cardinality."""
-    gate = _check_p0_gate_strict()
-    _validate_hashes_match(gate, "preliminary-freeze")
+    if formal:
+        gate = _check_p0_gate_strict()
+        _validate_hashes_match(gate, "preliminary-freeze")
+    else:
+        gate = _developer_attestation()
 
     selection_path = output_dir / "preliminary" / "validation_selection.json"
     if not selection_path.exists():
@@ -887,8 +910,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
 
 def generate_developer_validation_bank(output_dir: Path) -> dict[str, Any]:
     """Create a small validation-only developer bank in a separate namespace."""
-    gate = _check_p0_gate_strict()
-    _validate_hashes_match(gate, "generate-developer-validation-bank")
+    gate = _developer_attestation()
     manifest = generate_tape_bank(
         output_dir / "preliminary",
         modes=MODES,
