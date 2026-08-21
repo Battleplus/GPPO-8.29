@@ -1,0 +1,102 @@
+{
+  "event_seed": 1438911033901473259,
+  "events": [
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "E0000",
+      "event_seed": 5556376881137832661,
+      "observed_at": 1.5809529054543465,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "discovered_target": 1,
+        "generated_region_vacancy": [
+          1
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "severity": 0.66995,
+      "source_event": "target_sensor_detection",
+      "state_version": 0,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0001",
+      "event_seed": 4178760522876971612,
+      "observed_at": 3.620043999922961,
+      "occurred_at": 0.743807261278852,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "previous_uav": 0,
+        "vacant_region": 1
+      },
+      "severity": 0.844861,
+      "source_event": "direct_region_vacancy",
+      "state_version": 1,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [
+        0,
+        1
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0002",
+      "event_seed": 3749729646244048417,
+      "observed_at": 2.4246840025270417,
+      "occurred_at": 1.285149195461076,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.2,
+          "TARGET_DESTROYED": 0.2,
+          "TARGET_DISCOVERED": 0.3,
+          "UAV_DAMAGE": 0.3
+        },
+        "discovered_target": 2,
+        "generated_region_vacancy": [
+          0,
+          1
+        ],
+        "target_region": 1,
+        "tracker_uav": 0
+      },
+      "severity": 0.953531,
+      "source_event": "target_sensor_detection",
+      "state_version": 2,
+      "type": "TARGET_DISCOVERED"
+    }
+  ],
+  "initial_seed": 1655315771,
+  "mode": "overlap",
+  "schema_version": 1
+}

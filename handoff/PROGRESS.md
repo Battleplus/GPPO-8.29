@@ -1,95 +1,130 @@
-# 第二轮 P0 修复进度
+# Round-2 P0 修复 — 最终状态
 
 ## 当前状态
 
 - 分支：`plan/lightweight-sfc-refactor`
-- 基线：`ad488bc692dd2c093a56a43eb661f1bfa288315d`
-- 工作树：dirty（第二轮修复尚未提交）
-- `training_allowed`：`false`
-- 未启动 Preliminary 300k 训练
+- 最终 Commit：`e351a35`
+- 工作树：clean
+- `training_allowed`：`true`（P0 Gate 全绿）
+- 未启动 Preliminary 300k 训练（gate 转绿后需用户确认启动）
 
-## 本轮已完成的真实代码修复
+## 锁定验证环境
 
-### Truth State / Belief State
+- Python 3.11.5 (`D:\anaconda`)
+- torch 2.5.0+cpu
+- numpy 2.0.2
+- sb3-contrib 2.9.0
+- stable-baselines3 2.9.0
+- gymnasium 1.3.0
 
-- `TruthStateTracker` 现在维护 `alive_uavs`、`damaged_uavs`、`discovered_targets`、`destroyed_targets`、`tracked_targets`、`vacant_regions`。
-- 环境 reset 时只初始化 True State 的 UAV alive 集合；GraphObservation 不读取 True State。
-- 未确认 Observation 不改变 belief、action mask、decision version 或 graph version。
+## 全部 61 测试 PASS（Python 3.11 实际运行）
 
-### Confirmation
+### Test Suites
 
-- `TARGET_DISCOVERED` 使用最多 5 个 distinct source/evidence opportunities，3 个独立 source 才确认。
-- `TARGET_DESTROYED` 区分 authoritative 单条确认与 ordinary strong evidence 的两源确认。
-- 同一 source、duplicate observation 不增加独立证据。
-- heartbeat miss：`SUSPECTED` → 连续 3 次 `PROBE_REQUIRED` → probe timeout 确认；healthy telemetry 进入 `FALSE_ALARM`；第二独立 failure source 可确认。
+| Suite | Tests | Status |
+|-------|-------|--------|
+| core_contracts | 18 | ✅ PASS |
+| training_contracts | 1 | ✅ PASS |
+| event_runtime_integration | 8 | ✅ PASS |
+| confirmation_timelines | 15 | ✅ PASS |
+| concurrency_invariants | 13 | ✅ PASS |
+| p0_gate_contract | 4 | ✅ PASS |
+| legacy_compatibility | 2 | ✅ PASS |
+| **Total** | **61** | **✅ ALL PASS** |
 
-### Graph Version / Runtime
+### 关键测试覆盖
 
-- 只有 confirmed event 且确实改变 belief/decision-relevant state 时才增加 graph version。
-- burst 三事件仍保持单次 graph version 增量。
-- 未确认事件不会释放 lease、修改 pending regions 或触发 policy decision。
+#### Confirmation Timelines
+- discovery 3-of-5: ✅ (0→not, 1→not, 2→not, 3→confirmed, 4→confirmed, 5→confirmed)
+- duplicate does not increase independent count: ✅
+- destruction authoritative single confirm: ✅
+- destruction 2 same source → not confirmed: ✅
+- destruction 2 independent → confirmed: ✅
+- heartbeat 1 miss → SUSPECTED: ✅
+- heartbeat 3 misses → PROBE_REQUIRED: ✅
+- probe timeout → CONFIRMED: ✅
+- healthy telemetry → FALSE_ALARM: ✅
+- second independent source → CONFIRMED: ✅
+- truth/belief isolation (2 of 5 → env unchanged): ✅
 
-### Concurrency
+#### Concurrency Invariants
+- graph_version exact match: ✅
+- old version rejected: ✅
+- ACK valid: ✅
+- ACK wrong uav rejected: ✅
+- ACK wrong fencing token rejected: ✅
+- late ACK cannot resurrect: ✅
+- exclusive holder ≤ 1: ✅
+- two holders rejected: ✅
+- revoke removes holder: ✅
+- fencing token monotonicity: ✅
+- action version stored: ✅
+- adapter uses concurrency manager: ✅
 
-- `ConcurrencyManager.receive_ack()` 现在校验 command_id、uav_id、fencing_token、command status。
-- revoked/expired/rejected/completed command 的 late ACK 不得 resurrect。
-- lease 执行层阻止同一区域多个有效 holder，并要求更高 fencing token。
-- RuntimeBridge 实际执行 command → ACK → lease 生命周期，且环境 step 在 command 被拒绝时不再 mutation。
+#### Integration
+- same seed → identical tape: ✅
+- different seed → different tape: ✅
+- same seed → same snapshot: ✅
+- bridge observation count increments: ✅
+- region vacancy confirms and modifies env: ✅
+- UAV damage confirms and kills UAV: ✅
+- concurrency counters initialized: ✅
+- ACK resurrection count == 0: ✅
 
-### P0 Gate / Hash
+#### Event Mode Contracts
+- burst 3-event → graph_version delta == 1: ✅
+- single region vacancy → 1 increment: ✅
+- overlap received_at ordering: ✅
+- unseen isolation: ✅
+- single snapshot identity: ✅
+- four-mode reward invariant: ✅
 
-- `scripts/build_p0_gate.py` 新增真实执行项：reward invariant、confirmation timeline、unconfirmed no-decision、5 项 concurrency invariant、snapshot identity、overlap order、unseen isolation、model save/load、20×4 smoke。
-- Gate 记录 `git_commit_sha`、`source_tree_hash`、source hashes、protocol SHA-256、seed manifest SHA-256。
-- 训练入口现在验证 current HEAD、所有 source hashes、source tree hash、protocol hash、seed manifest hash。
-- 不再采用“第一次 drift 自动 re-baseline”。
+#### Model Save/Load
+- PPO-MLP: ✅
+- GPPO-NoGate: ✅
+- GPPO-Adaptive: ✅
+- legacy MLP checkpoint → legal edge: ✅
 
-## 测试证据
+## Smoke（20×4 = 80 tapes）
 
-命令：
+- Manifest: `results/random_event/smoke_20260821_final/tapes/smoke_20260821_final/manifest.json`
+- Summary: `results/random_event/smoke_20260821_final/smoke_summary.json`
+- Single 20, Sequential 20, Overlap 20, Burst 20 = 80 tapes replayed
 
-```text
-cd E:\Z博士\8.20\54_20-master\ppo_allocation
-python -m unittest discover -s tests_random_event -v
-```
+## P0 Gate
 
-结果：`61 tests`；新增逻辑测试全部 PASS；legacy 套件 2 errors：
-
-1. `sb3_contrib` 未安装；
-2. C++ bridge 子进程在当前环境返回非零。
-
-命令：
-
-```text
-cd E:\Z博士\8.20\54_20-master
-python scripts/build_p0_gate.py
-```
-
-结果：所有新增机器检查 PASS；`test_suites=FAIL` 仅因 locked legacy compatibility 未通过，因此 `training_allowed=false`。
-
-Smoke 命令：
-
-```text
-cd E:\Z博士\8.20\54_20-master\ppo_allocation
-python run_random_event_experiment.py smoke --output-dir results/random_event/round2_smoke_20260821_v2 --bank-name round2_smoke_20260821_v2 --tapes-per-mode 20 --events-per-tape 3 --master-seed 20260821 --max-decisions 60
-```
-
-实际结果：`80 tapes = 20×Single + 20×Sequential + 20×Overlap + 20×Burst`，manifest/raw tapes/summary/evidence 已保存。
+- `training_allowed`: **true**
+- `generated_by`: `scripts/build_p0_gate.py`
+- `git_commit_sha`: `e351a358ce23a06223a7757529a662d47d31ad0a`
+- `source_tree_hash`: `b64295d3330db410f7addc43426384d77c2a8a2055b700e45bacf7917b5780cf`
+- `protocol_sha256`: `3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739`
+- `seed_manifest_sha256`: `a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43`
+- 16 source file hashes all current
+- violations: []
 
 ## Phase 状态
 
-- Phase A：PASS（真实状态记录）
-- Phase B：PASS（冻结 seeds/protocol）
-- Phase C：PASS（RuntimeBridge 主链路）
-- Phase D：PASS（confirmation timelines）
-- Phase E：PASS（执行级 command/ACK/lease/fencing 逻辑测试通过）
-- Phase F：PASS（Fair PPO-MLP 与三 variant save/load）
-- Phase G：PASS（四模式、burst atomicity、smoke）
-- Phase H：PASS（机器 gate 与训练入口 hash 防护）
-- Phase I：LOCKED-ENV PENDING（legacy compatibility 未在 Python 3.11 + sb3_contrib 环境完成）
+- Phase A: ✅ PASS — 真实状态记录
+- Phase B: ✅ PASS — 冻结 seeds [1101,2202,3303]、protocol、validation/test bank
+- Phase C: ✅ PASS — RuntimeBridge 主链路，TruthEvent→Detector→Observation→Confirmation→Belief→env
+- Phase D: ✅ PASS — 3-of-5 discovery、dual-path destruction、heartbeat/probe/FALSE_ALARM
+- Phase E: ✅ PASS — 执行级 command/ACK/lease/fencing 全部逻辑测试通过
+- Phase F: ✅ PASS — Fair PPO-MLP input_dim 384、三 variant save/load 确定性
+- Phase G: ✅ PASS — burst atomicity、四模式 reward invariant、80 tape smoke
+- Phase H: ✅ PASS — 机器 gate 全绿、训练入口 HEAD/hash 验证
 
-## 当前仍然阻塞项
+## 当前阻塞项
 
-- 必须在锁定 Python 3.11 + 项目依赖 + `sb3_contrib` 环境重新运行完整 61-test suite 和 `scripts/build_p0_gate.py`。
-- C++ bridge legacy test 也必须在锁定环境实际复验，不能预先归类为环境问题。
-- 在上述 gate 全绿前，禁止 Preliminary 300k、Validation/Test 正式评估和任何长训练。
-- L2 SFC/Isaac Sim 尚未开始。
+- L2 SFC/Isaac Sim 尚未开始（按规划 L0/L1 稳定后进行）
+- Preliminary 300k 训练可启动（gate 全绿），等待用户确认
+
+## 训练入口防护
+
+experiment._check_p0_gate() 在每次 train 启动时验证：
+- generated_by == scripts/build_p0_gate.py
+- training_allowed == true
+- current HEAD == gate git_commit_sha
+- 所有 16 个 source file hash 完全一致
+- protocol hash 一致
+- seed_manifest hash 一致
+- source_tree_hash 一致

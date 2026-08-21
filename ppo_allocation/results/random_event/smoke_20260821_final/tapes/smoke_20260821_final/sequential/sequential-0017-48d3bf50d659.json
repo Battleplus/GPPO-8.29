@@ -1,0 +1,92 @@
+{
+  "event_seed": 1897560373978610536,
+  "events": [
+    {
+      "affected_regions": [
+        0
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0000",
+      "event_seed": 5283539624679814298,
+      "observed_at": 0.26837437974157513,
+      "occurred_at": 0.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "previous_uav": 0,
+        "vacant_region": 0
+      },
+      "severity": 0.51378,
+      "source_event": "direct_region_vacancy",
+      "state_version": 0,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "E0001",
+      "event_seed": 7310483836646356249,
+      "observed_at": 4.623082968891236,
+      "occurred_at": 4.051787359184135,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "damaged_uav": 1,
+        "released_regions": [
+          1
+        ]
+      },
+      "severity": 0.652864,
+      "source_event": "external_random_scheduler",
+      "state_version": 1,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        0,
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "E0002",
+      "event_seed": 6977343552771150955,
+      "observed_at": 11.040839959609238,
+      "occurred_at": 10.651818706586074,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.25,
+          "TARGET_DISCOVERED": 0.37499999999999994,
+          "UAV_DAMAGE": 0.37499999999999994
+        },
+        "damaged_uav": 0,
+        "released_regions": [
+          0,
+          1
+        ]
+      },
+      "severity": 0.736268,
+      "source_event": "external_random_scheduler",
+      "state_version": 2,
+      "type": "UAV_DAMAGE"
+    }
+  ],
+  "initial_seed": 741446493,
+  "mode": "sequential",
+  "schema_version": 1
+}
