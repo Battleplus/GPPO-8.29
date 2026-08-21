@@ -3,7 +3,7 @@
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-21T04:41:32.522692+00:00",
+  "generated_at": "2026-08-21T04:57:57.182006+00:00",
   "training_allowed": true,
   "training_allowed_reason": "All machine checks PASS",
   "checks": {
@@ -15,49 +15,49 @@
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.992s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 1.016s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.867s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.950s\n\nOK\n"
         },
         "event_runtime_integration": {
           "passed": true,
           "tests_run": 8,
           "failures": 0,
           "errors": 0,
-          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.015s\n\nOK\n"
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK\n"
         },
         "confirmation_timelines": {
           "passed": true,
           "tests_run": 15,
           "failures": 0,
           "errors": 0,
-          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.005s\n\nOK\n"
+          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.008s\n\nOK\n"
         },
         "concurrency_invariants": {
           "passed": true,
-          "tests_run": 21,
+          "tests_run": 23,
           "failures": 0,
           "errors": 0,
-          "output": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.028s\n\nOK\n"
+          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.026s\n\nOK\n"
         },
         "p0_gate_contract": {
           "passed": true,
           "tests_run": 4,
           "failures": 0,
           "errors": 0,
-          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 4.117s\n\nOK\n"
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 3.761s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": true,
           "tests_run": 2,
           "failures": 0,
           "errors": 0,
-          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 3.935s\n\nOK\n"
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.035s\n\nOK\n"
         }
       }
     },
@@ -177,8 +177,12 @@
       "status": "PASS",
       "details": {
         "passed": true,
-        "injected": 10,
-        "rejected": 10,
+        "graph_stale_injected": 5,
+        "graph_stale_rejected": 5,
+        "action_version_stale_injected": 5,
+        "action_version_stale_rejected": 5,
+        "total_injected": 10,
+        "total_rejected": 10,
         "rate": 1.0
       }
     },
@@ -206,13 +210,13 @@
           "burst": 20
         },
         "mode_ok": true,
-        "summary_sha256": "827ea1deaef0fe6c443af9f6443d83b65aa4d881a4f48411aab42ada4bc002f0",
-        "manifest_file_sha256": "",
-        "environment_metadata_sha256": "ec50d2134cf08c39b6594dd9706fd9d82109a32bf16ccbf9d534ececc9483be5",
+        "summary_sha256": "1f2bc75c5fd41f4a3ab80244d0cc0f93f341261048abe3624105bdc18f290e38",
+        "manifest_file_sha256": "cc7b747da4072bc50eee553e36fbb22184de55ae1e110874a39c74d82c843def",
+        "environment_metadata_sha256": "96c90db1cf39e81be2ef35ba9824625803b0c5a9b7ca5445805a60b9aea181d7",
         "environment_metadata": {
           "python": "3.11.5 | packaged by Anaconda, Inc. | (main, Sep 11 2023, 13:26:23) [MSC v.1916 64 bit (AMD64)]",
           "python_311": true,
-          "git_commit": "777106b207034e4c336c5404d5a72f1eb6551622",
+          "git_commit": "fcd14b25fc50b3c54be86f93a7ec2f1dcd7cd348",
           "git_commit_matches_attested": true,
           "torch": "2.5.0+cpu",
           "numpy": "2.0.2",
@@ -226,39 +230,49 @@
     "source_hash_integrity": {
       "status": "PASS",
       "details": {
-        "git_commit_sha": "777106b207034e4c336c5404d5a72f1eb6551622",
-        "source_tree_hash": "c205810ae33dbf41fc96e2a266730acdb2238d2c46e2a41db161a1aea1bafba1",
+        "git_commit_sha": "fcd14b25fc50b3c54be86f93a7ec2f1dcd7cd348",
+        "source_tree_hash": "7179769cc34a37e2c35114e970dc2ef6c9735d1cef1084e0d0f299b66f0b80ff",
         "missing": [],
         "previous_gate_not_used_as_baseline": true
       }
     }
   },
-  "attested_source_commit_sha": "777106b207034e4c336c5404d5a72f1eb6551622",
-  "git_commit_sha": "777106b207034e4c336c5404d5a72f1eb6551622",
-  "source_tree_hash": "c205810ae33dbf41fc96e2a266730acdb2238d2c46e2a41db161a1aea1bafba1",
+  "attested_source_commit_sha": "fcd14b25fc50b3c54be86f93a7ec2f1dcd7cd348",
+  "git_commit_sha": "fcd14b25fc50b3c54be86f93a7ec2f1dcd7cd348",
+  "source_tree_hash": "7179769cc34a37e2c35114e970dc2ef6c9735d1cef1084e0d0f299b66f0b80ff",
   "protocol_sha256": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
   "seed_manifest_sha256": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43",
   "source_hashes": {
-    "git_commit_sha": "777106b207034e4c336c5404d5a72f1eb6551622",
-    "source_tree_hash": "c205810ae33dbf41fc96e2a266730acdb2238d2c46e2a41db161a1aea1bafba1",
+    "git_commit_sha": "fcd14b25fc50b3c54be86f93a7ec2f1dcd7cd348",
+    "source_tree_hash": "7179769cc34a37e2c35114e970dc2ef6c9735d1cef1084e0d0f299b66f0b80ff",
     "source": {
       "event_runtime/concurrency.py": "ee88114bfe10038fe5e795f82b50d10a0910ea0e06dc047789c4422e79277a5d",
       "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
+      "event_runtime/events.py": "4974dd2405cb49a08c422e523af58451f2f52b015de9dad85e342a6b56e07b76",
       "event_runtime/metrics.py": "508b515e5998af914df97c0e45725360d0f714d26852279e87447f58b54ca44f",
       "event_runtime/replay.py": "a206c4aa719f6fe57cf5292ddc80612e3f5d65bc47afdbc43519b89db20475fc",
       "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
-      "ppo_allocation/random_event/environment.py": "f569b6bd68c7bfecb54f8acd4c4b8d64d654cab447cadcab3f9134bab7041681",
+      "ppo_allocation/random_event/environment.py": "4d01e08faff30681a7508d74e7cde32e2be48a685e8ed0e4fa2e986dc05f900f",
       "ppo_allocation/random_event/experiment.py": "8eb945d6e17ae64511f82537a10157f061f89880ba7798217083fdc8a8bd9a59",
       "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
       "ppo_allocation/random_event/trainer.py": "bd1dc1a32900f1cfca54340846e3cbb766818227c6aae55f0b2f8dfa237941c0",
-      "ppo_allocation/random_event/runtime_bridge.py": "a21b98a4a95f676349eef13d7f2560880b8bfff32364482f7cf205d248b7f8f7",
+      "ppo_allocation/random_event/runtime_bridge.py": "2259c124812e8a04344d4b38ad79a92180cfc162e96431f116c030c07fce94fc",
       "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08",
-      "scripts/build_p0_gate.py": "b460f77378326d8170244591765decfb0728c4871f27aca4a0b3c5dd345468c6",
+      "ppo_allocation/random_event/graph.py": "c2ddec3c2dd378fe64e750726c5065bc6a72dd8d14a10980b85aafb25e70dd1f",
+      "ppo_allocation/random_event/reward.py": "95042c7a193c0d56a7e45179d785630b07e46924e6adad1b285e2f02320dba81",
+      "ppo_allocation/random_event/baselines.py": "da9134a5953f96533f90323c59f13b24e07f4b17bdd232bb56069939bb8c7cd5",
+      "ppo_allocation/random_event/events.py": "942c309746c28568cc9f534bad839fb5a45c1d38f052aaa253182a8ca353b4c2",
+      "ppo_allocation/random_event/legacy_adapter.py": "f9fe0e627f8952b3e3d22a4594bc9a87c07908c335454a60f92455bf39f36259",
+      "ppo_allocation/config.py": "2dbfb766e1717d0524024f5881736e59599cb74c0466e140db6bd6d7a4cdc7f9",
+      "scripts/build_p0_gate.py": "296d4e8f26b600768292c637d25e346c156d7cd30dbc7dbb49c668274dc7f5bf",
       "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
       "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
-      "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "b5495469c6a97786aa682057b55c8ce94976ae45188ad6d06f700904cd4ffba6",
-      "ppo_allocation/tests_random_event/test_p0_gate_contract.py": "1d4ec8f5664e4ffabc5789c8bb1139ef0ed1c04d0c3d935bc07f1e7bc5461516"
+      "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "28bf17783c48beb96436c2e275326615479fcfb39cc5911e972e3340f7015dc6",
+      "ppo_allocation/tests_random_event/test_p0_gate_contract.py": "1d4ec8f5664e4ffabc5789c8bb1139ef0ed1c04d0c3d935bc07f1e7bc5461516",
+      "ppo_allocation/tests_random_event/test_random_event_core.py": "16a0e8fc3a3a3619f4cb1a741a9a72bb90e160c52bdbc2baa50533cd34bb9bd1",
+      "ppo_allocation/tests_random_event/test_random_event_training.py": "ecb907458158135bbbcae273ac023db4b7357cdc41ce7b73fa1d4ef79acc808a",
+      "ppo_allocation/tests_random_event/test_legacy_compatibility.py": "afc17b48a6910e2a9a6192d0ec53cd70e0079aa5ea315ececf517aa3f99ba0f7"
     },
     "protocol": "3d137a28d4a56737a2a1c29b59cd1000fd586fdea72682d1593f6c21fe289739",
     "seed_manifest": "a47843efc244c0b62904b4ff21b19103cfb99911a943a49ce995c8f3102fbb43"
