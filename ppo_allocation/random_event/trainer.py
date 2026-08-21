@@ -25,6 +25,7 @@ from .models import (
     make_fair_ppo_mlp,
     make_no_gate_model,
 )
+from .environment import ActionSubmission, DecisionContext
 
 
 @dataclass(frozen=True)
@@ -194,6 +195,34 @@ def _step_env(env: Any, action: int) -> tuple[HeteroGraphState, float, bool, boo
     return graph, float(reward), bool(terminated), bool(truncated), info
 
 
+def _versioned_step_env(
+    env: Any, action: int, ctx: "DecisionContext"
+) -> tuple[HeteroGraphState, float, bool, bool, dict[str, Any]]:
+    """Step using the versioned submission contract (begin_decision → submit_action).
+
+    If the env supports ``begin_decision``/``submit_action`` (``RandomEventAllocationEnv``),
+    this path is used; otherwise falls back to ``env.step``.
+    """
+    if hasattr(env, "submit_action") and isinstance(ctx, DecisionContext):
+        submission = ActionSubmission.from_decision(action, ctx)
+        result = env.submit_action(submission)
+        if not isinstance(result, tuple):
+            raise TypeError("env.submit_action(submission) must return a tuple")
+        if len(result) == 5:
+            observation, reward, terminated, truncated, info = result
+        elif len(result) == 4:
+            observation, reward, done, info = result
+            info = dict(info or {})
+            truncated = bool(info.get("TimeLimit.truncated", False))
+            terminated = bool(done) and not truncated
+        else:
+            raise TypeError("env.submit_action must return 4 or 5 values")
+        info = dict(info or {})
+        graph = _extract_graph(observation, info, env)
+        return graph, float(reward), bool(terminated), bool(truncated), info
+    return _step_env(env, action)
+
+
 def _explained_variance(prediction: np.ndarray, target: np.ndarray) -> float:
     target_variance = float(np.var(target))
     if target_variance <= 1e-12:
@@ -312,7 +341,14 @@ class PPOTrainer:
             if not bool(device_graph.action_mask.any().item()):
                 raise RuntimeError("graph action mask contains no legal action")
             action, log_prob, value, diagnostics = model.act(device_graph, deterministic=False)
-            next_graph, reward, terminated, truncated, _ = _step_env(self.env, action)
+            # Phase J: use versioned submission contract for RandomEventAllocationEnv
+            ctx = None
+            if hasattr(self.env, "begin_decision"):
+                ctx = self.env.begin_decision()
+            next_graph, reward, terminated, truncated, _ = (
+                _versioned_step_env(self.env, action, ctx) if ctx is not None
+                else _step_env(self.env, action)
+            )
             with torch.no_grad():
                 if terminated:
                     next_value = 0.0

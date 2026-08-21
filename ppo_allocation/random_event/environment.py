@@ -75,6 +75,31 @@ class DecisionContext:
     action_version: int
 
 
+@dataclass(frozen=True)
+class ActionSubmission:
+    """Unified action submission contract for versioned submission.
+
+    Both ``PPOTrainer.collect_rollout`` and ``run_episode`` produce an
+    ``ActionSubmission`` that carries the action together with the decision-time
+    versions.  The environment validates both before executing.
+
+    Both ``LightweightEnvAdapter`` and ``SFC/IsaacSimAdapter`` consume this
+    contract.
+    """
+    action: int
+    graph_version: int
+    action_version: int
+
+    @classmethod
+    def from_decision(cls, action: int, ctx: DecisionContext) -> "ActionSubmission":
+        """Create an ActionSubmission from a DecisionContext."""
+        return cls(
+            action=int(action),
+            graph_version=ctx.graph_version,
+            action_version=ctx.action_version,
+        )
+
+
 class RandomEventAllocationEnv(UAVTaskAllocationEnv):
     """Event-tape environment whose action is a single UAV--Region edge."""
 
@@ -439,13 +464,15 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
 
     def submit_action(
         self,
-        action: int,
-        expected_graph_version: int,
+        action: int | ActionSubmission,
+        expected_graph_version: int | None = None,
         expected_action_version: int | None = None,
         *,
         strict: bool = False,
     ):
         """Submit a decision with staleness guards.
+
+        Accepts either an ``ActionSubmission`` (preferred) or separate arguments.
 
         ``expected_graph_version`` must match ``self.graph_version`` exactly.
         If ``expected_action_version`` is provided, it must also match
@@ -455,7 +482,14 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
         ``strict=True`` raises ``StaleDecisionError`` instead of returning a
         zero-reward tuple.
         """
-        gv = int(expected_graph_version)
+        if isinstance(action, ActionSubmission):
+            sub = action
+            action_int = sub.action
+            gv = sub.graph_version
+            expected_action_version = sub.action_version
+        else:
+            action_int = int(action)
+            gv = int(expected_graph_version) if expected_graph_version is not None else self.graph_version
         if gv != self.graph_version:
             self.stale_rejection_count += 1
             if strict:
@@ -463,7 +497,7 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
                     f"decision used graph v{gv}, current graph is v{self.graph_version}"
                 )
             graph = build_graph_state(self)
-            info = self._info(graph, stale_decision=True, rejected_action=int(action))
+            info = self._info(graph, stale_decision=True, rejected_action=action_int)
             return graph, 0.0, False, False, info
         if expected_action_version is not None and int(expected_action_version) != self.decision_version:
             self.stale_rejection_count += 1
@@ -472,9 +506,9 @@ class RandomEventAllocationEnv(UAVTaskAllocationEnv):
                     f"decision used action_version={expected_action_version}, current is {self.decision_version}"
                 )
             graph = build_graph_state(self)
-            info = self._info(graph, stale_decision=True, rejected_action=int(action))
+            info = self._info(graph, stale_decision=True, rejected_action=action_int)
             return graph, 0.0, False, False, info
-        return self._step_current(int(action), expected_graph_version=gv, expected_action_version=int(expected_action_version) if expected_action_version is not None else None)
+        return self._step_current(action_int, expected_graph_version=gv, expected_action_version=int(expected_action_version) if expected_action_version is not None else None)
 
     def step(self, action):
         if isinstance(action, Mapping):

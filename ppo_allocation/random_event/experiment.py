@@ -34,7 +34,7 @@ from .baselines import (
     MinLoadPolicy,
     NearestLegalPolicy,
 )
-from .environment import RandomEventAllocationEnv
+from .environment import ActionSubmission, DecisionContext, RandomEventAllocationEnv
 from .events import EventTape
 from .legacy_adapter import LegacyMLPPPOPolicy
 from .metrics import (
@@ -421,7 +421,7 @@ def generate_protocol_bank(
         "split": split,
         "intended_use": "checkpoint_selection" if split == "validation" else "final_evaluation_only",
         "checkpoint_selection": split == "validation",
-        "reward_tuning": split == "validation",
+        "reward_tuning": False,
         "complete_frozen_bank": complete,
         "expected_tape_count": expected_count,
         "tape_count": len(entries),
@@ -701,7 +701,13 @@ def run_episode(
         previous_comm_count = int(env.communication_trigger_count)
         mask = graph.action_mask.cpu().numpy().astype(bool)
         action, diagnostics = _select_action(policy, env, graph)
-        graph_after, reward, terminated, truncated, info = env.step(action)
+        # Phase J: use versioned submission contract
+        if hasattr(env, "begin_decision"):
+            ctx = env.begin_decision()
+            submission = ActionSubmission.from_decision(action, ctx)
+            graph_after, reward, terminated, truncated, info = env.submit_action(submission)
+        else:
+            graph_after, reward, terminated, truncated, info = env.step(action)
         total_reward += float(reward)
         register_events()
 
