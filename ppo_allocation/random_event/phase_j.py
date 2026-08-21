@@ -57,8 +57,10 @@ DEFAULT_BUDGET = 300_000
 CHECKPOINT_INTERVAL = 25_000
 # Frozen censoring rule: an unrecovered event contributes the protocol's
 # finite observation-horizon penalty to Levels 3 and 4. It is never coerced
-# from None to zero.
-UNCENSORED_RECOVERY_PENALTY_SECONDS = 200.0
+# from None to zero.  The single source of truth is the frozen constant in
+# reward.py (mirrored in random_event_protocol.json
+# validation_metrics.fixed_j_unobserved_event_rule.recovery_delay_seconds).
+from .reward import UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS as UNCENSORED_RECOVERY_PENALTY_SECONDS  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -975,28 +977,50 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
     entries_ledger = ledger.setdefault("entries", {})
     state_dir = output_dir / "preliminary" / "test_state"
 
-    # Partial-resume invariant: every consumed entry must belong to this exact
-    # locked manifest, freeze, checkpoint SHA and provenance.  Any drift is a
-    # hard failure, never a silent re-run.
-    for key, entry in entries_ledger.items():
-        if not entry.get("consumed"):
-            continue
+    # ---- Formal Test journal (single source of truth for consumption) ----
+    # Each checkpoint has one atomic journal file under ``test_state``.  The
+    # journal records state=running before evaluation and is atomically flipped
+    # to state=consumed (with result_path + result_sha) only after the result
+    # is durably written.  The ledger is an aggregate index; the journal is the
+    # authoritative record.  A consumed checkpoint is NEVER re-evaluated.
+
+    def _journal_path(key: str) -> Path:
+        return state_dir / f"{key}.json"
+
+    def _check_provenance(payload: dict[str, Any], key: str) -> None:
         for field, expected in (
-            ("checkpoint_sha", None),
+            ("checkpoint_sha", freeze["checkpoint_sha256"]),
             ("test_manifest_sha", test_manifest_sha),
             ("freeze_manifest_sha", freeze_sha),
             ("source_tree_hash", gate.get("source_tree_hash")),
             ("protocol_sha256", gate.get("protocol_sha256")),
             ("seed_manifest_sha256", gate.get("seed_manifest_sha256")),
         ):
-            value = entry.get(field)
-            if field == "checkpoint_sha":
-                expected = None  # resolved per-key below
-            if expected is not None and value != expected:
+            if payload.get(field) != expected:
                 raise SystemExit(
-                    f"consumed Test entry {key} has mismatched {field}; "
-                    "refusing partial resume against a different manifest/provenance"
+                    f"formal Test entry {key} has mismatched {field}; "
+                    "refusing resume against a different manifest/provenance"
                 )
+
+    def _verify_result_file(key: str, label: str, expected_sha: str | None) -> str:
+        if not label or not label.strip():
+            raise SystemExit(
+                f"formal Test checkpoint {key}: consumed journal/ledger has no "
+                "result_path; manual audit required -- NO re-evaluation"
+            )
+        result_path = _relative_path(label)
+        if not result_path.is_file():
+            raise SystemExit(
+                f"formal Test checkpoint {key}: consumed result file missing "
+                f"({label}); manual audit required -- NO re-evaluation"
+            )
+        current = _sha256_file(result_path)
+        if expected_sha and current != expected_sha:
+            raise SystemExit(
+                f"formal Test checkpoint {key}: result file hash mismatch; "
+                "manual audit required -- NO re-evaluation"
+            )
+        return current
 
     all_results = []
     for freeze in freezes:
@@ -1004,30 +1028,85 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             f"{freeze['variant']}_seed{freeze['training_seed']}_"
             f"{freeze['checkpoint_sha256'][:12]}_{test_manifest_sha}"
         )
+        journal_path = _journal_path(key)
         entry = entries_ledger.get(key)
-        if entry is not None and entry.get("consumed"):
-            if entry.get("checkpoint_sha") != freeze["checkpoint_sha256"]:
-                raise SystemExit(f"consumed Test entry {key} checkpoint SHA changed; refusing resume")
-            # Same locked manifest + checkpoint + provenance: skip, never re-run.
-            all_results.append({
-                "variant": freeze["variant"], "seed": freeze["training_seed"],
-                "resumed": True, "tape_count": 200,
-            })
-            continue
-        # A crashed (running, never consumed) checkpoint is ambiguous: the
-        # evaluation may or may not have completed.  Hard fail for manual
-        # audit instead of silently re-running a formal Test.
-        state_path = state_dir / f"{key}.json"
-        if state_path.exists():
-            state = json.loads(state_path.read_text(encoding="utf-8"))
-            if state.get("state") != "consumed":
+        journal = None
+        if journal_path.exists():
+            journal = json.loads(journal_path.read_text(encoding="utf-8"))
+
+        if journal is not None:
+            state = journal.get("state")
+            if state == "consumed":
+                _check_provenance(journal, key)
+                if entry is not None and entry.get("consumed"):
+                    # D: journal + ledger both consumed with exact provenance -> skip.
+                    _check_provenance(entry, key)
+                    all_results.append({
+                        "variant": freeze["variant"], "seed": freeze["training_seed"],
+                        "resumed": True, "tape_count": 200,
+                    })
+                    continue
+                # B: journal consumed but ledger entry missing (crash between
+                # journal flip and ledger persist).  NO re-evaluation: verify
+                # the cryptographically recorded result and rebuild the ledger
+                # entry from the journal.
+                _verify_result_file(key, journal.get("result_path", ""), journal.get("result_sha"))
+                entries_ledger[key] = {
+                    "consumed": True,
+                    "variant": freeze["variant"],
+                    "training_seed": freeze["training_seed"],
+                    "checkpoint_sha": freeze["checkpoint_sha256"],
+                    "test_manifest_sha": test_manifest_sha,
+                    "freeze_manifest_sha": freeze_sha,
+                    "source_tree_hash": gate.get("source_tree_hash"),
+                    "protocol_sha256": gate.get("protocol_sha256"),
+                    "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
+                    "at": journal.get("at", _utc_now()),
+                    "result_path": journal.get("result_path"),
+                    "result_sha": journal.get("result_sha"),
+                    "resumed_from_journal": True,
+                }
+                _json_file(ledger_path, ledger)
+                all_results.append({
+                    "variant": freeze["variant"], "seed": freeze["training_seed"],
+                    "resumed": True, "tape_count": 200,
+                })
+                continue
+            if state == "running":
+                if entry is not None and entry.get("consumed"):
+                    # C: ledger consumed but journal still running (crash after
+                    # ledger persist, before journal flip).  NO re-evaluation:
+                    # verify the ledger's result and restore the journal.
+                    _check_provenance(entry, key)
+                    result_sha = _verify_result_file(key, entry.get("result_path", ""), entry.get("result_sha"))
+                    journal["state"] = "consumed"
+                    journal["result_path"] = entry.get("result_path")
+                    journal["result_sha"] = result_sha
+                    journal["recovered_at"] = _utc_now()
+                    _json_file(journal_path, journal)
+                    all_results.append({
+                        "variant": freeze["variant"], "seed": freeze["training_seed"],
+                        "resumed": True, "tape_count": 200,
+                    })
+                    continue
+                # A: journal running + no consumed ledger entry -> ambiguous.
                 raise SystemExit(
                     f"formal Test checkpoint {key} is in ambiguous state "
-                    f"{state.get('state')!r}; manual audit required before resume"
+                    "'running' with no consumed ledger entry; manual audit "
+                    "required -- NO re-evaluation"
                 )
-        _json_file(state_path, {
+            raise SystemExit(
+                f"formal Test checkpoint {key} is in unknown journal state {state!r}; "
+                "manual audit required"
+            )
+
+        # Fresh checkpoint: claim atomically (journal = running), evaluate, then
+        # commit result + journal(consumed) + ledger entry.
+        _json_file(journal_path, {
             "state": "running",
             "key": key,
+            "variant": freeze["variant"],
+            "training_seed": freeze["training_seed"],
             "checkpoint_sha": freeze["checkpoint_sha256"],
             "test_manifest_sha": test_manifest_sha,
             "freeze_manifest_sha": freeze_sha,
@@ -1086,6 +1165,8 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "tape_count": len(results),
             "results": results,
         })
+        result_sha = _sha256_file(result_path)
+        result_label = _relative_label(result_path)
 
         entries_ledger[key] = {
             "consumed": True,
@@ -1098,14 +1179,18 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "protocol_sha256": gate.get("protocol_sha256"),
             "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
             "at": _utc_now(),
-            "result_path": _relative_label(result_path),
+            "result_path": result_label,
+            "result_sha": result_sha,
         }
-        # Mark consumed only after the result file is durably written, then
-        # flip the state file.  A crash before this point leaves state=running,
-        # which the resume path treats as ambiguous and hard-fails.
-        _json_file(state_path, {
+        # Journal is flipped to consumed only AFTER the result file and the
+        # ledger entry are durably written.  A crash before this point leaves
+        # state=running, which the resume path treats as ambiguous (A) or, if
+        # the ledger already persisted, recovers without re-running (C).
+        _json_file(journal_path, {
             "state": "consumed",
             "key": key,
+            "variant": freeze["variant"],
+            "training_seed": freeze["training_seed"],
             "checkpoint_sha": freeze["checkpoint_sha256"],
             "test_manifest_sha": test_manifest_sha,
             "freeze_manifest_sha": freeze_sha,
@@ -1113,10 +1198,12 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
             "protocol_sha256": gate.get("protocol_sha256"),
             "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
             "at": _utc_now(),
+            "result_path": result_label,
+            "result_sha": result_sha,
         })
         all_results.append({"variant": freeze["variant"], "seed": freeze["training_seed"], "tape_count": len(results)})
-        # Persist each completed checkpoint so a partial run can resume only
-        # against this exact locked manifest.
+        # Persist the ledger after each completed checkpoint so a partial run
+        # can resume only against this exact locked manifest.
         _json_file(ledger_path, ledger)
 
     ledger["completed"] = len(entries_ledger) == 9 and all(

@@ -54,6 +54,7 @@ SOURCE_FILES = [
     "event_runtime/observation.py",
     "ppo_allocation/random_event/environment.py",
     "ppo_allocation/random_event/experiment.py",
+    "ppo_allocation/random_event/metrics.py",
     "ppo_allocation/random_event/models.py",
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
@@ -234,11 +235,21 @@ def verify_seed_isolation() -> dict:
         and int(mapping.get("episode_index_start", 0)) == 0
     )
     # Reserved count must cover the frozen 300k budget under the worst-case
-    # 1 accepted decision per episode.
+    # 1 accepted decision per episode.  The trainer performs one initial reset
+    # before the first decision plus one post-terminal reset after the LAST
+    # accepted transition, so the worst case needs budget + 1 resets: the
+    # reservation must satisfy ``reserved >= formal_budget + 1``.
     reserved = int(train_block.get("episodes_per_training_seed", 0))
     budget = int(manifest["preliminary"]["train"].get("reserved_coverage_assertions", {})
                    .get("formal_budget_decision_steps", 300000))
-    coverage_ok = reserved >= budget
+    coverage_ok = reserved >= budget + 1
+    reserved_assertions = train_block.get("reserved_coverage_assertions", {})
+    assertions_ok = (
+        int(reserved_assertions.get("reserved_episodes_per_seed", 0)) == reserved
+        and reserved_assertions.get("includes_initial_reset") is True
+        and reserved_assertions.get("sufficiency_rule") == "reserved >= formal_budget_decision_steps + 1"
+        and int(reserved_assertions.get("required_episodes_per_run", 0)) == reserved
+    )
     # Formal train mode cycle must be exactly the frozen cycle (no single).
     mode_cycle_ok = (
         frozen_mode_cycle == ("sequential", "overlap", "burst")
@@ -266,6 +277,7 @@ def verify_seed_isolation() -> dict:
         not any(overlaps.values())
         and formula_ok
         and coverage_ok
+        and assertions_ok
         and mode_cycle_ok
         and counts_ok
         and starts_ok
@@ -281,7 +293,9 @@ def verify_seed_isolation() -> dict:
         "runtime_formula_ok": formula_ok,
         "reserved_episodes_per_seed": reserved,
         "formal_budget_decision_steps": budget,
+        "seed_coverage_rule": "reserved >= formal_budget + 1",
         "seed_coverage_ok": coverage_ok,
+        "seed_coverage_assertions_ok": assertions_ok,
         "seed_start_formula_ok": starts_ok,
         "seed_start_formula_checks": formula_checks,
     }
@@ -492,7 +506,12 @@ def run_invariant_checks() -> dict:
 
     # --- Reward semantic consistency: the protocol and runtime are one truth ---
     try:
-        from random_event.reward import CostWeights, VACANCY_DURATION_WEIGHT
+        from random_event.reward import (
+            UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
+            VACANCY_DURATION_WEIGHT,
+            CostWeights,
+            compute_cost,
+        )
         from random_event.phase_j import UNCENSORED_RECOVERY_PENALTY_SECONDS
         cw = CostWeights()
         protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
@@ -528,7 +547,36 @@ def run_invariant_checks() -> dict:
             and "unresolved event" in validation_metrics.get("recovery_latency_definition", "")
             and "censored recovery penalty" in validation_metrics.get("fixed_j_unrecovered_rule", "")
         )
-        semantic_pass = all(mapping_status.values()) and constraint_ok and normalization_ok and vacancy_ok and tuning_ok and censoring_ok
+        # --- Frozen unobserved-event fixed-J rule: protocol == runtime ---
+        rule = validation_metrics.get("fixed_j_unobserved_event_rule", {}) or {}
+        unobserved_rule_ok = (
+            abs(float(rule.get("recovery_delay_seconds", -1.0)) - UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS) <= 1e-12
+            and rule.get("uncovered_source") == "final_environment_cost.uncovered"
+            and rule.get("distance_source") == "final_environment_cost.distance"
+            and rule.get("load_gap_source") == "final_environment_cost.load_gap"
+            and str(rule.get("switches_source", "")).startswith("frozen_zero")
+            and abs(float(rule.get("switches_value", -1.0)) - 0.0) <= 1e-12
+        )
+        # Runtime probe: compute_cost without a reference assignment must yield
+        # switches == 0.0 exactly (the frozen switches source for unobserved
+        # events), never a hidden nonzero.
+        switches_runtime_zero = False
+        try:
+            from random_event.environment import RandomEventAllocationEnv
+            probe_env = RandomEventAllocationEnv(
+                initial_seed=1, event_seed=2, mode="single", events_per_episode=1,
+            )
+            probe_env.reset(seed=1)
+            probe_cost = compute_cost(probe_env)
+            switches_runtime_zero = abs(float(probe_cost.switches) - 0.0) <= 1e-12
+            probe_env.close()
+        except Exception:
+            switches_runtime_zero = False
+        unobserved_rule_ok = unobserved_rule_ok and switches_runtime_zero
+        semantic_pass = (
+            all(mapping_status.values()) and constraint_ok and normalization_ok
+            and vacancy_ok and tuning_ok and censoring_ok and unobserved_rule_ok
+        )
         results["reward_semantic_consistency"] = {
             "passed": semantic_pass,
             "mapping": {key: "PASS" if value else "FAIL" for key, value in mapping_status.items()},
@@ -539,6 +587,10 @@ def run_invariant_checks() -> dict:
             "test_reward_tuning": test.get("reward_tuning"),
             "reward_tuning": "PASS" if tuning_ok else "FAIL",
             "unrecovered_event_censoring": "PASS" if censoring_ok else "FAIL",
+            "unobserved_event_fixed_j_rule": "PASS" if unobserved_rule_ok else "FAIL",
+            "unobserved_event_rule": rule,
+            "runtime_recovery_penalty": UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
+            "runtime_switches_without_reference_is_zero": switches_runtime_zero,
             "cost_weights": asdict(cw),
             "protocol_reward": reward_config,
         }

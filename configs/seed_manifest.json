@@ -85,61 +85,65 @@
   "preliminary": {
     "label_required": "preliminary",
     "train": {
-      "checkpoint_selection": false,   "events_per_tape": 5,
-   "episodes_per_training_seed": 300000,
-   "runtime_mapping": {
-    "instance_seed": "training_seed*1000003+episode_index",
-    "event_seed": "training_seed*10000019+episode_index",
-    "episode_index_start": 0,
-    "note": "matches CyclingTrainingEnv. episodes_per_training_seed=300000 is the hard reserved cap: the 300k decision budget must stay inside the frozen namespace even under the worst-case 1 accepted decision per episode. reset_index >= 300000 is a hard FAIL."
-   },
-   "instance_seeds_by_training_seed": {
-    "1101": {
-     "start": 1101003303,
-     "count": 300000,
-     "stride": 1
-    },
-    "2202": {
-     "start": 2202006606,
-     "count": 300000,
-     "stride": 1
-    },
-    "3303": {
-     "start": 3303009909,
-     "count": 300000,
-     "stride": 1
-    }
-   },
-   "event_seeds_by_training_seed": {
-    "1101": {
-     "start": 11010020919,
-     "count": 300000,
-     "stride": 1
-    },
-    "2202": {
-     "start": 22020041838,
-     "count": 300000,
-     "stride": 1
-    },
-    "3303": {
-     "start": 33030062757,
-     "count": 300000,
-     "stride": 1
-    }
-   },
-   "mode_cycle": [
-    "sequential",
-    "overlap",
-    "burst"
-   ],
-   "mode_cycle_definition": "preliminary train mode cycle is the ONLY canonical train mode sequence; training env must use this exact cycle and must NOT include single",
-   "reserved_coverage_assertions": {
-    "formal_budget_decision_steps": 300000,
-    "worst_case_decisions_per_episode": 1,
-    "required_episodes_per_run": 300000,
-    "episodes_per_training_seed": 300000,
-    "sufficient_for_budget": true
-   }
+      "checkpoint_selection": false,
+      "events_per_tape": 5,
+      "episodes_per_training_seed": 300001,
+      "runtime_mapping": {
+        "instance_seed": "training_seed*1000003+episode_index",
+        "event_seed": "training_seed*10000019+episode_index",
+        "episode_index_start": 0,
+        "note": "matches CyclingTrainingEnv. episodes_per_training_seed=300001 is the hard reserved cap: the 300k decision budget needs at most 1 initial reset + 300000 post-terminal resets (worst-case 1 accepted decision per episode), so 300001 episode indices are reserved per training seed. reset_index >= 300001 is a hard FAIL."
+      },
+      "instance_seeds_by_training_seed": {
+        "1101": {
+          "start": 1101003303,
+          "count": 300001,
+          "stride": 1
+        },
+        "2202": {
+          "start": 2202006606,
+          "count": 300001,
+          "stride": 1
+        },
+        "3303": {
+          "start": 3303009909,
+          "count": 300001,
+          "stride": 1
+        }
+      },
+      "event_seeds_by_training_seed": {
+        "1101": {
+          "start": 11010020919,
+          "count": 300001,
+          "stride": 1
+        },
+        "2202": {
+          "start": 22020041838,
+          "count": 300001,
+          "stride": 1
+        },
+        "3303": {
+          "start": 33030062757,
+          "count": 300001,
+          "stride": 1
+        }
+      },
+      "mode_cycle": [
+        "sequential",
+        "overlap",
+        "burst"
+      ],
+      "mode_cycle_definition": "preliminary train mode cycle is the ONLY canonical train mode sequence; training env must use this exact cycle and must NOT include single",
+      "reserved_coverage_assertions": {
+        "formal_budget_decision_steps": 300000,
+        "worst_case_decisions_per_episode": 1,
+        "required_episodes_per_run": 300001,
+        "episodes_per_training_seed": 300001,
+        "sufficient_for_budget": true,
+        "reserved_episodes_per_seed": 300001,
+        "includes_initial_reset": true,
+        "sufficiency_rule": "reserved >= formal_budget_decision_steps + 1"
+      }
     },
     "validation": {
       "checkpoint_selection": true,

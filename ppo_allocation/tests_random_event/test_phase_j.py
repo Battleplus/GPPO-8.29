@@ -586,12 +586,23 @@ class FrozenTrainContractTests(unittest.TestCase):
         self.assertNotIn("single", frozen_cycle)
 
     def test_formal_train_seed_coverage_is_sufficient_for_300k(self):
+        # The trainer performs one initial reset before the first decision plus
+        # one post-terminal reset after the LAST accepted transition, so the
+        # worst case (1 accepted decision per episode) needs budget + 1 resets.
         manifest = self._manifest()
         reserved = int(manifest["preliminary"]["train"]["episodes_per_training_seed"])
         budget = int(
             manifest["preliminary"]["train"]["reserved_coverage_assertions"]["formal_budget_decision_steps"]
         )
-        self.assertGreaterEqual(reserved, budget)
+        self.assertGreaterEqual(reserved, budget + 1)
+        self.assertEqual(reserved, 300_001)
+        self.assertTrue(
+            manifest["preliminary"]["train"]["reserved_coverage_assertions"]["includes_initial_reset"]
+        )
+        self.assertEqual(
+            manifest["preliminary"]["train"]["reserved_coverage_assertions"]["sufficiency_rule"],
+            "reserved >= formal_budget_decision_steps + 1",
+        )
         for training_seed in (1101, 2202, 3303):
             inst = manifest["preliminary"]["train"]["instance_seeds_by_training_seed"][str(training_seed)]
             evt = manifest["preliminary"]["train"]["event_seeds_by_training_seed"][str(training_seed)]
@@ -604,6 +615,39 @@ class FrozenTrainContractTests(unittest.TestCase):
                 training_seed * 1_000_003 + last_index,
                 int(inst["start"]) + int(inst["count"]) - 1,
             )
+
+    def test_trainer_N_accepted_steps_requires_N_plus_1_resets(self):
+        """Every accepted terminal transition triggers one reset, plus the
+        initial reset, so N accepted steps need exactly N+1 reset calls."""
+        from ppo_allocation.random_event.experiment import CyclingTrainingEnv
+        from ppo_allocation.random_event.trainer import PPOTrainer, PPOConfig
+
+        reset_log = []
+
+        class _EveryStepTerminalEnv(CyclingTrainingEnv):
+            def reset(self, *args, **kwargs):
+                reset_log.append(self._reset_index)
+                return super().reset(*args, **kwargs)
+
+            def submit_action(self, submission):
+                observation, reward, _terminated, truncated, info = super().submit_action(submission)
+                # Force every accepted decision to terminate the episode.
+                return observation, reward, True, False, info
+
+        env = _EveryStepTerminalEnv(
+            seed=1101, modes=("single",), events_per_episode=1, max_resets=64,
+        )
+        config = PPOConfig(rollout_steps=1, update_epochs=1, minibatch_size=2, seed=1101, device="cpu")
+        trainer = PPOTrainer(env=env, variant="GPPO-NoGate", config=config)
+        n = 4
+        buffer, stats = trainer.collect_rollout(n)
+        try:
+            self.assertEqual(trainer.total_steps, n)
+            self.assertEqual(len(buffer), n)
+            self.assertEqual(len(reset_log), n + 1)
+            self.assertEqual(reset_log, list(range(n + 1)))
+        finally:
+            env.close()
 
     def test_train_seed_range_exhaustion_hard_fails(self):
         from ppo_allocation.random_event.experiment import CyclingTrainingEnv
@@ -740,9 +784,29 @@ class FormalTestResumeTests(unittest.TestCase):
                     "source_tree_hash": gate["source_tree_hash"],
                     "protocol_sha256": gate["protocol_sha256"],
                     "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                    "result_path": f"preliminary/test_results/{i}.json",
+                    "result_sha": "c" * 64,
                 } for i, key in enumerate(keys)},
             }
             (root / "preliminary" / "test_ledger.json").write_text(json.dumps(ledger))
+            # Journal is the single source of truth: write consumed journals for
+            # the two already-consumed checkpoints (same provenance).
+            state_dir = root / "preliminary" / "test_state"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            for i, key in enumerate(keys):
+                freeze = freeze_payload["freezes"][i]
+                (state_dir / f"{key}.json").write_text(json.dumps({
+                    "state": "consumed",
+                    "key": key,
+                    "checkpoint_sha": freeze["checkpoint_sha256"],
+                    "test_manifest_sha": manifest_sha,
+                    "freeze_manifest_sha": lock["freeze_manifest_sha256"],
+                    "source_tree_hash": gate["source_tree_hash"],
+                    "protocol_sha256": gate["protocol_sha256"],
+                    "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                    "result_path": f"preliminary/test_results/{i}.json",
+                    "result_sha": "c" * 64,
+                }))
             result = self._run_test(root, gate, freeze_payload, manifest_sha)
             # 2 skipped (resumed), 7 evaluated.
             resumed = [r for r in result["results"] if r.get("resumed")]
@@ -801,6 +865,198 @@ class FormalTestResumeTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self._run_test(root, gate, freeze_payload, manifest_sha)
 
+    def _setup_test_env(self, gate, root):
+        (root / "preliminary").mkdir(parents=True, exist_ok=True)
+        freeze_payload = self._freeze_payload(gate, root)
+        (root / "preliminary" / "frozen_manifests.json").write_text(json.dumps(freeze_payload))
+        manifest_path, manifest_sha = self._test_bank(gate, root)
+        lock = {
+            "test_manifest_sha256": manifest_sha,
+            "source_tree_hash": gate["source_tree_hash"],
+            "attested_source_commit_sha": gate["attested_source_commit_sha"],
+            "protocol_sha256": gate["protocol_sha256"],
+            "seed_manifest_sha256": gate["seed_manifest_sha256"],
+            "freeze_manifest_sha256": hashlib.sha256(json.dumps(freeze_payload).encode()).hexdigest(),
+            "completed": False,
+        }
+        (root / "preliminary" / "formal_test_bank_lock.json").write_text(json.dumps(lock))
+        return freeze_payload, manifest_sha, lock
+
+    def _journal_fields(self, freeze, key, manifest_sha, freeze_sha, gate, result_path=None, result_sha=None):
+        payload = {
+            "state": "consumed",
+            "key": key,
+            "variant": freeze["variant"],
+            "training_seed": freeze["training_seed"],
+            "checkpoint_sha": freeze["checkpoint_sha256"],
+            "test_manifest_sha": manifest_sha,
+            "freeze_manifest_sha": freeze_sha,
+            "source_tree_hash": gate["source_tree_hash"],
+            "protocol_sha256": gate["protocol_sha256"],
+            "seed_manifest_sha256": gate["seed_manifest_sha256"],
+        }
+        if result_path is not None:
+            payload["result_path"] = result_path
+            payload["result_sha"] = result_sha
+        return payload
+
+    def _run_test_tracked(self, root, gate, freeze_payload, manifest_sha):
+        """Like _run_test but returns (result, run_episode_mock)."""
+        import ppo_allocation.random_event.phase_j as phase_j
+        from unittest.mock import patch, Mock
+        from ppo_allocation.random_event.metrics import EpisodeMetrics
+
+        def fake_episode():
+            from dataclasses import fields
+            values = {}
+            for field in fields(EpisodeMetrics):
+                if field.name in {"tape_id", "episode_id", "algorithm"}:
+                    values[field.name] = "x"
+                elif field.name in {"event_success_rate", "legal_coverage_rate", "weighted_uncovered", "recovery_delay", "normalized_distance", "load_gap", "inference_latency_ms", "event_to_action_latency_ms", "communication_suppression_rate", "pre_mask_invalid_probability", "mask_rate", "gate_mean", "gate_variance", "value_error", "value_squared_error", "avg_reward"}:
+                    values[field.name] = None
+                else:
+                    values[field.name] = 0
+            values.update({"tape_id": "t", "episode_id": "e", "algorithm": "X", "event_count": 1, "fixed_j": 1.0})
+            return EpisodeMetrics(**values)
+
+        run_episode_mock = Mock(return_value=(fake_episode(), {"reward_invariant": True, "decisions": [], "events": []}))
+
+        class _FakeModel:
+            def eval(self):
+                return self
+
+        with patch.object(phase_j, "_check_p0_gate_strict", return_value=gate), \
+             patch.object(phase_j, "_validate_hashes_match"), \
+             patch.object(phase_j.torch, "load", return_value={"format": "graph-actor-critic-v1"}), \
+             patch.object(phase_j.GraphActorCritic, "load", return_value=(_FakeModel(), {})), \
+             patch.object(phase_j, "load_tape_bank", return_value=({}, [])), \
+             patch.object(phase_j, "run_episode", run_episode_mock):
+            result = phase_j.preliminary_test(root)
+        return result, run_episode_mock
+
+    def test_consumed_journal_without_ledger_rebuilds_and_skips(self):
+        """B: journal consumed + ledger entry missing -> NO re-evaluation;
+        rebuild the ledger entry from the cryptographically verified result."""
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            freeze_payload, manifest_sha, lock = self._setup_test_env(gate, root)
+            freeze = freeze_payload["freezes"][0]
+            key = f"{freeze['variant']}_seed{freeze['training_seed']}_{freeze['checkpoint_sha256'][:12]}_{manifest_sha}"
+            # Durable result file with matching SHA.
+            result_dir = root / "preliminary" / "test_results"
+            result_dir.mkdir(parents=True, exist_ok=True)
+            result_file = result_dir / "resume0.json"
+            result_file.write_text(json.dumps({"ok": True}))
+            result_sha = hashlib.sha256(result_file.read_bytes()).hexdigest()
+            state_dir = root / "preliminary" / "test_state"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            journal = self._journal_fields(
+                freeze, key, manifest_sha, lock["freeze_manifest_sha256"], gate,
+                result_path=str(result_file.resolve()), result_sha=result_sha,
+            )
+            (state_dir / f"{key}.json").write_text(json.dumps(journal))
+            # No ledger entry at all (crash before ledger persist).
+            result, run_episode_mock = self._run_test_tracked(root, gate, freeze_payload, manifest_sha)
+            run_episode_mock.assert_not_called()
+            resumed = [r for r in result["results"] if r.get("resumed")]
+            self.assertEqual(len(resumed), 1)
+            ledger_after = json.loads((root / "preliminary" / "test_ledger.json").read_text())
+            self.assertTrue(ledger_after["entries"][key]["consumed"])
+            self.assertTrue(ledger_after["entries"][key].get("resumed_from_journal"))
+
+    def test_consumed_journal_missing_result_hard_fails_exit(self):
+        """B-fail: missing result under a consumed journal raises SystemExit
+        (manual audit) instead of silently re-running."""
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            freeze_payload, manifest_sha, lock = self._setup_test_env(gate, root)
+            freeze = freeze_payload["freezes"][0]
+            key = f"{freeze['variant']}_seed{freeze['training_seed']}_{freeze['checkpoint_sha256'][:12]}_{manifest_sha}"
+            state_dir = root / "preliminary" / "test_state"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            journal = self._journal_fields(
+                freeze, key, manifest_sha, lock["freeze_manifest_sha256"], gate,
+                result_path=str(root / "preliminary" / "test_results" / "MISSING.json"),
+                result_sha="d" * 64,
+            )
+            (state_dir / f"{key}.json").write_text(json.dumps(journal))
+            import ppo_allocation.random_event.phase_j as phase_j
+            from unittest.mock import patch, Mock
+            from ppo_allocation.random_event.metrics import EpisodeMetrics
+
+            def fake_episode():
+                from dataclasses import fields
+                values = {}
+                for field in fields(EpisodeMetrics):
+                    if field.name in {"tape_id", "episode_id", "algorithm"}:
+                        values[field.name] = "x"
+                    elif field.name in {"event_success_rate", "legal_coverage_rate", "weighted_uncovered", "recovery_delay", "normalized_distance", "load_gap", "inference_latency_ms", "event_to_action_latency_ms", "communication_suppression_rate", "pre_mask_invalid_probability", "mask_rate", "gate_mean", "gate_variance", "value_error", "value_squared_error", "avg_reward"}:
+                        values[field.name] = None
+                    else:
+                        values[field.name] = 0
+                values.update({"tape_id": "t", "episode_id": "e", "algorithm": "X", "event_count": 1, "fixed_j": 1.0})
+                return EpisodeMetrics(**values)
+
+            run_episode_mock = Mock(return_value=(fake_episode(), {"reward_invariant": True, "decisions": [], "events": []}))
+
+            class _FakeModel:
+                def eval(self):
+                    return self
+
+            with patch.object(phase_j, "_check_p0_gate_strict", return_value=gate), \
+                 patch.object(phase_j, "_validate_hashes_match"), \
+                 patch.object(phase_j.torch, "load", return_value={"format": "graph-actor-critic-v1"}), \
+                 patch.object(phase_j.GraphActorCritic, "load", return_value=(_FakeModel(), {})), \
+                 patch.object(phase_j, "load_tape_bank", return_value=({}, [])), \
+                 patch.object(phase_j, "run_episode", run_episode_mock):
+                with self.assertRaises(SystemExit):
+                    phase_j.preliminary_test(root)
+            run_episode_mock.assert_not_called()
+
+    def test_ledger_consumed_running_journal_recovers_and_skips(self):
+        """C: ledger consumed + journal running -> NO re-evaluation; restore
+        the journal to consumed from the verified ledger/result."""
+        gate = ProvenanceGuardTests()._gate()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            freeze_payload, manifest_sha, lock = self._setup_test_env(gate, root)
+            freeze = freeze_payload["freezes"][0]
+            key = f"{freeze['variant']}_seed{freeze['training_seed']}_{freeze['checkpoint_sha256'][:12]}_{manifest_sha}"
+            # Durable result file.
+            result_dir = root / "preliminary" / "test_results"
+            result_dir.mkdir(parents=True, exist_ok=True)
+            result_file = result_dir / "resume0.json"
+            result_file.write_text(json.dumps({"ok": True}))
+            # Ledger says consumed; journal still says running (crash window).
+            ledger = {
+                "schema_version": 1, "completed": False, "test_manifest_sha256": manifest_sha,
+                "entries": {key: {
+                    "consumed": True, "variant": freeze["variant"],
+                    "training_seed": freeze["training_seed"],
+                    "checkpoint_sha": freeze["checkpoint_sha256"],
+                    "test_manifest_sha": manifest_sha,
+                    "freeze_manifest_sha": lock["freeze_manifest_sha256"],
+                    "source_tree_hash": gate["source_tree_hash"],
+                    "protocol_sha256": gate["protocol_sha256"],
+                    "seed_manifest_sha256": gate["seed_manifest_sha256"],
+                    "result_path": str(result_file.resolve()),
+                    "result_sha": hashlib.sha256(result_file.read_bytes()).hexdigest(),
+                }},
+            }
+            (root / "preliminary" / "test_ledger.json").write_text(json.dumps(ledger))
+            state_dir = root / "preliminary" / "test_state"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            (state_dir / f"{key}.json").write_text(json.dumps({"state": "running", "key": key}))
+            result, run_episode_mock = self._run_test_tracked(root, gate, freeze_payload, manifest_sha)
+            run_episode_mock.assert_not_called()
+            resumed = [r for r in result["results"] if r.get("resumed")]
+            self.assertEqual(len(resumed), 1)
+            journal_after = json.loads((state_dir / f"{key}.json").read_text())
+            self.assertEqual(journal_after["state"], "consumed")
+            self.assertEqual(journal_after["result_sha"], hashlib.sha256(result_file.read_bytes()).hexdigest())
+
 
 # ---------------------------------------------------------------------------
 # Multi-event early termination remains validation-rankable
@@ -845,6 +1101,115 @@ class EarlyTerminationRankableTests(unittest.TestCase):
         self.assertTrue(np.isfinite(metrics.fixed_j))
         selected, _ = _lexicographic_select([metrics])
         self.assertEqual(selected.checkpoint_sha256, ckpt.checkpoint_sha256)
+
+    def test_run_episode_early_termination_unobserved_event_rankable(self):
+        """REAL integration: a tape with >=2 events where an early event causes
+        final-infeasible termination before a later event is ever observed.
+        run_episode itself must materialise finite fixed_j for the unobserved
+        event (test does NOT pre-fill fixed_j), and the checkpoint must remain
+        lexicographically rankable."""
+        from ppo_allocation.random_event.events import EventTape, RandomEvent, RandomEventType
+        from ppo_allocation.random_event.baselines import NearestLegalPolicy
+        from ppo_allocation.random_event.experiment import run_episode
+        from ppo_allocation.random_event.phase_j import (
+            CheckpointRecord, _lexicographic_select, extract_validation_metrics,
+        )
+
+        events = []
+        # Burst of 4 UAV_DAMAGE (one per UAV): after the single merged decision
+        # every UAV is dead, all regions are pending, and there is no future
+        # TARGET_DESTROYED to release capacity -> final infeasible termination.
+        for i in range(4):
+            events.append(RandomEvent(
+                event_id=f"dmg-{i}", event_type=RandomEventType.UAV_DAMAGE,
+                occurred_at=0.0, observed_at=0.0, source_event="src",
+                affected_uavs=(i,), affected_regions=(), affected_targets=(),
+                severity=1.0, event_seed=100 + i, state_version=0,
+            ))
+        # Later event that must NEVER be observed/acted on.
+        events.append(RandomEvent(
+            event_id="vac-4", event_type=RandomEventType.REGION_VACANCY,
+            occurred_at=5.0, observed_at=5.0, source_event="src",
+            affected_uavs=(), affected_regions=(0,), affected_targets=(),
+            severity=0.5, event_seed=200, state_version=0,
+        ))
+        tape = EventTape(initial_seed=42, event_seed=1000, mode="burst", events=tuple(events))
+
+        episode, trace = run_episode(
+            NearestLegalPolicy(), tape_id="early-term", tape=tape,
+            algorithm="NearestLegal", max_decisions=100,
+        )
+
+        self.assertGreaterEqual(len(trace["events"]), 2)
+        second = trace["events"][-1]  # the never-observed event
+        self.assertEqual(second["event_id"], "vac-4")
+        self.assertEqual(second["decision_count"], 0)
+        self.assertIsNone(second["recovery_delay"])
+        self.assertTrue(np.isfinite(float(second["fixed_j"])))
+        # Every unobserved event got the frozen 200s censored recovery horizon.
+        from ppo_allocation.random_event.reward import UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS
+        ckpt = CheckpointRecord(
+            variant="PPO-MLP", training_seed=1101, decision_steps=25000,
+            checkpoint_path="x.pt", checkpoint_sha256="a" * 64,
+            source_tree_hash="b" * 64, attested_source_commit_sha="c" * 40,
+            protocol_sha256="d" * 64, seed_manifest_sha256="e" * 64,
+            ppo_config={}, rng_state={}, created_at="now",
+        )
+        metrics = extract_validation_metrics(episode, trace, ckpt)
+        self.assertTrue(np.isfinite(metrics.final_infeasible_rate))
+        self.assertTrue(np.isfinite(metrics.cumulative_weighted_vacancy))
+        self.assertTrue(np.isfinite(metrics.recovery_latency))
+        self.assertTrue(np.isfinite(metrics.fixed_j))
+        self.assertEqual(metrics.final_infeasible_count, 1)
+        selected, _ = _lexicographic_select([metrics])
+        self.assertEqual(selected.checkpoint_sha256, ckpt.checkpoint_sha256)
+        self.assertGreaterEqual(
+            metrics.recovery_latency,
+            UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Protected-source contract
+# ---------------------------------------------------------------------------
+class ProtectedSourceContractTests(unittest.TestCase):
+    def _source_files(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "build_p0_gate", str(Path(_REPO_ROOT) / "scripts" / "build_p0_gate.py"),
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return set(module.SOURCE_FILES)
+
+    def test_phase_j_runtime_modules_are_protected(self):
+        required = [
+            "ppo_allocation/random_event/environment.py",
+            "ppo_allocation/random_event/experiment.py",
+            "ppo_allocation/random_event/metrics.py",
+            "ppo_allocation/random_event/models.py",
+            "ppo_allocation/random_event/trainer.py",
+            "ppo_allocation/random_event/reward.py",
+            "ppo_allocation/random_event/phase_j.py",
+        ]
+        source_files = self._source_files()
+        for module in required:
+            self.assertIn(module, source_files)
+
+    def test_metrics_change_invalidates_old_gate_hashes(self):
+        """metrics.py is protected: a 1-byte change must alter the committed
+        blob hash, so an old GREEN gate becomes stale."""
+        import subprocess
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=_REPO_ROOT, text=True
+        ).strip()
+        blob = subprocess.check_output(
+            ["git", "show", f"{commit}:ppo_allocation/random_event/metrics.py"],
+            cwd=_REPO_ROOT,
+        )
+        digest = hashlib.sha256(blob).hexdigest()
+        tampered = blob.replace(b"from __future__ import annotations", b"from __future__ import annotations \n", 1)
+        self.assertNotEqual(digest, hashlib.sha256(tampered).hexdigest())
 
 
 # ---------------------------------------------------------------------------

@@ -5,19 +5,29 @@
     "num_uavs": 4,
     "num_regions": 4,
     "num_targets": 3,
-    "uav_modes": ["SEARCH", "TRACK", "IDLE"],
+    "uav_modes": [
+      "SEARCH",
+      "TRACK",
+      "IDLE"
+    ],
     "preserve_legacy_task_semantics": true,
     "parent_subtask_model_enabled": false
   },
   "runtime": {
-    "supported_python": ["3.10", "3.11"],
+    "supported_python": [
+      "3.10",
+      "3.11"
+    ],
     "forbidden_training_python": "3.14",
     "deterministic_torch": true,
     "canonical_event_json": {
       "encoding": "utf-8",
       "sort_keys": true,
       "allow_nan": false,
-      "separators": [",", ":"],
+      "separators": [
+        ",",
+        ":"
+      ],
       "digest": "sha256"
     }
   },
@@ -56,16 +66,30 @@
       },
       "sequential": {
         "inter_event_rule": "schedule_next_after_recovery",
-        "interval_seconds": [2, 6]
+        "interval_seconds": [
+          2,
+          6
+        ]
       },
       "overlap": {
         "inter_event_rule": "allow_arrival_while_pending",
-        "interval_seconds": [1, 3]
+        "interval_seconds": [
+          1,
+          3
+        ]
       },
       "burst": {
-        "events_per_atomic_batch": [2, 3],
+        "events_per_atomic_batch": [
+          2,
+          3
+        ],
         "window_seconds": 0.1,
-        "atomic_order": ["observed_at", "occurred_at", "tape_order", "event_id"]
+        "atomic_order": [
+          "observed_at",
+          "occurred_at",
+          "tape_order",
+          "event_id"
+        ]
       }
     },
     "unseen_base_probabilities": {
@@ -75,12 +99,29 @@
       "REGION_VACANCY": 0.4
     },
     "unseen_distribution_profile": "unseen_shift_v1",
-    "unseen_mode_cycle": ["single", "sequential", "overlap", "burst"],
+    "unseen_mode_cycle": [
+      "single",
+      "sequential",
+      "overlap",
+      "burst"
+    ],
     "unseen_detection_delay_seconds_by_mode": {
-      "single": [1.5, 3.0],
-      "sequential": [1.5, 3.0],
-      "overlap": [3.0, 6.0],
-      "burst": [2.0, 4.0]
+      "single": [
+        1.5,
+        3.0
+      ],
+      "sequential": [
+        1.5,
+        3.0
+      ],
+      "overlap": [
+        3.0,
+        6.0
+      ],
+      "burst": [
+        2.0,
+        4.0
+      ]
     },
     "unseen_contract": "same_four_event_semantics_shifted_type_mixture_and_observation_delay_not_used_for_training",
     "horizon": {
@@ -98,26 +139,71 @@
     "preserve_unaffected_search_uavs": true,
     "preempt_unaffected_tasks": false,
     "continuous_progress_model_enabled": false,
-    "state_fields": ["pending_regions", "event_queue", "graph_version", "decision_version"],
-    "queue_order": ["observed_at", "occurred_at", "tape_order", "event_id"],
+    "state_fields": [
+      "pending_regions",
+      "event_queue",
+      "graph_version",
+      "decision_version"
+    ],
+    "queue_order": [
+      "observed_at",
+      "occurred_at",
+      "tape_order",
+      "event_id"
+    ],
     "reject_action_when_decision_version_is_stale": true,
     "re_infer_after_stale_rejection": true,
     "burst_commit": "atomic_then_increment_graph_version_once"
   },
   "graph": {
     "node_types": {
-      "UAV": ["position", "alive", "mode", "assigned_region_count", "sensor_type", "sensor_failed", "target_id"],
-      "Region": ["center_position", "assigned_uav", "need_reassign", "priority", "workload", "vacancy_duration"],
-      "Target": ["position", "discovered", "tracked", "destroyed", "tracker_id", "region_id"]
+      "UAV": [
+        "position",
+        "alive",
+        "mode",
+        "assigned_region_count",
+        "sensor_type",
+        "sensor_failed",
+        "target_id"
+      ],
+      "Region": [
+        "center_position",
+        "assigned_uav",
+        "need_reassign",
+        "priority",
+        "workload",
+        "vacancy_duration"
+      ],
+      "Target": [
+        "position",
+        "discovered",
+        "tracked",
+        "destroyed",
+        "tracker_id",
+        "region_id"
+      ]
     },
     "edge_types": {
-      "UAV-Region": ["assignable", "currently_assigned", "normalized_distance", "load", "sensor_available"],
-      "UAV-Target": ["discovered_by", "tracked_by"],
-      "Target-Region": ["located_in"]
+      "UAV-Region": [
+        "assignable",
+        "currently_assigned",
+        "normalized_distance",
+        "load",
+        "sensor_available"
+      ],
+      "UAV-Target": [
+        "discovered_by",
+        "tracked_by"
+      ],
+      "Target-Region": [
+        "located_in"
+      ]
     },
     "encoder": "AHGNN",
     "adaptive_gate": {
-      "enabled_for": ["GPPO-Adaptive"],
+      "enabled_for": [
+        "GPPO-Adaptive"
+      ],
       "disabled_value_for_ablation": 1.0
     },
     "actor": "candidate_UAV-Region_edge_logits_plus_NOOP",
@@ -153,20 +239,29 @@
       "balance_component",
       "switch_component",
       "recovery_component"
-    ],  "large_invalid_action_penalty": false,
-  "validation_metrics": {
-    "final_infeasible_definition": "sum(final_infeasible_count) / sum(event_count) over the validation bank",
-    "cumulative_weighted_vacancy_definition": "sum EpisodeMetrics.cumulative_weighted_vacancy over tapes",
-    "recovery_latency_definition": "sum observed recovery_delay + 200.0 seconds per unresolved event",
-    "unrecovered_recovery_penalty_seconds": 200.0,
-    "fixed_j_unrecovered_rule": "use the same 200.0 second censored recovery penalty in eta*recovery_delay",
-    "missing_metric_is_zero": false
-  },
-  "weight_selection_sources": [
-
-    "train"
-  ],
-
+    ],
+    "large_invalid_action_penalty": false,
+    "validation_metrics": {
+      "final_infeasible_definition": "sum(final_infeasible_count) / sum(event_count) over the validation bank",
+      "cumulative_weighted_vacancy_definition": "sum EpisodeMetrics.cumulative_weighted_vacancy over tapes",
+      "recovery_latency_definition": "sum observed recovery_delay + 200.0 seconds per unresolved event",
+      "unrecovered_recovery_penalty_seconds": 200.0,
+      "fixed_j_unrecovered_rule": "use the same 200.0 second censored recovery penalty in eta*recovery_delay",
+      "missing_metric_is_zero": false,
+      "fixed_j_unobserved_event_rule": {
+        "definition": "Frozen rule for an event that never produced a decision (unobserved because an earlier event caused final-infeasible termination). Components are derived from the FINAL environment snapshot at episode finalization; recovery_delay uses the explicit 200.0s censored horizon. NEVER None -> 0.",
+        "uncovered_source": "final_environment_cost.uncovered",
+        "distance_source": "final_environment_cost.distance",
+        "load_gap_source": "final_environment_cost.load_gap",
+        "switches_source": "frozen_zero_no_reference_assignments_at_finalization",
+        "switches_value": 0.0,
+        "recovery_delay_seconds": 200.0,
+        "missing_metric_is_zero": false
+      }
+    },
+    "weight_selection_sources": [
+      "train"
+    ],
     "weight_selection_forbidden_source": "test"
   },
   "methods": {
@@ -189,7 +284,12 @@
       "P1_anchored_exact_pair": {
         "common_pre_event_snapshot": true,
         "identical_actual_affected_entities": true,
-        "uses": ["Test-Single", "anchored-burst", "oracle-regret", "primary-paired-effect"]
+        "uses": [
+          "Test-Single",
+          "anchored-burst",
+          "oracle-regret",
+          "primary-paired-effect"
+        ]
       },
       "P2_continuous_exogenous_tape": {
         "common_initial_state": true,
@@ -204,7 +304,11 @@
           "payload"
         ],
         "preserve_policy_state_divergence": true,
-        "record_fields": ["intended_affected_regions", "actual_affected_regions", "endogenous_effect_divergence"],
+        "record_fields": [
+          "intended_affected_regions",
+          "actual_affected_regions",
+          "endogenous_effect_divergence"
+        ],
         "claim_limit": "same exogenous shock, not necessarily identical derived affected state"
       }
     },
@@ -212,12 +316,21 @@
     "report_protocols_separately": true
   },
   "evaluation": {
-    "banks": ["train", "validation", "test"],
+    "banks": [
+      "train",
+      "validation",
+      "test"
+    ],
     "disjoint_seed_namespaces": true,
     "checkpoint_selection_source": "validation",
     "test_allowed_for_checkpoint_selection": false,
     "smoke": {
-      "modes": ["single", "sequential", "overlap", "burst"],
+      "modes": [
+        "single",
+        "sequential",
+        "overlap",
+        "burst"
+      ],
       "tapes_or_bundles_per_mode": 20,
       "minimum_events_per_continuous_tape": 3,
       "minimum_reset_isolated_branches_per_single_bundle": 3
@@ -227,13 +340,25 @@
       "training_seeds": 3,
       "test_tapes_total": 200,
       "test_tapes_per_set": 40,
-      "test_sets": ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+      "test_sets": [
+        "Test-Single",
+        "Test-Sequential",
+        "Test-Overlap",
+        "Test-Burst",
+        "Test-Unseen"
+      ]
     },
     "formal": {
       "training_seeds": 5,
       "test_tapes_total": 1000,
       "test_tapes_per_set": 200,
-      "test_sets": ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
+      "test_sets": [
+        "Test-Single",
+        "Test-Sequential",
+        "Test-Overlap",
+        "Test-Burst",
+        "Test-Unseen"
+      ]
     }
   },
   "metrics": {
@@ -287,7 +412,13 @@
   "statistics": {
     "paired_unit": "same_tape_or_same_anchored_snapshot_within_training_seed",
     "independent_algorithm_stability_unit": "training_seed",
-    "report": ["raw_seed_values", "mean", "standard_deviation", "95_percent_confidence_interval", "paired_difference"],
+    "report": [
+      "raw_seed_values",
+      "mean",
+      "standard_deviation",
+      "95_percent_confidence_interval",
+      "paired_difference"
+    ],
     "primary_comparisons": [
       "GPPO-Adaptive_vs_PPO-MLP",
       "GPPO-Adaptive_vs_GPPO-NoGate",

@@ -47,7 +47,11 @@ from .metrics import (
     write_metrics_json,
 )
 from .models import GraphActorCritic
-from .reward import compute_cost, compute_fixed_j_from_components
+from .reward import (
+    UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
+    compute_cost,
+    compute_fixed_j_from_components,
+)
 from .scheduler import (
     RandomEventScheduler,
     TimingProfile,
@@ -105,8 +109,20 @@ def _sha256_file(path: Path) -> str:
 
 
 def _json_file(path: Path, value: Any) -> Path:
+    """Write JSON atomically (same-dir temp + fsync + os.replace).
+
+    Readers never observe a partially-written file: on crash the previous
+    version (or nothing) remains.  This is what makes the formal Test journal
+    crash-safe.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(stable_json_dumps(value, indent=2) + "\n", encoding="utf-8")
+    data = (stable_json_dumps(value, indent=2) + "\n").encode("utf-8")
+    tmp_path = path.with_name(path.name + ".tmp")
+    with tmp_path.open("wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(tmp_path, path)
     return path
 
 
@@ -487,7 +503,7 @@ class CyclingTrainingEnv(RandomEventAllocationEnv):
         seed: int,
         modes: Sequence[str],
         events_per_episode: int,
-        max_resets: int = 300_000,
+        max_resets: int = 300_001,
     ):
         self._training_seed = int(seed)
         self._training_modes = tuple(modes)
@@ -877,12 +893,17 @@ def run_episode(
         # checkpoint lexicographically rankable even with unresolved events.
         censored = accumulator._decision_count == 0
         if censored:
+            # Frozen rule (random_event_protocol.json
+            # validation_metrics.fixed_j_unobserved_event_rule): components come
+            # from the FINAL environment snapshot (switches is frozen 0.0 because
+            # no reference assignment is available at finalization) and the
+            # recovery horizon is the explicit frozen 200s censoring penalty.
             fixed_j = compute_fixed_j_from_components(
                 uncovered=final_cost.uncovered,
                 distance=final_cost.distance,
                 load_gap=final_cost.load_gap,
                 switches=final_cost.switches,
-                recovery_delay=200.0,
+                recovery_delay=UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
             )
         else:
             fixed_j = compute_fixed_j_from_components(
@@ -890,7 +911,7 @@ def run_episode(
                 distance=_mean(accumulator._distance),
                 load_gap=_mean(accumulator._load_gap),
                 switches=float(accumulator._switch_count),
-                recovery_delay=recovery_delay if recovery_delay is not None else 200.0,
+                recovery_delay=recovery_delay if recovery_delay is not None else UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS,
             )
         event_metrics.append(
             accumulator.finalize(

@@ -34,6 +34,13 @@ FROZEN_REWARD_WEIGHTS = {
 }
 VACANCY_DURATION_WEIGHT = 0.2
 
+# Frozen censoring horizon for an event that never produced a decision (e.g.
+# it was never observed because an earlier event caused final-infeasible
+# termination).  Mirrors ``random_event_protocol.json``
+# ``validation_metrics.fixed_j_unobserved_event_rule.recovery_delay_seconds``.
+# It is an explicit censored upper horizon, NEVER an implicit None -> 0.
+UNOBSERVED_EVENT_RECOVERY_PENALTY_SECONDS = 200.0
+
 
 @dataclass(frozen=True)
 class CostWeights:
