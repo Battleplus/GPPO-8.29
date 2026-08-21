@@ -74,6 +74,9 @@ SOURCE_FILES = [
     "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
     "ppo_allocation/random_event/phase_j.py",
     "ppo_allocation/tests_random_event/test_phase_j.py",
+    "run_phase_j.py",
+    "configs/random_event_protocol.json",
+    "configs/seed_manifest.json",
 ]
 
 # Required test suites.  Each entry: (label, discovery_dir, pattern).
@@ -99,6 +102,46 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def git_blob_sha256(commit: str, relative: str) -> str:
+    """Hash the exact blob stored in Git at ``commit:path``."""
+    try:
+        data = subprocess.check_output(
+            ["git", "show", f"{commit}:{relative}"], cwd=ROOT
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "MISSING"
+    return hashlib.sha256(data).hexdigest()
+
+
+def protected_paths() -> list[str]:
+    return sorted(set(SOURCE_FILES) | {
+        "configs/random_event_protocol.json",
+        "configs/seed_manifest.json",
+    })
+
+
+def working_tree_clean(paths: list[str] | None = None) -> tuple[bool, list[str]]:
+    paths = paths or protected_paths()
+    try:
+        output = subprocess.check_output(
+            ["git", "status", "--porcelain", "--", *paths],
+            cwd=ROOT, text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False, ["git status unavailable"]
+    changed = [line for line in output.splitlines() if line.strip()]
+    return not changed, changed
+
+
+def committed_hashes_match(commit: str, source: dict[str, str]) -> tuple[bool, list[str]]:
+    mismatches = []
+    for relative, disk_hash in source.items():
+        git_hash = git_blob_sha256(commit, relative)
+        if disk_hash != git_hash:
+            mismatches.append(relative)
+    return not mismatches, mismatches
 
 
 def utc_now() -> str:
@@ -135,7 +178,11 @@ def run_tests() -> dict:
         }
         if not passed:
             all_pass = False
-    results["_all_pass"] = all_pass
+    results["total_tests"] = sum(
+        int(value.get("tests_run", 0)) for key, value in results.items()
+        if key != "_all_pass"
+    )
+    results["_all_pass"] = all_pass and results["total_tests"] >= 83
     return results
 
 
@@ -381,27 +428,48 @@ def run_invariant_checks() -> dict:
     except Exception as exc:  # pragma: no cover
         results["stale_injection_rate"] = {"passed": False, "error": str(exc)}
 
-    # --- Reward semantic consistency: CostWeights default matches protocol ---
+    # --- Reward semantic consistency: the protocol and runtime are one truth ---
     try:
-        from random_event.reward import CostWeights
+        from random_event.reward import CostWeights, VACANCY_DURATION_WEIGHT
         cw = CostWeights()
         protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
         reward_config = protocol.get("reward", {})
-        protocol_matches = True
-        mismatches = []
-        if "region_penalty" in reward_config:
-            if abs(cw.region_penalty - reward_config["region_penalty"]) > 1e-9:
-                protocol_matches = False
-                mismatches.append(f"region_penalty: {cw.region_penalty} != {reward_config['region_penalty']}")
-        if "distance_cost" in reward_config:
-            if abs(cw.distance_cost - reward_config["distance_cost"]) > 1e-9:
-                protocol_matches = False
-                mismatches.append(f"distance_cost: {cw.distance_cost} != {reward_config['distance_cost']}")
+        cost_config = reward_config.get("cost", {})
+        protocol_weights = cost_config.get("weights", {})
+        mapping = {
+            "alpha -> uncovered": (protocol_weights.get("alpha"), cw.uncovered),
+            "beta -> distance": (protocol_weights.get("beta"), cw.distance),
+            "gamma -> load_gap": (protocol_weights.get("gamma"), cw.load_gap),
+            "delta -> switches": (protocol_weights.get("delta"), cw.switches),
+            "eta -> recovery_delay": (protocol_weights.get("eta"), cw.recovery_delay),
+        }
+        mapping_status = {
+            name: expected is not None and abs(float(expected) - actual) <= 1e-12
+            for name, (expected, actual) in mapping.items()
+        }
+        manifest = json.loads(SEED_MANIFEST_PATH.read_text(encoding="utf-8"))
+        validation = manifest["preliminary"]["validation"]
+        test = manifest["preliminary"]["test"]
+        constraint_ok = cost_config.get("constraint_term_included") is False and cw.constraint_violation == 0.0
+        normalization_ok = cost_config.get("distance_normalization") == "fixed_scenario_diagonal_AREA_SIZE_times_sqrt2"
+        vacancy_ok = (
+            cost_config.get("uncovered_definition") ==
+            "sum(priority*workload + 0.2*(vacancy_duration/max_time)) over uncovered regions"
+            and abs(VACANCY_DURATION_WEIGHT - 0.2) <= 1e-12
+        )
+        tuning_ok = validation.get("reward_tuning") is False and test.get("reward_tuning") is False
+        semantic_pass = all(mapping_status.values()) and constraint_ok and normalization_ok and vacancy_ok and tuning_ok
         results["reward_semantic_consistency"] = {
-            "passed": protocol_matches,
-            "cost_weights": asdict(cw) if hasattr(cw, '__dataclass_fields__') else str(cw),
+            "passed": semantic_pass,
+            "mapping": {key: "PASS" if value else "FAIL" for key, value in mapping_status.items()},
+            "constraint_term": "PASS" if constraint_ok else "FAIL",
+            "distance_normalization": "PASS" if normalization_ok else "FAIL",
+            "weighted_vacancy_definition": "PASS" if vacancy_ok else "FAIL",
+            "validation_reward_tuning": validation.get("reward_tuning"),
+            "test_reward_tuning": test.get("reward_tuning"),
+            "reward_tuning": "PASS" if tuning_ok else "FAIL",
+            "cost_weights": asdict(cw),
             "protocol_reward": reward_config,
-            "mismatches": mismatches,
         }
     except Exception as exc:
         results["reward_semantic_consistency"] = {"passed": False, "error": str(exc)}
@@ -592,6 +660,10 @@ def main() -> int:
     # A gate is a new attestation for the current committed HEAD.  It must not
     # silently re-baseline after a failed drift check: the full required test
     # suites and invariant probes above always run before this record is written.
+    clean, dirty_paths = working_tree_clean()
+    committed_match, committed_mismatches = committed_hashes_match(
+        hashes["git_commit_sha"], hashes["source"]
+    )
     missing_hashes = [name for name, value in hashes["source"].items() if value == "MISSING"]
     checks = {
         "test_suites": {
@@ -671,11 +743,15 @@ def main() -> int:
             "details": smoke,
         },
         "source_hash_integrity": {
-            "status": "PASS" if not missing_hashes else "FAIL",
+            "status": "PASS" if clean and committed_match and not missing_hashes else "FAIL",
             "details": {
                 "git_commit_sha": hashes["git_commit_sha"],
                 "source_tree_hash": hashes["source_tree_hash"],
                 "missing": missing_hashes,
+                "working_tree_clean": clean,
+                "dirty_paths": dirty_paths,
+                "committed_blob_hashes_match": committed_match,
+                "committed_blob_mismatches": committed_mismatches,
                 "previous_gate_not_used_as_baseline": True,
             },
         },

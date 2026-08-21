@@ -261,6 +261,85 @@ class LexicographicSelectionTests(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# Real metric extraction and strict contract tests
+# ---------------------------------------------------------------------------
+class ValidationMetricIntegrationTests(unittest.TestCase):
+    def _episode(self, **overrides):
+        from dataclasses import fields
+        from ppo_allocation.random_event.metrics import EpisodeMetrics
+        values = {}
+        for field in fields(EpisodeMetrics):
+            if field.name in {"tape_id", "episode_id", "algorithm"}:
+                values[field.name] = "x"
+            elif field.name in {"event_success_rate", "legal_coverage_rate", "weighted_uncovered", "recovery_delay", "normalized_distance", "load_gap", "inference_latency_ms", "event_to_action_latency_ms", "communication_suppression_rate", "pre_mask_invalid_probability", "mask_rate", "gate_mean", "gate_variance", "value_error", "value_squared_error", "avg_reward"}:
+                values[field.name] = None
+            elif field.name in {"episode_return"}:
+                values[field.name] = 0.0
+            else:
+                values[field.name] = 0
+        values.update({
+            "tape_id": "t", "episode_id": "e", "algorithm": "PPO-MLP",
+            "event_count": 1, "final_infeasible_count": 0,
+            "final_infeasible_rate": 0.0, "cumulative_uncovered_time": 2.0,
+            "recovery_delay": 3.0, "recovery_delay_observed_count": 1,
+        })
+        values.update(overrides)
+        return EpisodeMetrics(**values)
+
+    def _trace(self, **overrides):
+        event = {
+            "weighted_uncovered": 2.0, "normalized_distance": 1.0,
+            "load_gap": 0.5, "switch_count": 2, "recovery_delay": 3.0,
+        }
+        event.update(overrides)
+        return {"events": [event]}
+
+    def _checkpoint(self):
+        return __import__("ppo_allocation.random_event.phase_j", fromlist=["CheckpointRecord"]).CheckpointRecord(
+            variant="PPO-MLP", training_seed=1101, decision_steps=64,
+            checkpoint_path="x.pt", checkpoint_sha256="a" * 64,
+            source_tree_hash="b" * 64, attested_source_commit_sha="c" * 40,
+            protocol_sha256="d" * 64, seed_manifest_sha256="e" * 64,
+            ppo_config={}, rng_state={}, created_at="now",
+        )
+
+    def test_extracts_real_episode_metrics_and_fixed_j(self):
+        from ppo_allocation.random_event.phase_j import extract_validation_metrics
+        result = extract_validation_metrics(self._episode(), self._trace(), self._checkpoint())
+        self.assertEqual(result.final_infeasible_count, 0)
+        self.assertEqual(result.cumulative_weighted_vacancy, 2.0)
+        self.assertAlmostEqual(result.fixed_j, 2.0 * 5.0 + 1.0 + 0.5 + 2.0 * 0.25 + 3.0 * 0.5)
+
+    def test_missing_recovery_metric_is_hard_failure(self):
+        from ppo_allocation.random_event.phase_j import extract_validation_metrics
+        with self.assertRaises(ValueError):
+            extract_validation_metrics(
+                self._episode(recovery_delay=None, recovery_delay_observed_count=0),
+                self._trace(recovery_delay=None), self._checkpoint()
+            )
+
+
+class PhaseJCompletenessAndCliTests(unittest.TestCase):
+    def test_formal_checkpoint_completeness_rejects_missing_groups(self):
+        from ppo_allocation.random_event.phase_j import _validate_formal_checkpoints
+        with self.assertRaises(SystemExit):
+            _validate_formal_checkpoints([], {})
+
+    def test_cli_defaults_are_frozen(self):
+        from ppo_allocation.random_event.phase_j import build_parser
+        args = build_parser().parse_args(["preliminary-train"])
+        self.assertEqual(args.budget, 300000)
+        self.assertEqual(args.checkpoint_interval, 25000)
+        self.assertFalse(args.developer_mode)
+
+    def test_cli_help_contains_all_phase_j_commands(self):
+        from ppo_allocation.random_event.phase_j import build_parser
+        help_text = build_parser().format_help()
+        for command in ("preliminary-train", "preliminary-validate", "preliminary-freeze", "preliminary-test", "phase-j-dry-run"):
+            self.assertIn(command, help_text)
+
+
+# ---------------------------------------------------------------------------
 # Test isolation guard
 # ---------------------------------------------------------------------------
 class TestIsolationGuardTests(unittest.TestCase):
@@ -277,10 +356,21 @@ class TestIsolationGuardTests(unittest.TestCase):
 # DRY RUN
 # ---------------------------------------------------------------------------
 class DryRunOrchestratorTests(unittest.TestCase):
-    def test_dry_run_import(self):
+    def test_dry_run_end_to_end_fresh_directory(self):
+        from unittest.mock import patch
         from ppo_allocation.random_event.phase_j import dry_run, preliminary_train
-        self.assertTrue(callable(dry_run))
         self.assertTrue(callable(preliminary_train))
+        gate = json.loads((Path(_REPO_ROOT) / "handoff" / "P0_GATE.json").read_text())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("ppo_allocation.random_event.phase_j._check_p0_gate_strict", return_value=gate), \
+                 patch("ppo_allocation.random_event.phase_j._validate_hashes_match"):
+                result = dry_run(Path(tmpdir))
+            self.assertEqual(result["formal"], False)
+            self.assertEqual(result["selected_per_group"], 9)
+            self.assertEqual(result["frozen_count"], 9)
+            self.assertEqual(result["train_checkpoints"], 18)
+            self.assertFalse(result["official_test_namespace_touched"])
+            self.assertTrue((Path(tmpdir) / "phase_j_dry_run_summary.json").exists())
 
 
 if __name__ == "__main__":

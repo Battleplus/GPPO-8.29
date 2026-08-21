@@ -699,19 +699,28 @@ def run_episode(
         previous_repairs = int(env.repair_count)
         previous_comm_bytes = int(env.communication_bytes)
         previous_comm_count = int(env.communication_trigger_count)
-        # Phase J: begin_decision first, then infer on ctx.graph
-        ctx = None
-        if hasattr(env, "begin_decision"):
-            ctx = env.begin_decision()
-            graph = ctx.graph
-        mask = graph.action_mask.cpu().numpy().astype(bool)
-        action, diagnostics = _select_action(policy, env, graph)
-        # Submit with versioned contract
-        if ctx is not None:
-            submission = ActionSubmission.from_decision(action, ctx)
-            graph_after, reward, terminated, truncated, info = env.submit_action(submission)
-        else:
-            graph_after, reward, terminated, truncated, info = env.step(action)
+        # Phase J: begin_decision → infer → versioned submit.  A stale
+        # submission is not a decision: no trace row, reward, event metric or
+        # budget step is consumed; the policy receives a fresh context.
+        stale_attempts = 0
+        while True:
+            ctx = env.begin_decision() if hasattr(env, "begin_decision") else None
+            if ctx is not None:
+                graph = ctx.graph
+            mask = graph.action_mask.cpu().numpy().astype(bool)
+            action, diagnostics = _select_action(policy, env, graph)
+            if ctx is not None:
+                submission = ActionSubmission.from_decision(action, ctx)
+                graph_after, reward, terminated, truncated, info = env.submit_action(submission)
+            else:
+                graph_after, reward, terminated, truncated, info = env.step(action)
+            if info.get("stale_decision", False):
+                stale_attempts += 1
+                if stale_attempts > 100:
+                    raise RuntimeError("more than 100 consecutive stale decisions in evaluation")
+                continue
+            break
+
         total_reward += float(reward)
         register_events()
 
@@ -744,6 +753,7 @@ def run_episode(
             "final_infeasible": bool(info.get("final_infeasible", False)),
             "mask_rate": float(1.0 - np.mean(mask)),
             "diagnostics": diagnostics,
+            "stale_submission_retries": stale_attempts,
             "affected_event_ids": list(active_before),
         }
         decision_rows.append(decision_row)
@@ -836,6 +846,9 @@ def run_episode(
         "terminated": bool(terminated),
         "truncated": bool(truncated),
         "final_snapshot": env.snapshot(),
+        "stale_submission_retry_count": sum(
+            int(row.get("stale_submission_retries", 0)) for row in decision_rows
+        ),
         "communication_counter_check": {
             "trigger_count": env.communication_trigger_count,
             "bytes": env.communication_bytes,

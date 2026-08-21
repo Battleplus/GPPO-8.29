@@ -1,11 +1,15 @@
-"""Cost-difference reward for random-event recovery.
+"""Frozen state-cost reward for random-event recovery.
 
-Unlike the legacy absolute reward (which contains a large constant coverage
-bonus), this reward measures whether one decision improved the current state:
+The only reward definition used by Phase J is::
 
-    reward = J(before) - J(after)
+    r_t = J(before) - J(after)
+    J = alpha*weighted_uncovered_regions + beta*normalized_distance
+        + gamma*load_gap + delta*switch_count + eta*recovery_delay
 
-Every raw and weighted component is returned for traceable experiment logs.
+The five weights and the normalization below intentionally mirror
+``configs/random_event_protocol.json``.  Constraint violations are reported as
+an audit diagnostic, but are *not* a sixth reward term: action legality is a
+hard mask and the frozen protocol explicitly excludes a constraint penalty.
 """
 
 from __future__ import annotations
@@ -21,14 +25,27 @@ except ImportError:
     from ..config import AREA_SIZE, NO_UAV, TaskType
 
 
+FROZEN_REWARD_WEIGHTS = {
+    "uncovered": 5.0,
+    "distance": 1.0,
+    "load_gap": 1.0,
+    "switches": 0.25,
+    "recovery_delay": 0.5,
+}
+VACANCY_DURATION_WEIGHT = 0.2
+
+
 @dataclass(frozen=True)
 class CostWeights:
-    uncovered: float = 20.0
-    distance: float = 3.0
-    load_gap: float = 2.0
-    switches: float = 1.0
-    recovery_delay: float = 2.0
-    constraint_violation: float = 20.0
+    """Protocol mapping alpha/beta/gamma/delta/eta -> J components."""
+
+    uncovered: float = FROZEN_REWARD_WEIGHTS["uncovered"]
+    distance: float = FROZEN_REWARD_WEIGHTS["distance"]
+    load_gap: float = FROZEN_REWARD_WEIGHTS["load_gap"]
+    switches: float = FROZEN_REWARD_WEIGHTS["switches"]
+    recovery_delay: float = FROZEN_REWARD_WEIGHTS["recovery_delay"]
+    # Retained only for backwards-compatible diagnostics; never included in J.
+    constraint_violation: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -57,12 +74,21 @@ def compute_cost(
     weights: CostWeights | None = None,
     reference_assignments: Mapping[int, int] | None = None,
 ) -> CostBreakdown:
+    """Compute the frozen five-term J and separately expose violations.
+
+    ``uncovered`` is the protocol's ``weighted_uncovered_regions``: current
+    priority*workload demand plus 0.2 times normalized accumulated vacancy
+    duration for each uncovered region.  Distance is normalized by the fixed
+    scenario diagonal ``AREA_SIZE*sqrt(2)`` and averaged over assigned regions.
+    """
     weights = weights or CostWeights()
     uncovered = 0.0
     violation = 0.0
     distance = 0.0
     assigned_count = 0
     diagonal = max(1e-9, AREA_SIZE * np.sqrt(2.0))
+    vacancy_duration = getattr(env, "vacancy_duration", {})
+    max_time = max(1.0, float(getattr(env, "max_time", 1.0)))
 
     for rid, region in env.regions.items():
         uid = int(region.assigned_uav)
@@ -70,7 +96,8 @@ def compute_cost(
         workload = float(getattr(region, "workload", 1.0))
         legal = uid != NO_UAV and env._valid_search_assign(uid, rid)
         if not legal:
-            uncovered += priority * workload
+            vacancy = float(vacancy_duration.get(int(rid), 0.0)) / max_time
+            uncovered += priority * workload + VACANCY_DURATION_WEIGHT * vacancy
             if uid != NO_UAV:
                 violation += 1.0
             continue
@@ -94,9 +121,10 @@ def compute_cost(
             for rid, old_uid in reference_assignments.items()
         ))
 
-    vacancy = getattr(env, "vacancy_duration", {})
-    recovery_delay = float(sum(float(vacancy.get(int(rid), 0.0)) for rid in getattr(env, "pending_regions", ())))
-
+    recovery_delay = float(sum(
+        float(vacancy_duration.get(int(rid), 0.0))
+        for rid in getattr(env, "pending_regions", ())
+    ))
     raw = {
         "uncovered": uncovered,
         "distance": distance,
@@ -105,8 +133,46 @@ def compute_cost(
         "recovery_delay": recovery_delay,
         "constraint_violation": violation,
     }
-    weighted = {name: float(value * getattr(weights, name)) for name, value in raw.items()}
-    return CostBreakdown(**raw, weighted=weighted, total=float(sum(weighted.values())))
+    # Exactly the five frozen protocol terms.  Constraint violation remains a
+    # raw audit field but cannot silently alter reward.
+    weighted = {
+        name: float(raw[name] * getattr(weights, name))
+        for name in FROZEN_REWARD_WEIGHTS
+    }
+    return CostBreakdown(
+        uncovered=uncovered,
+        distance=distance,
+        load_gap=load_gap,
+        switches=switches,
+        recovery_delay=recovery_delay,
+        constraint_violation=violation,
+        weighted=weighted,
+        total=float(sum(weighted.values())),
+    )
+
+
+def compute_fixed_j_from_components(
+    *,
+    uncovered: float | None,
+    distance: float | None,
+    load_gap: float | None,
+    switches: float | None,
+    recovery_delay: float | None,
+    weights: CostWeights | None = None,
+) -> float:
+    """Evaluate frozen J; missing required components are a hard error."""
+    values = {
+        "uncovered": uncovered,
+        "distance": distance,
+        "load_gap": load_gap,
+        "switches": switches,
+        "recovery_delay": recovery_delay,
+    }
+    missing = [key for key, value in values.items() if value is None]
+    if missing:
+        raise ValueError(f"fixed J requires finite components; missing: {', '.join(missing)}")
+    weights = weights or CostWeights()
+    return float(sum(float(values[name]) * getattr(weights, name) for name in FROZEN_REWARD_WEIGHTS))
 
 
 def cost_difference_reward(before: CostBreakdown, after: CostBreakdown) -> tuple[float, dict]:
@@ -117,6 +183,8 @@ def cost_difference_reward(before: CostBreakdown, after: CostBreakdown) -> tuple
     reward = float(before.total - after.total)
     return reward, {
         "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "constraint_term_included": False,
         "before": before.to_dict(),
         "after": after.to_dict(),
         "reward_components": components,

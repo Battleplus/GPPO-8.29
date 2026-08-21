@@ -175,7 +175,11 @@ class EpisodeMetrics:
     value_squared_error: float | None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        value = asdict(self)
+        # Canonical Phase J name; the underlying accumulator integrates the
+        # protocol weighted-uncovered quantity over physical time.
+        value["cumulative_weighted_vacancy"] = value["cumulative_uncovered_time"]
+        return value
 
 
 @dataclass(slots=True)

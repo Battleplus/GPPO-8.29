@@ -141,8 +141,10 @@
         "priority_weighted_current_uncovered": true,
         "normalized_vacancy_duration_weight": 0.2
       },
-      "distance_normalization": "scenario_max_pairwise_UAV-Region_distance",
-      "load_gap": "max_assigned_regions_minus_min_assigned_regions_over_alive_search_capable_uavs"
+      "distance_normalization": "fixed_scenario_diagonal_AREA_SIZE_times_sqrt2",
+      "load_gap": "max_assigned_regions_minus_min_assigned_regions_over_alive_search_capable_uavs",
+      "constraint_term_included": false,
+      "uncovered_definition": "sum(priority*workload + 0.2*(vacancy_duration/max_time)) over uncovered regions"
     },
     "logged_components": [
       "coverage_component",
@@ -152,8 +154,10 @@
       "switch_component",
       "recovery_component"
     ],
-    "large_invalid_action_penalty": false,
-    "weight_selection_sources": ["train", "validation"],
+    "large_invalid_action_penalty": false,  "weight_selection_sources": [
+    "train"
+  ],
+
     "weight_selection_forbidden_source": "test"
   },
   "methods": {
