@@ -3,7 +3,7 @@
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-21T07:52:57.797900+00:00",
+  "generated_at": "2026-08-21T08:29:28.358236+00:00",
   "training_allowed": true,
   "training_allowed_reason": "All machine checks PASS",
   "checks": {
@@ -15,58 +15,58 @@
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.962s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.876s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.824s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.281s\n\nOK\n"
         },
         "event_runtime_integration": {
           "passed": true,
           "tests_run": 8,
           "failures": 0,
           "errors": 0,
-          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.012s\n\nOK\n"
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK\n"
         },
         "confirmation_timelines": {
           "passed": true,
           "tests_run": 15,
           "failures": 0,
           "errors": 0,
-          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.005s\n\nOK\n"
+          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.004s\n\nOK\n"
         },
         "concurrency_invariants": {
           "passed": true,
           "tests_run": 23,
           "failures": 0,
           "errors": 0,
-          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.023s\n\nOK\n"
+          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.021s\n\nOK\n"
         },
         "p0_gate_contract": {
           "passed": true,
           "tests_run": 4,
           "failures": 0,
           "errors": 0,
-          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 4.566s\n\nOK\n"
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 3.984s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": true,
           "tests_run": 2,
           "failures": 0,
           "errors": 0,
-          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.486s\n\nOK\n"
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 3.742s\n\nOK\n"
         },
         "phase_j": {
           "passed": true,
-          "tests_run": 23,
+          "tests_run": 31,
           "failures": 0,
           "errors": 0,
-          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 81.013s\n\nOK\n"
+          "output": "...............................\n----------------------------------------------------------------------\nRan 31 tests in 86.535s\n\nOK\n"
         },
-        "total_tests": 94
+        "total_tests": 102
       }
     },
     "seed_namespace_isolation": {
@@ -222,6 +222,7 @@
         "validation_reward_tuning": false,
         "test_reward_tuning": false,
         "reward_tuning": "PASS",
+        "unrecovered_event_censoring": "PASS",
         "cost_weights": {
           "uncovered": 5.0,
           "distance": 1.0,
@@ -260,6 +261,14 @@
             "recovery_component"
           ],
           "large_invalid_action_penalty": false,
+          "validation_metrics": {
+            "final_infeasible_definition": "sum(final_infeasible_count) / sum(event_count) over the validation bank",
+            "cumulative_weighted_vacancy_definition": "sum EpisodeMetrics.cumulative_weighted_vacancy over tapes",
+            "recovery_latency_definition": "sum observed recovery_delay + 200.0 seconds per unresolved event",
+            "unrecovered_recovery_penalty_seconds": 200.0,
+            "fixed_j_unrecovered_rule": "use the same 200.0 second censored recovery penalty in eta*recovery_delay",
+            "missing_metric_is_zero": false
+          },
           "weight_selection_sources": [
             "train"
           ],
@@ -280,13 +289,13 @@
           "burst": 20
         },
         "mode_ok": true,
-        "summary_sha256": "4e761ea1de18da240bfc246180fd6f483de0e4275f9c5a6a963bfd34ba298960",
-        "manifest_file_sha256": "cac128e933df18e898f26c4a7f7d387bcb65e0e4d5479c26cd75efbea93f66b2",
-        "environment_metadata_sha256": "7f56d8711526bdccc01e819b6867d660f366e85a59a2281c720f1f3de3a43a16",
+        "summary_sha256": "55507a932cb0c0802ddd57c539aed10cfb6276a9610eed704760d4d8d3ce63de",
+        "manifest_file_sha256": "58668ae1a88bcfb5c64568c718a71986c2df3ad83f1f90663b18fd6acbebd421",
+        "environment_metadata_sha256": "7d010b9d34d90841ae1bdfd1c0fa45d9f8ac7eb80bf08cb21347ddf19f20f54f",
         "environment_metadata": {
           "python": "3.11.5 | packaged by Anaconda, Inc. | (main, Sep 11 2023, 13:26:23) [MSC v.1916 64 bit (AMD64)]",
           "python_311": true,
-          "git_commit": "749003e099aeca43f0dd44ca5c1365765d648665",
+          "git_commit": "6943a92f7e3663fc469eea98ad730e64784a0148",
           "git_commit_matches_attested": true,
           "torch": "2.5.0+cpu",
           "numpy": "2.0.2",
@@ -300,8 +309,8 @@
     "source_hash_integrity": {
       "status": "PASS",
       "details": {
-        "git_commit_sha": "749003e099aeca43f0dd44ca5c1365765d648665",
-        "source_tree_hash": "6dc45e0718a855e37373ee0467dd27dfaf8fc268415a7728408f173311763712",
+        "git_commit_sha": "6943a92f7e3663fc469eea98ad730e64784a0148",
+        "source_tree_hash": "d6370e4aab14a496b89914298f4b48ccf1987d81a87db2af4254f5e51d342a9e",
         "missing": [],
         "working_tree_clean": true,
         "dirty_paths": [],
@@ -311,8 +320,8 @@
       }
     }
   },
-  "test_count": 94,
-  "required_test_count": 94,
+  "test_count": 102,
+  "required_test_count": 102,
   "protected_source_files": [
     "configs/random_event_protocol.json",
     "configs/seed_manifest.json",
@@ -347,14 +356,14 @@
     "run_phase_j.py",
     "scripts/build_p0_gate.py"
   ],
-  "attested_source_commit_sha": "749003e099aeca43f0dd44ca5c1365765d648665",
-  "git_commit_sha": "749003e099aeca43f0dd44ca5c1365765d648665",
-  "source_tree_hash": "6dc45e0718a855e37373ee0467dd27dfaf8fc268415a7728408f173311763712",
-  "protocol_sha256": "ac271cfff9fbfbaf03bba9143fa4a23ca03f36fe00fb7d5374f481d478188039",
+  "attested_source_commit_sha": "6943a92f7e3663fc469eea98ad730e64784a0148",
+  "git_commit_sha": "6943a92f7e3663fc469eea98ad730e64784a0148",
+  "source_tree_hash": "d6370e4aab14a496b89914298f4b48ccf1987d81a87db2af4254f5e51d342a9e",
+  "protocol_sha256": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
   "seed_manifest_sha256": "4fa2ab0ef3615b41d98ce4b1eca5072416ef326aa105a339ab23939a604ca615",
   "source_hashes": {
-    "git_commit_sha": "749003e099aeca43f0dd44ca5c1365765d648665",
-    "source_tree_hash": "6dc45e0718a855e37373ee0467dd27dfaf8fc268415a7728408f173311763712",
+    "git_commit_sha": "6943a92f7e3663fc469eea98ad730e64784a0148",
+    "source_tree_hash": "d6370e4aab14a496b89914298f4b48ccf1987d81a87db2af4254f5e51d342a9e",
     "source": {
       "event_runtime/concurrency.py": "ee88114bfe10038fe5e795f82b50d10a0910ea0e06dc047789c4422e79277a5d",
       "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
@@ -364,7 +373,7 @@
       "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
       "ppo_allocation/random_event/environment.py": "781a6871766a452a77bdc3dd461db859b42a04e69cc62bd0324424fa7bde19f6",
-      "ppo_allocation/random_event/experiment.py": "301d534f71f20e44da6070a950627302110b53560f41886f4ee53555ee32c844",
+      "ppo_allocation/random_event/experiment.py": "5d8abedcaf84fa0772f27e0957bfdea0a9a9f18de86dc958722c685f58a1c322",
       "ppo_allocation/random_event/models.py": "1bad8dac591687e222b3b7e43c9c91b613d27a4df6bb7f31cb3870a5c177dda7",
       "ppo_allocation/random_event/trainer.py": "e41b26487393881cac3efb856f9d9263f74092df964718c53b3c70dcd8a9208d",
       "ppo_allocation/random_event/runtime_bridge.py": "2259c124812e8a04344d4b38ad79a92180cfc162e96431f116c030c07fce94fc",
@@ -375,7 +384,7 @@
       "ppo_allocation/random_event/events.py": "942c309746c28568cc9f534bad839fb5a45c1d38f052aaa253182a8ca353b4c2",
       "ppo_allocation/random_event/legacy_adapter.py": "f9fe0e627f8952b3e3d22a4594bc9a87c07908c335454a60f92455bf39f36259",
       "ppo_allocation/config.py": "2dbfb766e1717d0524024f5881736e59599cb74c0466e140db6bd6d7a4cdc7f9",
-      "scripts/build_p0_gate.py": "8f5b11bf56d6b3bc32bb47d227b796c95dd16b93c27f788de489487c3aa4c979",
+      "scripts/build_p0_gate.py": "b4017d49b725224fe888e0eecfe4c31edbd47943161b87139f61710b4ccbbbad",
       "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
       "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
       "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "28bf17783c48beb96436c2e275326615479fcfb39cc5911e972e3340f7015dc6",
@@ -383,13 +392,13 @@
       "ppo_allocation/tests_random_event/test_random_event_core.py": "16a0e8fc3a3a3619f4cb1a741a9a72bb90e160c52bdbc2baa50533cd34bb9bd1",
       "ppo_allocation/tests_random_event/test_random_event_training.py": "ecb907458158135bbbcae273ac023db4b7357cdc41ce7b73fa1d4ef79acc808a",
       "ppo_allocation/tests_random_event/test_legacy_compatibility.py": "afc17b48a6910e2a9a6192d0ec53cd70e0079aa5ea315ececf517aa3f99ba0f7",
-      "ppo_allocation/random_event/phase_j.py": "bccfe0ceffd605720e030c5e851b1f6cace616bb91dc23f5945323735f1ce216",
-      "ppo_allocation/tests_random_event/test_phase_j.py": "d6771caaa7bdc789fc278a724e9ef3b2bcde0b2d080609b744b3fde0d7eab1cf",
+      "ppo_allocation/random_event/phase_j.py": "077784e353f94dac0a53bea3e34f12e22321f57eeb16accadd5ad85e8276360c",
+      "ppo_allocation/tests_random_event/test_phase_j.py": "e700599faf3d69c1db4035061441d666d81734d8a25b3e2ec54f2d0db3911a25",
       "run_phase_j.py": "92d6e594106c379aab9f02020dafea41c5c01743302517c089fc227857d53f79",
-      "configs/random_event_protocol.json": "ac271cfff9fbfbaf03bba9143fa4a23ca03f36fe00fb7d5374f481d478188039",
+      "configs/random_event_protocol.json": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
       "configs/seed_manifest.json": "4fa2ab0ef3615b41d98ce4b1eca5072416ef326aa105a339ab23939a604ca615"
     },
-    "protocol": "ac271cfff9fbfbaf03bba9143fa4a23ca03f36fe00fb7d5374f481d478188039",
+    "protocol": "ad454162cf327af130954f91f23fb53a566346843b5516b5b7a6d74d3ae7879f",
     "seed_manifest": "4fa2ab0ef3615b41d98ce4b1eca5072416ef326aa105a339ab23939a604ca615"
   },
   "violations": []
