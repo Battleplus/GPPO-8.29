@@ -226,10 +226,10 @@ class EvalVersionedSubmissionTests(unittest.TestCase):
 # ---------------------------------------------------------------------------
 class CheckpointSchedulingTests(unittest.TestCase):
     def test_standard_300k(self):
-        steps = compute_checkpoint_steps(300_000, 25_000)
-        self.assertEqual(len(steps), 12)
+        steps = compute_checkpoint_steps(50_000, 25_000)
+        self.assertEqual(len(steps), 2)
         self.assertEqual(steps[0], 25_000)
-        self.assertEqual(steps[-1], 300_000)
+        self.assertEqual(steps[-1], 50_000)
 
     def test_small_dry_run(self):
         steps = compute_checkpoint_steps(10_000, 5_000)
@@ -245,8 +245,8 @@ class PreliminaryProtocolTests(unittest.TestCase):
         p = PreliminaryProtocol()
         self.assertEqual(p.variants, ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"))
         self.assertEqual(p.training_seeds, (1101, 2202, 3303))
-        self.assertEqual(p.budget, 300_000)
-        self.assertEqual(p.num_checkpoints, 12)
+        self.assertEqual(p.budget, 50_000)
+        self.assertEqual(p.num_checkpoints, 2)
         self.assertEqual(p.num_runs, 9)
 
 
@@ -417,7 +417,7 @@ class PhaseJCompletenessAndCliTests(unittest.TestCase):
     def test_cli_defaults_are_frozen(self):
         from ppo_allocation.random_event.phase_j import build_parser
         args = build_parser().parse_args(["preliminary-train"])
-        self.assertEqual(args.budget, 300000)
+        self.assertEqual(args.budget, 50000)
         self.assertEqual(args.checkpoint_interval, 25000)
         self.assertFalse(args.developer_mode)
 
@@ -585,7 +585,7 @@ class FrozenTrainContractTests(unittest.TestCase):
         self.assertEqual(frozen_cycle, ("sequential", "overlap", "burst"))
         self.assertNotIn("single", frozen_cycle)
 
-    def test_formal_train_seed_coverage_is_sufficient_for_300k(self):
+    def test_formal_train_seed_coverage_is_sufficient_for_50k(self):
         # The trainer performs one initial reset before the first decision plus
         # one post-terminal reset after the LAST accepted transition, so the
         # worst case (1 accepted decision per episode) needs budget + 1 resets.
@@ -595,7 +595,7 @@ class FrozenTrainContractTests(unittest.TestCase):
             manifest["preliminary"]["train"]["reserved_coverage_assertions"]["formal_budget_decision_steps"]
         )
         self.assertGreaterEqual(reserved, budget + 1)
-        self.assertEqual(reserved, 300_001)
+        self.assertEqual(reserved, 50_001)
         self.assertTrue(
             manifest["preliminary"]["train"]["reserved_coverage_assertions"]["includes_initial_reset"]
         )

@@ -1,15 +1,11 @@
-"""Phase J: Preliminary Training Orchestrator.
+"""Minimum-validation orchestrator and controlled independent-run scheduler.
 
-This module implements the full Phase J workflow:
-1. preliminary-train: 300k steps with periodic checkpoints
-2. preliminary-validate: lexicographic checkpoint selection PER (variant, seed)
-3. preliminary-freeze: freeze 9 selected checkpoints with SHA attestation
-4. preliminary-test: run Test bank on all 9 frozen checkpoints (once each)
+The formal minimum-validation contract is three independent model variants ×
+three seeds × 50,000 accepted decisions, with checkpoints at 25,000 and
+50,000. Parallelism only changes process scheduling; each model×seed run keeps
+its own environment, RNG, optimizer, output and heartbeat.
 
-All operations respect the frozen protocol and refuse to proceed if
-the P0 gate is not green or if source/protocol hashes have drifted.
-
-Resume is NOT supported for formal Preliminary training.
+Resume is NOT supported for formal training.
 """
 
 from __future__ import annotations
@@ -45,15 +41,16 @@ from .models import GraphActorCritic
 from .reward import CostWeights, assignment_map, compute_cost, compute_fixed_j_from_components
 from .metrics import EpisodeMetrics
 from .trainer import PPOConfig, PPOTrainer
+from .progress import write_progress
 
 MODES = ("single", "sequential", "overlap", "burst")
 
 # ---------------------------------------------------------------------------
-# Frozen protocol defaults for Preliminary
+# Frozen minimum-validation protocol
 # ---------------------------------------------------------------------------
 VARIANTS = ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive")
 TRAINING_SEEDS = (1101, 2202, 3303)
-DEFAULT_BUDGET = 300_000
+DEFAULT_BUDGET = 50_000
 CHECKPOINT_INTERVAL = 25_000
 # Frozen censoring rule: an unrecovered event contributes the protocol's
 # finite observation-horizon penalty to Levels 3 and 4. It is never coerced
@@ -316,128 +313,166 @@ def preliminary_train(
 ) -> dict[str, Any]:
     """Run preliminary training: 3 variants × 3 seeds, periodic checkpoints.
 
-    The P0 gate must be green before training starts.
-    Resume is NOT supported — training always starts fresh.
+    The P0 gate must be green before formal training starts. Formal mode may
+    use the controlled parallel scheduler; every run remains fresh.
     """
-    from .experiment import CyclingTrainingEnv
-
+    protocol = protocol or PreliminaryProtocol()
     if formal:
         gate = _check_p0_gate_strict()
         _validate_hashes_match(gate, "preliminary-train")
+        if protocol != PreliminaryProtocol():
+            raise SystemExit(
+                "formal minimum-validation requires frozen 50000/25000/3-variant/3-seed protocol"
+            )
     else:
         gate = _developer_attestation()
+    return _run_sequential_campaign(output_dir, protocol=protocol, ppo_config=ppo_config, gate=gate)
 
-    protocol = protocol or PreliminaryProtocol()
-    if formal and protocol != PreliminaryProtocol():
-        raise SystemExit(
-            "formal Preliminary requires the frozen 300000/25000/3-variant/3-seed protocol; "
-            "use developer mode for a dry-run"
-        )
-    ppo_config = ppo_config or PPOConfig(seed=1, device="cpu")
-    model_dir = output_dir / "preliminary" / "models"
-    model_dir.mkdir(parents=True, exist_ok=True)
 
-    source_tree_hash = gate.get("source_tree_hash", "UNKNOWN")
-    attested_commit = gate.get("attested_source_commit_sha", "UNKNOWN")
-    protocol_hash = gate.get("protocol_sha256", "UNKNOWN")
-    seed_manifest_hash = gate.get("seed_manifest_sha256", "UNKNOWN")
+def train_single_run(
+    run_dir: Path,
+    *,
+    variant: str,
+    seed: int,
+    protocol: PreliminaryProtocol,
+    gate: dict[str, Any],
+    ppo_config: PPOConfig | None = None,
+) -> dict[str, Any]:
+    """Train one fresh model×seed run in an isolated directory."""
+    from .experiment import CyclingTrainingEnv, _load_frozen_train_episode_cap, _load_frozen_train_modes
 
-    checkpoint_steps = compute_checkpoint_steps(protocol.budget, protocol.checkpoint_interval)
-    all_checkpoints: list[CheckpointRecord] = []
-    training_summary: dict[str, Any] = {
-        "protocol": asdict(protocol),
-        "ppo_config": asdict(ppo_config),
-        "checkpoints": [],
-        "created_at": _utc_now(),
-        "resume_supported": False,
-    }
-
-    from .experiment import _load_frozen_train_episode_cap, _load_frozen_train_modes
+    run_dir = Path(run_dir)
+    if any((run_dir / "models").glob("*.pt")):
+        raise RuntimeError(f"refusing to overwrite existing checkpoints: {run_dir}")
+    run_dir.mkdir(parents=True, exist_ok=True)
+    model_dir = run_dir / "models"
+    progress_path = run_dir / "progress" / "live_progress.json"
     train_modes = _load_frozen_train_modes()
     train_cap = _load_frozen_train_episode_cap()
+    if tuple(train_modes) != tuple(_load_frozen_train_modes()):
+        raise RuntimeError("training mode cycle drifted from seed manifest")
+    if train_cap < protocol.budget + 1:
+        raise RuntimeError("training seed reservation is below budget plus initial reset")
+
+    config_values = asdict(ppo_config or PPOConfig(seed=seed, device="cpu"))
+    config_values["seed"] = int(seed)
+    config_values["device"] = "cpu"
+    config_values["rollout_steps"] = min(int(config_values["rollout_steps"]), protocol.budget)
+    config = PPOConfig(**config_values)
+    env = CyclingTrainingEnv(
+        seed=seed, modes=train_modes, events_per_episode=protocol.events_per_tape,
+        max_resets=train_cap,
+    )
+    trainer = PPOTrainer(env=env, variant=variant, config=config)
+    started = time.perf_counter()
+    checkpoint_steps = compute_checkpoint_steps(protocol.budget, protocol.checkpoint_interval)
+    records: list[dict[str, Any]] = []
+    last_checkpoint: str | None = None
+
+    def heartbeat(current: PPOTrainer) -> None:
+        elapsed = max(time.perf_counter() - started, 1e-9)
+        rate = current.total_steps / elapsed
+        write_progress(progress_path, {
+            "variant": variant, "seed": int(seed), "status": "running",
+            "total_steps": int(current.total_steps), "target_steps": int(protocol.budget),
+            "update_count": int(current.update_count), "checkpoint_count": len(records),
+            "last_checkpoint": last_checkpoint, "elapsed_seconds": elapsed,
+            "steps_per_second": rate,
+            "estimated_remaining_seconds": max(0, protocol.budget - current.total_steps) / rate if rate else None,
+            "updated_at": _utc_now(),
+        })
+
+    write_progress(progress_path, {
+        "variant": variant, "seed": int(seed), "status": "running", "total_steps": 0,
+        "target_steps": int(protocol.budget), "update_count": 0, "checkpoint_count": 0,
+        "last_checkpoint": None, "elapsed_seconds": 0.0, "steps_per_second": 0.0,
+        "estimated_remaining_seconds": None, "updated_at": _utc_now(),
+    })
+    for target_step in checkpoint_steps:
+        trainer.train(target_step - trainer.total_steps, progress_callback=heartbeat)
+        safe_variant = variant.lower().replace("-", "_")
+        checkpoint = model_dir / f"{safe_variant}_seed{seed}_step{target_step}.pt"
+        trainer.save(checkpoint, extra={
+            "variant": variant, "training_seed": int(seed), "decision_steps": target_step,
+            "budget": protocol.budget, "training_modes": list(train_modes), "max_resets": train_cap,
+        })
+        last_checkpoint = _relative_label(checkpoint)
+        records.append(asdict(CheckpointRecord(
+            variant=variant, training_seed=int(seed), decision_steps=target_step,
+            checkpoint_path=last_checkpoint, checkpoint_sha256=_sha256_file(checkpoint),
+            source_tree_hash=gate.get("source_tree_hash", "UNKNOWN"),
+            attested_source_commit_sha=gate.get("attested_source_commit_sha", "UNKNOWN"),
+            protocol_sha256=gate.get("protocol_sha256", "UNKNOWN"),
+            seed_manifest_sha256=gate.get("seed_manifest_sha256", "UNKNOWN"),
+            ppo_config=asdict(config), rng_state=_get_rng_state(), created_at=_utc_now(),
+        )))
+        heartbeat(trainer)
+    elapsed = time.perf_counter() - started
+    write_progress(progress_path, {
+        "variant": variant, "seed": int(seed), "status": "done", "total_steps": int(trainer.total_steps),
+        "target_steps": int(protocol.budget), "update_count": int(trainer.update_count),
+        "checkpoint_count": len(records), "last_checkpoint": last_checkpoint,
+        "elapsed_seconds": elapsed, "steps_per_second": trainer.total_steps / max(elapsed, 1e-9),
+        "estimated_remaining_seconds": 0.0, "updated_at": _utc_now(),
+    })
+    summary = {"variant": variant, "seed": int(seed), "total_steps": int(trainer.total_steps),
+               "checkpoints": records, "elapsed_seconds": elapsed, "resume_supported": False}
+    _json_file(run_dir / "run_summary.json", summary)
+    env.close()
+    return summary
+
+
+def _run_sequential_campaign(output_dir: Path, *, protocol: PreliminaryProtocol,
+                             ppo_config: PPOConfig | None, gate: dict[str, Any]) -> dict[str, Any]:
+    """Reference scheduler used by legacy callers and developer smoke."""
+    root = output_dir / "preliminary" / "runs"
+    all_records: list[dict[str, Any]] = []
+    summaries = []
+    for seed in protocol.training_seeds:
+        for variant in protocol.variants:
+            result = train_single_run(root / variant / f"seed_{seed}", variant=variant, seed=seed,
+                                      protocol=protocol, gate=gate, ppo_config=ppo_config)
+            summaries.append({"variant": variant, "seed": seed, "total_steps": result["total_steps"],
+                              "checkpoints_created": len(result["checkpoints"]),
+                              "elapsed_seconds": result["elapsed_seconds"]})
+            all_records.extend(result["checkpoints"])
+    payload = {"protocol": asdict(protocol), "checkpoints": all_records, "runs": summaries,
+               "created_at": _utc_now(), "resume_supported": False, "parallel_workers": 1}
+    _json_file(output_dir / "preliminary" / "training_summary.json", payload)
+    _json_file(output_dir / "preliminary" / "checkpoint_index.json", all_records)
+    return {"checkpoints": all_records, "summary": payload}
+
+
+def preliminary_train_parallel(output_dir: Path, *, max_workers: int = 3,
+                                protocol: PreliminaryProtocol | None = None,
+                                formal: bool = True) -> dict[str, Any]:
+    """Run fresh independent model×seed runs in seed batches."""
+    from .parallel import run_controlled_parallel
+    protocol = protocol or PreliminaryProtocol()
     if formal:
-        frozen_cycle = tuple(_load_frozen_train_modes())
-        if tuple(train_modes) != frozen_cycle:
-            raise SystemExit(
-                "formal training mode cycle does not match frozen seed_manifest preliminary.train.mode_cycle"
-            )
-        # The reserved train namespace must cover the full budget even under
-        # the worst-case 1 accepted decision per episode.
-        if train_cap < protocol.budget:
-            raise SystemExit(
-                f"frozen train seed reservation {train_cap} < formal budget {protocol.budget}; "
-                "formal training would leave the frozen namespace"
-            )
-
-    for variant in protocol.variants:
-        for seed in protocol.training_seeds:
-            env = CyclingTrainingEnv(
-                seed=seed,
-                modes=train_modes,
-                events_per_episode=protocol.events_per_tape,
-                max_resets=train_cap,
-            )
-            # Copy every frozen PPO hyperparameter; only the run seed differs.
-            config_values = asdict(ppo_config)
-            config_values["seed"] = seed
-            config_values["device"] = "cpu"
-            config_values["rollout_steps"] = min(
-                int(config_values["rollout_steps"]), max(1, protocol.budget)
-            )
-            config = PPOConfig(**config_values)
-            trainer = PPOTrainer(env=env, variant=variant, config=config)
-            started = time.perf_counter()
-
-            for target_step in checkpoint_steps:
-                remaining = target_step - trainer.total_steps
-                if remaining > 0:
-                    trainer.train(remaining)
-
-                safe_variant = variant.lower().replace("-", "_")
-                ckpt_name = f"{safe_variant}_seed{seed}_step{target_step}.pt"
-                ckpt_path = model_dir / ckpt_name
-                trainer.save(ckpt_path, extra={
-                    "variant": variant,
-                    "training_seed": seed,
-                    "decision_steps": target_step,
-                    "budget": protocol.budget,
-                    "training_modes": list(train_modes),
-                    "max_resets": train_cap,
-                })
-                # Re-hash after save (Phase J requirement 9)
-                ckpt_sha = _sha256_file(ckpt_path)
-
-                record = CheckpointRecord(
-                    variant=variant,
-                    training_seed=seed,
-                    decision_steps=target_step,
-                    checkpoint_path=_relative_label(ckpt_path),
-                    checkpoint_sha256=ckpt_sha,
-                    source_tree_hash=source_tree_hash,
-                    attested_source_commit_sha=attested_commit,
-                    protocol_sha256=protocol_hash,
-                    seed_manifest_sha256=seed_manifest_hash,
-                    ppo_config=asdict(config),
-                    rng_state=_get_rng_state(),
-                    created_at=_utc_now(),
-                )
-                all_checkpoints.append(record)
-
-            elapsed = time.perf_counter() - started
-            training_summary["checkpoints"].append({
-                "variant": variant,
-                "seed": seed,
-                "elapsed_seconds": elapsed,
-                "checkpoints_created": len([
-                    c for c in all_checkpoints
-                    if c.variant == variant and c.training_seed == seed
-                ]),
-            })
-            env.close()
-
-    _json_file(output_dir / "preliminary" / "training_summary.json", training_summary)
-    _json_file(output_dir / "preliminary" / "checkpoint_index.json", [asdict(c) for c in all_checkpoints])
-    return {"checkpoints": [asdict(c) for c in all_checkpoints], "summary": training_summary}
+        gate = _check_p0_gate_strict()
+        _validate_hashes_match(gate, "preliminary-train-parallel")
+        if protocol != PreliminaryProtocol():
+            raise SystemExit("formal parallel protocol drift")
+    else:
+        gate = _developer_attestation()
+    result = run_controlled_parallel(
+        output_dir / "preliminary" / "runs", max_workers=max_workers, dry_run=False,
+        protocol=protocol, formal=formal,
+    )
+    records: list[dict[str, Any]] = []
+    summaries: list[dict[str, Any]] = []
+    for spec_result in result.get("results", []):
+        run_dir = output_dir / "preliminary" / "runs" / spec_result["variant"] / f"seed_{spec_result['seed']}"
+        run_summary = json.loads((run_dir / "run_summary.json").read_text(encoding="utf-8"))
+        records.extend(run_summary["checkpoints"])
+        summaries.append(run_summary)
+    payload = {"protocol": asdict(protocol), "checkpoints": records, "runs": summaries,
+               "created_at": _utc_now(), "resume_supported": False,
+               "parallel_workers": max_workers, "controller": result}
+    _json_file(output_dir / "preliminary" / "training_summary.json", payload)
+    _json_file(output_dir / "preliminary" / "checkpoint_index.json", records)
+    return {"checkpoints": records, "summary": payload}
 
 
 # ---------------------------------------------------------------------------
@@ -1332,8 +1367,12 @@ def add_phase_j_args(parser: argparse.ArgumentParser) -> None:
     """Add Phase J subcommands to an argument parser."""
     sub = parser.add_subparsers(dest="phase_j_cmd")
 
-    train_p = sub.add_parser("preliminary-train", help="Run 300k preliminary training")
+    train_p = sub.add_parser("preliminary-train", help="Run frozen 50k minimum-validation training")
     train_p.add_argument("--output-dir", default="results/random_event")
+    train_p.add_argument(
+        "--parallel-workers", type=int, choices=(1, 2, 3), default=3,
+        help="controlled independent workers in seed batches (default: 3)",
+    )
     train_p.add_argument(
         "--developer-mode", action="store_true",
         help="allow non-frozen budget/interval for developer experiments only",
@@ -1364,16 +1403,22 @@ def run_phase_j_command(args: argparse.Namespace) -> dict[str, Any]:
             args.budget != DEFAULT_BUDGET or args.checkpoint_interval != CHECKPOINT_INTERVAL
         ):
             raise SystemExit(
-                "formal preliminary-train is frozen at 300000/25000; "
+                "formal minimum-validation is frozen at 50000/25000; "
                 "use --developer-mode for a developer run"
             )
         protocol = PreliminaryProtocol(
             budget=args.budget,
             checkpoint_interval=args.checkpoint_interval,
         )
-        result = preliminary_train(
-            output_dir, protocol=protocol, formal=not args.developer_mode
-        )
+        if args.parallel_workers > 1:
+            result = preliminary_train_parallel(
+                output_dir, max_workers=args.parallel_workers,
+                protocol=protocol, formal=not args.developer_mode,
+            )
+        else:
+            result = preliminary_train(
+                output_dir, protocol=protocol, formal=not args.developer_mode
+            )
         print(f"Training complete: {len(result['checkpoints'])} checkpoints")
     elif args.phase_j_cmd == "preliminary-validate":
         result = preliminary_validate(output_dir)
@@ -1411,7 +1456,8 @@ __all__ = [
     "CheckpointRecord", "FreezeManifest", "PreliminaryProtocol", "ValidationMetrics",
     "compute_checkpoint_steps", "compute_fixed_j_from_episode", "extract_validation_metrics",
     "generate_developer_validation_bank", "generate_test_bank", "generate_validation_bank",
-    "preliminary_train", "preliminary_validate", "preliminary_freeze", "preliminary_test",
+    "preliminary_train", "preliminary_train_parallel", "train_single_run",
+    "preliminary_validate", "preliminary_freeze", "preliminary_test",
     "dry_run", "build_parser", "main", "_lexicographic_select",
 ]
 

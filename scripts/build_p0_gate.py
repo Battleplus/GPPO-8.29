@@ -55,6 +55,8 @@ SOURCE_FILES = [
     "ppo_allocation/random_event/environment.py",
     "ppo_allocation/random_event/experiment.py",
     "ppo_allocation/random_event/metrics.py",
+    "ppo_allocation/random_event/progress.py",
+    "ppo_allocation/random_event/parallel.py",
     "ppo_allocation/random_event/models.py",
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
@@ -94,6 +96,7 @@ REQUIRED_TEST_SUITES = [
     ("p0_gate_contract", "ppo_allocation/tests_random_event", "test_p0_gate_contract.py"),
     ("legacy_compatibility", "ppo_allocation/tests_random_event", "test_legacy_compatibility.py"),
     ("phase_j", "ppo_allocation/tests_random_event", "test_phase_j.py"),
+    ("parallel_minimum_validation", "ppo_allocation/tests_random_event", "test_parallel_minimum_validation.py"),
 ]
 
 
@@ -193,7 +196,7 @@ def verify_seed_isolation() -> dict:
     Also enforces the Phase J frozen train contract:
     - formal train mode cycle == manifest preliminary.train.mode_cycle
     - runtime seed formula == manifest runtime_mapping (instance/event)
-    - reserved episode count is sufficient for the frozen 300k budget under
+    - reserved episode count is sufficient for the frozen 50k budget under
       the worst-case 1 accepted decision per episode
     """
     manifest = json.loads(SEED_MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -241,7 +244,7 @@ def verify_seed_isolation() -> dict:
     # reservation must satisfy ``reserved >= formal_budget + 1``.
     reserved = int(train_block.get("episodes_per_training_seed", 0))
     budget = int(manifest["preliminary"]["train"].get("reserved_coverage_assertions", {})
-                   .get("formal_budget_decision_steps", 300000))
+                   .get("formal_budget_decision_steps", 50000))
     coverage_ok = reserved >= budget + 1
     reserved_assertions = train_block.get("reserved_coverage_assertions", {})
     assertions_ok = (
@@ -308,6 +311,14 @@ def verify_config_contract() -> dict:
 
     checks = {
         "preliminary_seeds": manifest["training_seeds"]["preliminary"] == [1101, 2202, 3303],
+        "minimum_validation_variants": manifest["preliminary"]["train"].get("variants") == ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+        "minimum_validation_budget": manifest["preliminary"]["train"].get("budget_decision_steps") == 50000,
+        "minimum_validation_checkpoint_interval": manifest["preliminary"]["train"].get("checkpoint_interval") == 25000,
+        "minimum_validation_checkpoint_steps": manifest["preliminary"]["train"].get("checkpoint_steps") == [25000, 50000],
+        "minimum_validation_checkpoint_count": manifest["preliminary"]["train"].get("expected_checkpoint_count") == 18,
+        "protocol_minimum_validation_variants": protocol["evaluation"]["preliminary"].get("training_variants") == ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+        "protocol_minimum_validation_budget": protocol["evaluation"]["preliminary"].get("training_budget_decision_steps") == 50000,
+        "protocol_minimum_validation_checkpoints": protocol["evaluation"]["preliminary"].get("checkpoint_steps") == [25000, 50000],
         "validation_tapes_100": manifest["preliminary"]["validation"]["tapes_total"] == 100,
         "validation_per_mode_25": all(
             spec["instance_seeds"]["count"] == 25

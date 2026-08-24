@@ -534,8 +534,17 @@ class PPOTrainer:
         stats["early_stop_kl"] = stop_for_kl
         return stats
 
-    def train(self, total_timesteps: int) -> list[dict[str, Any]]:
-        """Train until at least ``total_timesteps`` have been collected."""
+    def train(
+        self,
+        total_timesteps: int,
+        progress_callback: Any | None = None,
+    ) -> list[dict[str, Any]]:
+        """Train until at least ``total_timesteps`` have been collected.
+
+        ``progress_callback`` is observability-only. It is invoked after each
+        completed PPO update and failures are swallowed so heartbeat I/O can
+        never alter algorithm state or RNG semantics.
+        """
 
         target = int(total_timesteps)
         if target <= 0:
@@ -560,6 +569,12 @@ class PPOTrainer:
             ]
             record["rollout_gate_means"] = rollout_stats["gate_means"]
             self.history.append(record)
+            if progress_callback is not None:
+                try:
+                    progress_callback(self)
+                except Exception:
+                    # Progress must be best-effort and must not affect training.
+                    pass
         return self.history
 
     def save(self, path: str | Path, extra: dict[str, Any] | None = None) -> None:

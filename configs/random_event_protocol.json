@@ -337,7 +337,14 @@
     },
     "preliminary": {
       "label_required": "preliminary",
-      "training_seeds": 3,
+      "training_variants": ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+      "training_seeds": [1101, 2202, 3303],
+      "training_budget_decision_steps": 50000,
+      "checkpoint_interval": 25000,
+      "checkpoint_steps": [25000, 50000],
+      "expected_checkpoint_count": 18,
+      "fixed_evaluation_checkpoint": 50000,
+      "training_seeds_count": 3,
       "test_tapes_total": 200,
       "test_tapes_per_set": 40,
       "test_sets": [
