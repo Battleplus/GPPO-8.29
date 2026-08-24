@@ -57,6 +57,7 @@ SOURCE_FILES = [
     "ppo_allocation/random_event/metrics.py",
     "ppo_allocation/random_event/progress.py",
     "ppo_allocation/random_event/parallel.py",
+    "scripts/run_minimum_validation_worker.py",
     "ppo_allocation/random_event/models.py",
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
