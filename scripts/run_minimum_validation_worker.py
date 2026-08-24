@@ -8,10 +8,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PPO_ROOT = ROOT / "ppo_allocation"
+# Match the test/gate import order: the ppo_allocation package (which owns
+# config.settings and random_event) must precede the legacy root config.py.
 if str(PPO_ROOT) not in sys.path:
     sys.path.insert(0, str(PPO_ROOT))
 if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    sys.path.append(str(ROOT))
 
 from random_event.phase_j import (  # noqa: E402
     PreliminaryProtocol,
