@@ -59,6 +59,10 @@ from .scheduler import (
     UNSEEN_TIMING,
 )
 from .trainer import PPOConfig, PPOTrainer
+from .gate_integrity import (
+    source_tree_hash,
+    verify_runtime_attestation,
+)
 
 
 PPO_DIR = Path(__file__).resolve().parents[1]
@@ -1124,21 +1128,8 @@ def _check_p0_gate() -> None:
     except (OSError, subprocess.CalledProcessError) as exc:
         raise SystemExit(f"Cannot determine current git HEAD: {exc}") from exc
 
-    # Verify the attested commit is an ancestor of (or equal to) current HEAD.
-    # This allows evidence-only commits on top of the attested source.
-    if current_commit != attested:
-        try:
-            merge_base = subprocess.check_output(
-                ["git", "merge-base", "--is-ancestor", attested, current_commit],
-                cwd=root, text=True,
-            )
-            # If merge-base exits 0, attested is ancestor of HEAD — OK.
-        except (OSError, subprocess.CalledProcessError):
-            raise SystemExit(
-                f"P0 gate attested commit {attested[:12]} is not an ancestor of "
-                f"current HEAD {current_commit[:12]}; protected source may have changed; "
-                "rerun the complete gate."
-            )
+    # Evidence HEADs are valid only when the attested source is an ancestor
+    # and every intervening path is source-bound evidence JSON.
 
     # --- Source/config/test hash verification ---
     frozen = gate.get("source_hashes", {})
@@ -1155,36 +1146,24 @@ def _check_p0_gate() -> None:
     if status:
         raise SystemExit("P0 gate protected working tree is dirty; rerun evidence after source commit.")
 
-    attested_blob_sources = {}
-    for relative, expected in frozen_sources.items():
-        try:
-            blob = subprocess.check_output(
-                ["git", "show", f"{attested}:{relative}"], cwd=root
-            )
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise SystemExit(f"P0 gate attested source is missing: {relative}") from exc
-        attested_blob_sources[relative] = hashlib.sha256(blob).hexdigest()
-    if attested_blob_sources != frozen_sources:
-        raise SystemExit("P0 gate attested Git tree hash mismatch")
-    current_tree_hash = hashlib.sha256(
-        "".join(f"{key}:{value}\n" for key, value in sorted(attested_blob_sources.items())).encode("utf-8")
-    ).hexdigest()
-    if current_tree_hash != gate.get("source_tree_hash"):
-        raise SystemExit("P0 gate source_tree_hash mismatch; protected source changed after attestation.")
+    expected_tree_hash = gate.get("source_tree_hash")
+    if expected_tree_hash != source_tree_hash(frozen_sources):
+        raise SystemExit("P0 gate source_tree_hash mismatch; protected source attestation is inconsistent.")
 
+    attested_hashes = dict(frozen_sources)
     for relative, key, field in (
         ("configs/random_event_protocol.json", "protocol", "protocol_sha256"),
         ("configs/seed_manifest.json", "seed_manifest", "seed_manifest_sha256"),
     ):
-        try:
-            current_hash = hashlib.sha256(
-                subprocess.check_output(["git", "show", f"{attested}:{relative}"], cwd=root)
-            ).hexdigest()
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise SystemExit(f"P0 gate {key} is missing from attested tree") from exc
         expected = gate.get(field) or frozen.get(key)
-        if current_hash != expected:
-            raise SystemExit(f"P0 gate {key} hash mismatch; configuration changed after attestation.")
+        if not expected:
+            raise SystemExit(f"P0 gate has no {key} attestation hash")
+        attested_hashes[relative] = expected
+
+    try:
+        verify_runtime_attestation(root, attested, current_commit, attested_hashes)
+    except (OSError, subprocess.CalledProcessError, ValueError) as exc:
+        raise SystemExit(f"P0 gate runtime attestation failed: {exc}") from exc
 
 
 def run_train(args: argparse.Namespace) -> dict[str, Any]:

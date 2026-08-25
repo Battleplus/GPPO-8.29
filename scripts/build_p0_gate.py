@@ -38,17 +38,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest import TextTestRunner, loader
 
+from ppo_allocation.random_event.gate_integrity import (
+    is_allowed_evidence_path,
+    smoke_metadata_matches_attested,
+    smoke_namespace,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 GATE_PATH = ROOT / "handoff" / "P0_GATE.json"
 PROTOCOL_PATH = ROOT / "configs" / "random_event_protocol.json"
 SEED_MANIFEST_PATH = ROOT / "configs" / "seed_manifest.json"
-SMOKE_SUMMARY_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "smoke_summary.json"
-EVIDENCE_ONLY_PREFIXES = (
-    "handoff/",
-    "ppo_allocation/results/random_event/smoke_20260821_final/",
-    "ppo_allocation/results/random_event/minimum_validation_50k_smoke_cb7af78/",
-)
-SMOKE_ENV_METADATA_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "environment_metadata.json"
+SMOKE_ENV_METADATA_PATH = ROOT / "ppo_allocation" / "results" / "random_event"
 
 SOURCE_FILES = [
     "event_runtime/concurrency.py",
@@ -68,6 +68,7 @@ SOURCE_FILES = [
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
     "ppo_allocation/random_event/scheduler.py",
+    "ppo_allocation/random_event/gate_integrity.py",
     "ppo_allocation/random_event/graph.py",
     "ppo_allocation/random_event/reward.py",
     "ppo_allocation/random_event/baselines.py",
@@ -79,6 +80,7 @@ SOURCE_FILES = [
     "ppo_allocation/tests_random_event/test_confirmation_timelines.py",
     "ppo_allocation/tests_random_event/test_concurrency_invariants.py",
     "ppo_allocation/tests_random_event/test_p0_gate_contract.py",
+    "ppo_allocation/tests_random_event/test_gate_integrity.py",
     "ppo_allocation/tests_random_event/test_random_event_core.py",
     "ppo_allocation/tests_random_event/test_random_event_training.py",
     "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
@@ -101,6 +103,7 @@ REQUIRED_TEST_SUITES = [
     ("confirmation_timelines", "ppo_allocation/tests_random_event", "test_confirmation_timelines.py"),
     ("concurrency_invariants", "ppo_allocation/tests_random_event", "test_concurrency_invariants.py"),
     ("p0_gate_contract", "ppo_allocation/tests_random_event", "test_p0_gate_contract.py"),
+    ("gate_integrity", "ppo_allocation/tests_random_event", "test_gate_integrity.py"),
     ("legacy_compatibility", "ppo_allocation/tests_random_event", "test_legacy_compatibility.py"),
     ("phase_j", "ppo_allocation/tests_random_event", "test_phase_j.py"),
     ("parallel_minimum_validation", "ppo_allocation/tests_random_event", "test_parallel_minimum_validation.py"),
@@ -159,16 +162,8 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def evidence_only_paths_allowed(paths: list[str]) -> bool:
-    """Return whether a source→runtime diff contains evidence files only."""
-    return all(
-        any(path.startswith(prefix) for prefix in EVIDENCE_ONLY_PREFIXES)
-        and not path.endswith(".py")
-        and not path.startswith("configs/")
-        and "/tests" not in path
-        for path in paths
-    )
-
+def evidence_only_paths_allowed(paths: list[str], attested_source: str) -> bool:
+    return all(is_allowed_evidence_path(path, attested_source) for path in paths)
 
 def protected_hashes_match(expected: dict[str, str], actual: dict[str, str]) -> bool:
     """Compare protected disk hashes with the hashes recorded at attestation."""
@@ -708,89 +703,42 @@ def git_commit_sha() -> str:
 
 
 def verify_smoke_evidence(attested_commit: str) -> dict:
-    """Verify the actual 20 tapes x 4 modes replay evidence exists.
-
-    ``attested_commit`` is the source commit the gate is attesting.
-    The smoke metadata git_commit must match this exactly.
-    """
-    if not SMOKE_SUMMARY_PATH.exists():
-        return {"passed": False, "error": f"missing {SMOKE_SUMMARY_PATH.relative_to(ROOT)}"}
+    smoke_dir = ROOT / smoke_namespace(attested_commit)
+    summary_path = smoke_dir / "smoke_summary.json"
+    metadata_path = smoke_dir / "environment_metadata.json"
+    if not summary_path.exists() or not metadata_path.exists():
+        return {"passed": False, "error": f"missing source-bound smoke namespace {smoke_dir.relative_to(ROOT)}"}
     try:
-        summary = json.loads(SMOKE_SUMMARY_PATH.read_text(encoding="utf-8"))
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
         manifest = summary.get("manifest", {})
         entries = manifest.get("entries", [])
-        counts = {mode: sum(1 for entry in entries if entry.get("mode") == mode)
-                  for mode in ("single", "sequential", "overlap", "burst")}
+        counts = {mode: sum(1 for entry in entries if entry.get("mode") == mode) for mode in ("single", "sequential", "overlap", "burst")}
         replayed = int(summary.get("replayed_tape_count", -1))
-        mode_ok = counts == {mode: 20 for mode in counts}
-        replayed_ok = replayed == 80
-        # Compute file hashes for ALL smoke evidence artifacts.
-        summary_sha = sha256_file(SMOKE_SUMMARY_PATH)
-        # Find and hash the smoke manifest file.
-        smoke_manifest_path = SMOKE_SUMMARY_PATH.parent / "tapes" / manifest.get("bank_name", "smoke") / "manifest.json"
-        if not smoke_manifest_path.exists():
-            # Try to find it from the manifest_path in the summary.
-            rel = manifest.get("manifest_path", "")
-            if rel:
-                smoke_manifest_path = ROOT / "ppo_allocation" / rel
-        manifest_hash = sha256_file(smoke_manifest_path) if smoke_manifest_path.exists() else "MISSING"
-        meta_sha = sha256_file(SMOKE_ENV_METADATA_PATH) if SMOKE_ENV_METADATA_PATH.exists() else "MISSING"
-
-        # Verify environment metadata: Python 3.11.x, frozen package versions,
-        # and git_commit == attested source commit.
-        FROZEN_PACKAGES = {
-            "torch": "2.5.0+cpu",
-            "numpy": "2.0.2",
-            "sb3-contrib": "2.9.0",
-            "stable-baselines3": "2.9.0",
-            "gymnasium": "1.3.0",
+        manifest_path = smoke_dir / "tapes" / manifest.get("bank_name", "") / "manifest.json"
+        meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+        packages = meta.get("packages", {})
+        package_versions_ok = all(packages.get(name) == expected for name, expected in {
+            "torch": "2.5.0+cpu", "numpy": "2.0.2", "sb3-contrib": "2.9.0",
+            "stable-baselines3": "2.9.0", "gymnasium": "1.3.0",
+        }.items())
+        meta_detail = {
+            "python": meta.get("python", ""),
+            "python_311": str(meta.get("python", "")).startswith("3.11"),
+            "git_commit": meta.get("git_commit"),
+            "git_commit_matches_attested": smoke_metadata_matches_attested(meta, attested_commit),
+            "frozen_packages_ok": package_versions_ok,
         }
-        meta_ok = True
-        meta_detail = {}
-        if SMOKE_ENV_METADATA_PATH.exists():
-            meta = json.loads(SMOKE_ENV_METADATA_PATH.read_text(encoding="utf-8"))
-            py = meta.get("python", "")
-            meta_detail["python"] = py
-            meta_detail["python_311"] = py.startswith("3.11")
-            smoke_commit = meta.get("git_commit")
-            meta_detail["git_commit"] = smoke_commit
-            meta_detail["git_commit_matches_attested"] = smoke_commit == attested_commit
-            packages = meta.get("packages", {})
-            meta_detail["torch"] = packages.get("torch")
-            meta_detail["numpy"] = packages.get("numpy")
-            meta_detail["sb3_contrib"] = packages.get("sb3-contrib")
-            meta_detail["stable_baselines3"] = packages.get("stable-baselines3")
-            meta_detail["gymnasium"] = packages.get("gymnasium")
-            package_versions_ok = all(
-                packages.get(name) == expected
-                for name, expected in FROZEN_PACKAGES.items()
-            )
-            meta_detail["frozen_packages_ok"] = package_versions_ok
-            meta_ok = (
-                meta_detail["python_311"]
-                and meta_detail["git_commit_matches_attested"]
-                and package_versions_ok
-            )
-        else:
-            meta_detail["error"] = f"missing {SMOKE_ENV_METADATA_PATH.relative_to(ROOT)}"
-            meta_ok = False
-
-        manifest_hash_ok = manifest_hash and manifest_hash != "MISSING" and len(manifest_hash) == 64
-        passed = replayed_ok and mode_ok and meta_ok and manifest_hash_ok
-        return {
-            "passed": passed,
-            "replayed_tape_count": replayed,
-            "replayed_ok": replayed_ok,
-            "counts_by_mode": counts,
-            "mode_ok": mode_ok,
-            "summary_sha256": summary_sha,
-            "manifest_file_sha256": manifest_hash,
-            "environment_metadata_sha256": meta_sha,
-            "environment_metadata": meta_detail,
-        }
+        passed = (replayed == 80 and counts == {mode: 20 for mode in counts}
+                  and meta_detail["python_311"] and meta_detail["git_commit_matches_attested"]
+                  and package_versions_ok and manifest_path.is_file())
+        return {"passed": passed, "replayed_tape_count": replayed, "replayed_ok": replayed == 80,
+                "counts_by_mode": counts, "mode_ok": counts == {mode: 20 for mode in counts},
+                "summary_sha256": sha256_file(summary_path),
+                "manifest_file_sha256": sha256_file(manifest_path) if manifest_path.is_file() else "MISSING",
+                "environment_metadata_sha256": sha256_file(metadata_path),
+                "environment_metadata": meta_detail, "smoke_namespace": str(smoke_dir.relative_to(ROOT))}
     except (OSError, ValueError, TypeError) as exc:
         return {"passed": False, "error": str(exc)}
-
 
 def compute_hashes() -> dict:
     """Hash the committed Git tree, never an uncommitted working copy."""
