@@ -29,6 +29,7 @@ import contextlib
 import hashlib
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -166,23 +167,31 @@ def run_tests() -> dict:
 
     results = {}
     all_pass = True
-    for label, directory, pattern in REQUIRED_TEST_SUITES:
-        suite_dir = ROOT / directory
-        discover_loader = loader.TestLoader()
-        loaded = discover_loader.discover(str(suite_dir), pattern=pattern, top_level_dir=str(suite_dir))
-        stream = io.StringIO()
-        with contextlib.redirect_stdout(stream):
-            test_result = TextTestRunner(stream=stream, verbosity=1).run(loaded)
-        passed = test_result.wasSuccessful()
-        results[label] = {
-            "passed": passed,
-            "tests_run": test_result.testsRun,
-            "failures": len(test_result.failures),
-            "errors": len(test_result.errors),
-            "output": stream.getvalue()[-2000:],
-        }
-        if not passed:
-            all_pass = False
+    test_cwd = ROOT / "ppo_allocation"
+    previous_cwd = Path.cwd()
+    try:
+        os.chdir(test_cwd)
+        for label, directory, pattern in REQUIRED_TEST_SUITES:
+            suite_dir = ROOT / directory
+            discover_loader = loader.TestLoader()
+            loaded = discover_loader.discover(str(suite_dir), pattern=pattern, top_level_dir=str(suite_dir))
+            stream = io.StringIO()
+            with contextlib.redirect_stdout(stream):
+                test_result = TextTestRunner(stream=stream, verbosity=1).run(loaded)
+            passed = test_result.wasSuccessful()
+            results[label] = {
+                "passed": passed,
+                "working_directory": str(test_cwd),
+                "invocation": f"{sys.executable} -m unittest discover -s tests_random_event -p {pattern}",
+                "tests_run": test_result.testsRun,
+                "failures": len(test_result.failures),
+                "errors": len(test_result.errors),
+                "output": stream.getvalue()[-2000:],
+            }
+            if not passed:
+                all_pass = False
+    finally:
+        os.chdir(previous_cwd)
     results["total_tests"] = sum(
         int(value.get("tests_run", 0)) for key, value in results.items()
         if key != "_all_pass"
@@ -894,6 +903,7 @@ def main() -> int:
     all_pass = all(check["status"] == "PASS" for check in checks.values())
 
     gate = {
+        "test_working_directory": str(ROOT / "ppo_allocation"),
         "schema_version": "1.0.0",
         "gate_name": "P0_READINESS_GATE",
         "generated_by": "scripts/build_p0_gate.py",
