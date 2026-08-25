@@ -38,13 +38,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest import TextTestRunner, loader
 
+# Bootstrap repository imports from this script's location before any
+# project-local import, independent of the caller's working directory.
+ROOT = Path(__file__).resolve().parents[1]
+PPO_DIR = ROOT / "ppo_allocation"
+for _path in (ROOT, PPO_DIR):
+    if str(_path) not in sys.path:
+        sys.path.insert(0, str(_path))
+
 from ppo_allocation.random_event.gate_integrity import (
     is_allowed_evidence_path,
     smoke_metadata_matches_attested,
     smoke_namespace,
 )
 
-ROOT = Path(__file__).resolve().parents[1]
 GATE_PATH = ROOT / "handoff" / "P0_GATE.json"
 PROTOCOL_PATH = ROOT / "configs" / "random_event_protocol.json"
 SEED_MANIFEST_PATH = ROOT / "configs" / "seed_manifest.json"
