@@ -1,4 +1,8 @@
-"""Compatibility checks for the unchanged MLP checkpoint and C++ bridge."""
+"""Compatibility checks for the repository-pinned legacy fixture and C++ bridge.
+
+The fixture is not a formal experiment result. It is a deterministic compatibility
+artifact used only to exercise LegacyMLPPPOPolicy and the machine-readable bridge.
+"""
 
 from __future__ import annotations
 
@@ -15,11 +19,18 @@ from random_event.legacy_adapter import LegacyMLPPPOPolicy
 
 PPO_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = PPO_DIR.parent
-MODEL = PPO_DIR / "results/models/run_20260605_210049/maskable_ppo_uav_task_allocation.zip"
+MODEL = Path(__file__).resolve().parent / "fixtures/legacy_maskable_ppo_checkpoint.zip"
+EXPECTED_FIXTURE_SHA256 = "5a9be7153d33532ce99c61f13c8151549cc6cc919ec75fad150d05bc78dec5da"
 
 
 class LegacyCompatibilityTests(unittest.TestCase):
-    def test_real_legacy_mlp_checkpoint_selects_legal_edge(self):
+    def setUp(self):
+        self.assertTrue(MODEL.is_file(), f"missing repository fixture: {MODEL}")
+        import hashlib
+        digest = hashlib.sha256(MODEL.read_bytes()).hexdigest()
+        self.assertEqual(digest, EXPECTED_FIXTURE_SHA256)
+
+    def test_pinned_legacy_fixture_selects_legal_edge(self):
         env = RandomEventAllocationEnv(initial_seed=1, event_seed=2, events_per_episode=3)
         graph, _ = env.reset()
         policy = LegacyMLPPPOPolicy(MODEL)

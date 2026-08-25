@@ -43,6 +43,11 @@ GATE_PATH = ROOT / "handoff" / "P0_GATE.json"
 PROTOCOL_PATH = ROOT / "configs" / "random_event_protocol.json"
 SEED_MANIFEST_PATH = ROOT / "configs" / "seed_manifest.json"
 SMOKE_SUMMARY_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "smoke_summary.json"
+EVIDENCE_ONLY_PREFIXES = (
+    "handoff/",
+    "ppo_allocation/results/random_event/smoke_20260821_final/",
+    "ppo_allocation/results/random_event/minimum_validation_50k_smoke_cb7af78/",
+)
 SMOKE_ENV_METADATA_PATH = ROOT / "ppo_allocation" / "results" / "random_event" / "smoke_20260821_final" / "environment_metadata.json"
 
 SOURCE_FILES = [
@@ -152,6 +157,22 @@ def committed_hashes_match(commit: str, source: dict[str, str]) -> tuple[bool, l
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def evidence_only_paths_allowed(paths: list[str]) -> bool:
+    """Return whether a source→runtime diff contains evidence files only."""
+    return all(
+        any(path.startswith(prefix) for prefix in EVIDENCE_ONLY_PREFIXES)
+        and not path.endswith(".py")
+        and not path.startswith("configs/")
+        and "/tests" not in path
+        for path in paths
+    )
+
+
+def protected_hashes_match(expected: dict[str, str], actual: dict[str, str]) -> bool:
+    """Compare protected disk hashes with the hashes recorded at attestation."""
+    return bool(expected) and expected == actual
 
 
 def run_tests() -> dict:
@@ -911,6 +932,7 @@ def main() -> int:
         "generated_at": utc_now(),
         "training_allowed": all_pass,
         "training_allowed_reason": "All machine checks PASS" if all_pass else "Machine checks failed - see checks section",
+        "runtime_head_sha": hashes["git_commit_sha"],
         "checks": checks,
         "test_count": int(test_results.get("total_tests", 0)),
         "required_test_count": int(test_results.get("total_tests", 0)),
