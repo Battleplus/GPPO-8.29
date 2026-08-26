@@ -31,7 +31,8 @@ class P0GateContractTests(unittest.TestCase):
         gate = _load_gate_module()
         labels = {item[0] for item in gate.REQUIRED_TEST_SUITES}
         self.assertTrue({
-            "event_runtime_integration", "confirmation_timelines", "concurrency_invariants",
+            "build_p0_gate_bootstrap", "event_runtime_integration",
+            "confirmation_timelines", "concurrency_invariants",
         } <= labels)
 
     def test_gate_machine_checks_required_protocol(self):

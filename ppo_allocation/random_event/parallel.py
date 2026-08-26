@@ -12,10 +12,12 @@ from typing import Any, Sequence
 
 from .progress import read_progress, write_progress
 
-FORMAL_VARIANTS = ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive")
+FORMAL_VARIANTS = ("PPO-MLP", "GPPO-Adaptive")
 FORMAL_SEEDS = (1101, 2202, 3303)
 FORMAL_BUDGET = 50_000
 FORMAL_CHECKPOINTS = (25_000, 50_000)
+FORMAL_RUN_COUNT = len(FORMAL_VARIANTS) * len(FORMAL_SEEDS)
+FORMAL_CHECKPOINT_COUNT = FORMAL_RUN_COUNT * len(FORMAL_CHECKPOINTS)
 
 
 @dataclass(frozen=True)
@@ -65,7 +67,7 @@ def worker_specs(root: Path) -> list[WorkerSpec]:
 
 
 def seed_batches(root: Path, *, max_workers: int = 3) -> list[list[WorkerSpec]]:
-    """Return three seed batches, each containing all model variants."""
+    """Return three seed batches, each containing both formal model variants."""
     if max_workers not in (1, 2, 3):
         raise ValueError("max_workers must be 1, 2 or 3")
     specs = worker_specs(root)
@@ -114,8 +116,8 @@ def format_progress(snapshot: dict[str, Any]) -> str:
     lines = [
         f"Campaign: {snapshot['campaign_fraction']:.1%}",
         f"Running workers: {snapshot['running_workers']}",
-        f"Completed runs: {snapshot['completed_runs']}/9",
-        f"Checkpoints: {snapshot['checkpoint_count']}/18",
+        f"Completed runs: {snapshot['completed_runs']}/{FORMAL_RUN_COUNT}",
+        f"Checkpoints: {snapshot['checkpoint_count']}/{FORMAL_CHECKPOINT_COUNT}",
         f"Aggregate steps/s: {snapshot['aggregate_steps_per_second']:.2f}",
     ]
     for worker in snapshot["workers"]:
@@ -149,7 +151,8 @@ def run_controlled_parallel(root: Path, *, max_workers: int = 3, dry_run: bool =
     budget = int(getattr(protocol, "budget", FORMAL_BUDGET))
     checkpoint_interval = int(getattr(protocol, "checkpoint_interval", FORMAL_CHECKPOINTS[0]))
     if dry_run:
-        return {"status": "dry_run", "expected_runs": 9, "expected_checkpoints": 18,
+        return {"status": "dry_run", "expected_runs": FORMAL_RUN_COUNT,
+                "expected_checkpoints": FORMAL_CHECKPOINT_COUNT,
                 "max_workers": max_workers}
     if formal and (budget != FORMAL_BUDGET or checkpoint_interval != FORMAL_CHECKPOINTS[0]):
         raise ValueError("formal parallel controller received a protocol override")
@@ -189,4 +192,7 @@ def run_controlled_parallel(root: Path, *, max_workers: int = 3, dry_run: bool =
     return {"status": "complete", "max_workers": max_workers, "results": [result.__dict__ for result in results], "aggregate": snapshot}
 
 
-__all__ = ["FORMAL_VARIANTS", "FORMAL_SEEDS", "FORMAL_BUDGET", "FORMAL_CHECKPOINTS", "WorkerSpec", "aggregate_progress", "build_worker_command", "format_progress", "run_controlled_parallel", "validate_worker_isolation", "worker_specs"]
+__all__ = ["FORMAL_VARIANTS", "FORMAL_SEEDS", "FORMAL_BUDGET", "FORMAL_CHECKPOINTS",
+           "FORMAL_RUN_COUNT", "FORMAL_CHECKPOINT_COUNT", "WorkerSpec", "aggregate_progress",
+           "build_worker_command", "format_progress", "run_controlled_parallel",
+           "validate_worker_isolation", "worker_specs"]

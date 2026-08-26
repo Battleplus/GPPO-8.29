@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($Root)) {
   $Root = Join-Path (Get-Location) "results\random_event\minimum_validation_50k_run1\preliminary\runs"
 }
-$variants = @("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive")
+$variants = @("PPO-MLP", "GPPO-Adaptive")
 $seeds = @(1101,2202,3303)
 while ($true) {
   Clear-Host
@@ -29,8 +29,8 @@ while ($true) {
       $rows += [pscustomobject]@{ Variant=$variant; Seed=$seed; Steps="$steps/50000"; Percent=(100*$steps/50000); Status=$status; StepsPerSecond=$rate }
     }
   }
-  Write-Host ("Campaign: {0:P1}" -f ($total/450000))
-  Write-Host "Workers: 3 per seed batch | Completed runs: $done/9 | Checkpoints: $checkpoints/18"
+  Write-Host ("Campaign: {0:P1}" -f ($total/300000))
+  Write-Host "Workers: 2 per seed batch | Completed runs: $done/6 | Checkpoints: $checkpoints/12"
   Write-Host ("Aggregate steps/s: {0:N2}" -f (($rows | Measure-Object StepsPerSecond -Sum).Sum))
   $rows | Format-Table -AutoSize
   Start-Sleep -Seconds $RefreshSeconds

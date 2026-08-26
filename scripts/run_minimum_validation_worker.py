@@ -17,6 +17,8 @@ if str(ROOT) not in sys.path:
 
 from random_event.phase_j import (  # noqa: E402
     PreliminaryProtocol,
+    TRAINING_SEEDS,
+    VARIANTS,
     _check_p0_gate_strict,
     _developer_attestation,
     train_single_run,
@@ -25,8 +27,8 @@ from random_event.phase_j import (  # noqa: E402
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("variant")
-    parser.add_argument("seed", type=int)
+    parser.add_argument("variant", choices=VARIANTS)
+    parser.add_argument("seed", type=int, choices=TRAINING_SEEDS)
     parser.add_argument("run_dir")
     parser.add_argument("--developer", action="store_true")
     parser.add_argument("--budget", type=int, default=50_000)

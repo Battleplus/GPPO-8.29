@@ -243,11 +243,11 @@ class CheckpointSchedulingTests(unittest.TestCase):
 class PreliminaryProtocolTests(unittest.TestCase):
     def test_defaults(self):
         p = PreliminaryProtocol()
-        self.assertEqual(p.variants, ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"))
+        self.assertEqual(p.variants, ("PPO-MLP", "GPPO-Adaptive"))
         self.assertEqual(p.training_seeds, (1101, 2202, 3303))
         self.assertEqual(p.budget, 50_000)
         self.assertEqual(p.num_checkpoints, 2)
-        self.assertEqual(p.num_runs, 9)
+        self.assertEqual(p.num_runs, 6)
 
 
 # ---------------------------------------------------------------------------
@@ -442,11 +442,11 @@ class ProvenanceGuardTests(unittest.TestCase):
 
     def _formal_freeze(self, gate):
         freezes = []
-        for variant in ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"):
+        for variant in ("PPO-MLP", "GPPO-Adaptive"):
             for seed in (1101, 2202, 3303):
                 freezes.append({
                     "variant": variant, "training_seed": seed,
-                    "selected_step": 25000, "checkpoint_path": "x.pt",
+                    "selected_step": 50000, "checkpoint_path": "x.pt",
                     "checkpoint_sha256": "c" * 64,
                     "source_sha": gate["source_tree_hash"],
                     "protocol_sha": gate["protocol_sha256"],
@@ -456,7 +456,8 @@ class ProvenanceGuardTests(unittest.TestCase):
                     "selected_at": "now",
                 })
         return {
-            "formal": True, "freeze_count": 9, "freezes": freezes,
+            "formal": True, "freeze_count": 6, "freezes": freezes,
+            "checkpoint_selection": False, "fixed_evaluation_checkpoint": 50000,
             "source_tree_hash": gate["source_tree_hash"],
             "attested_source_commit_sha": gate["attested_source_commit_sha"],
             "protocol_sha256": gate["protocol_sha256"],
@@ -520,11 +521,11 @@ class ProvenanceGuardTests(unittest.TestCase):
             def fake_generate(*args, **kwargs):
                 entries = [
                     {"set_name": label, "mode": ("single" if label == "Test-Unseen" else label.removeprefix("Test-").lower())}
-                    for label in labels for _ in range(40)
+                    for label in labels for _ in range(20)
                 ]
                 payload = {
                     "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
-                    "expected_tape_count": 200, "tape_count": 200,
+                    "expected_tape_count": 100, "tape_count": 100,
                     "checkpoint_selection": False, "reward_tuning": False,
                     "seed_manifest_sha256": gate["seed_manifest_sha256"],
                     "protocol_sha256": gate["protocol_sha256"], "entries": entries,
@@ -673,14 +674,14 @@ class FrozenTrainContractTests(unittest.TestCase):
 class FormalTestResumeTests(unittest.TestCase):
     def _freeze_payload(self, gate, root):
         freezes = []
-        for variant in ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"):
+        for variant in ("PPO-MLP", "GPPO-Adaptive"):
             for seed in (1101, 2202, 3303):
                 ckpt_path = root / "preliminary" / "models" / f"{variant}-{seed}.pt"
                 ckpt_path.parent.mkdir(parents=True, exist_ok=True)
                 ckpt_path.write_bytes(b"ckpt")
                 freezes.append({
                     "variant": variant, "training_seed": seed,
-                    "selected_step": 25000, "checkpoint_path": str(ckpt_path),
+                    "selected_step": 50000, "checkpoint_path": str(ckpt_path),
                     "checkpoint_sha256": hashlib.sha256(b"ckpt").hexdigest(),
                     "source_sha": gate["source_tree_hash"],
                     "protocol_sha": gate["protocol_sha256"],
@@ -690,7 +691,8 @@ class FormalTestResumeTests(unittest.TestCase):
                     "selected_at": "now",
                 })
         return {
-            "formal": True, "freeze_count": 9, "freezes": freezes,
+            "formal": True, "freeze_count": 6, "freezes": freezes,
+            "checkpoint_selection": False, "fixed_evaluation_checkpoint": 50000,
             "source_tree_hash": gate["source_tree_hash"],
             "attested_source_commit_sha": gate["attested_source_commit_sha"],
             "protocol_sha256": gate["protocol_sha256"],
@@ -701,7 +703,7 @@ class FormalTestResumeTests(unittest.TestCase):
         labels = ["Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen"]
         entries = []
         for label in labels:
-            for i in range(40):
+            for i in range(20):
                 entries.append({
                     "tape_id": f"{label}-{i}", "set_name": label,
                     "mode": "single" if label == "Test-Unseen" else label.removeprefix("Test-").lower(),
@@ -709,7 +711,7 @@ class FormalTestResumeTests(unittest.TestCase):
                 })
         manifest = {
             "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
-            "expected_tape_count": 200, "tape_count": 200,
+            "expected_tape_count": 100, "tape_count": 100,
             "checkpoint_selection": False, "reward_tuning": False,
             "seed_manifest_sha256": gate["seed_manifest_sha256"],
             "protocol_sha256": gate["protocol_sha256"],
@@ -808,11 +810,11 @@ class FormalTestResumeTests(unittest.TestCase):
                     "result_sha": "c" * 64,
                 }))
             result = self._run_test(root, gate, freeze_payload, manifest_sha)
-            # 2 skipped (resumed), 7 evaluated.
+            # 2 skipped (resumed), 4 evaluated across the six-run contract.
             resumed = [r for r in result["results"] if r.get("resumed")]
             evaluated = [r for r in result["results"] if not r.get("resumed")]
             self.assertEqual(len(resumed), 2)
-            self.assertEqual(len(evaluated), 7)
+            self.assertEqual(len(evaluated), 4)
             ledger_after = json.loads((root / "preliminary" / "test_ledger.json").read_text())
             self.assertTrue(ledger_after["completed"])
             lock_after = json.loads((root / "preliminary" / "formal_test_bank_lock.json").read_text())
@@ -1220,15 +1222,17 @@ class DryRunOrchestratorTests(unittest.TestCase):
         from unittest.mock import patch
         from ppo_allocation.random_event.phase_j import dry_run, preliminary_train
         self.assertTrue(callable(preliminary_train))
-        gate = json.loads((Path(_REPO_ROOT) / "handoff" / "P0_GATE.json").read_text())
+        gate = json.loads(
+            (Path(_REPO_ROOT) / "handoff" / "P0_GATE.json").read_text(encoding="utf-8")
+        )
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch("ppo_allocation.random_event.phase_j._check_p0_gate_strict", return_value=gate), \
                  patch("ppo_allocation.random_event.phase_j._validate_hashes_match"):
                 result = dry_run(Path(tmpdir))
             self.assertEqual(result["formal"], False)
-            self.assertEqual(result["selected_per_group"], 9)
-            self.assertEqual(result["frozen_count"], 9)
-            self.assertEqual(result["train_checkpoints"], 18)
+            self.assertEqual(result["selected_per_group"], 6)
+            self.assertEqual(result["frozen_count"], 6)
+            self.assertEqual(result["train_checkpoints"], 12)
             self.assertFalse(result["official_test_namespace_touched"])
             self.assertTrue((Path(tmpdir) / "phase_j_dry_run_summary.json").exists())
 

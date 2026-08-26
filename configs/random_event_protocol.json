@@ -322,7 +322,7 @@
       "test"
     ],
     "disjoint_seed_namespaces": true,
-    "checkpoint_selection_source": "validation",
+    "checkpoint_selection_source": "formal_benchmark_only_not_minimum_validation",
     "test_allowed_for_checkpoint_selection": false,
     "smoke": {
       "modes": [
@@ -337,16 +337,19 @@
     },
     "preliminary": {
       "label_required": "preliminary",
-      "training_variants": ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+      "training_variants": ["PPO-MLP", "GPPO-Adaptive"],
       "training_seeds": [1101, 2202, 3303],
       "training_budget_decision_steps": 50000,
       "checkpoint_interval": 25000,
       "checkpoint_steps": [25000, 50000],
-      "expected_checkpoint_count": 18,
+      "expected_run_count": 6,
+      "expected_checkpoint_count": 12,
       "fixed_evaluation_checkpoint": 50000,
+      "checkpoint_selection": false,
+      "held_out_evaluation": true,
       "training_seeds_count": 3,
-      "test_tapes_total": 200,
-      "test_tapes_per_set": 40,
+      "test_tapes_total": 100,
+      "test_tapes_per_set": 20,
       "test_sets": [
         "Test-Single",
         "Test-Sequential",
@@ -428,7 +431,6 @@
     ],
     "primary_comparisons": [
       "GPPO-Adaptive_vs_PPO-MLP",
-      "GPPO-Adaptive_vs_GPPO-NoGate",
       "GPPO-Adaptive_vs_Greedy-Cost"
     ],
     "multiple_comparison_correction": "Holm",

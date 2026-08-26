@@ -7,6 +7,8 @@ from pathlib import Path
 from ppo_allocation.random_event.parallel import (
     FORMAL_BUDGET,
     FORMAL_CHECKPOINTS,
+    FORMAL_CHECKPOINT_COUNT,
+    FORMAL_RUN_COUNT,
     FORMAL_SEEDS,
     FORMAL_VARIANTS,
     aggregate_progress,
@@ -19,11 +21,13 @@ from ppo_allocation.random_event.progress import read_progress, write_progress
 
 class ParallelMinimumValidationTests(unittest.TestCase):
     def test_formal_contract(self):
-        self.assertEqual(FORMAL_VARIANTS, ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"))
+        self.assertEqual(FORMAL_VARIANTS, ("PPO-MLP", "GPPO-Adaptive"))
         self.assertEqual(FORMAL_SEEDS, (1101, 2202, 3303))
         self.assertEqual(FORMAL_BUDGET, 50_000)
         self.assertEqual(FORMAL_CHECKPOINTS, (25_000, 50_000))
-        self.assertEqual(len(worker_specs(Path("/tmp/campaign"))), 9)
+        self.assertEqual(FORMAL_RUN_COUNT, 6)
+        self.assertEqual(FORMAL_CHECKPOINT_COUNT, 12)
+        self.assertEqual(len(worker_specs(Path("/tmp/campaign"))), 6)
 
     def test_worker_paths_are_unique(self):
         validate_worker_isolation(worker_specs(Path("/tmp/campaign")))
@@ -40,8 +44,8 @@ class ParallelMinimumValidationTests(unittest.TestCase):
                     "steps_per_second": 2.5,
                 })
             snapshot = aggregate_progress(specs)
-            self.assertEqual(snapshot["total_steps"], sum(i * 1000 for i in range(9)))
-            self.assertEqual(snapshot["target_steps"], 9 * FORMAL_BUDGET)
+            self.assertEqual(snapshot["total_steps"], sum(i * 1000 for i in range(6)))
+            self.assertEqual(snapshot["target_steps"], 6 * FORMAL_BUDGET)
             self.assertEqual(snapshot["completed_runs"], 1)
             self.assertIn("50000", format_progress(snapshot))
 
@@ -59,10 +63,10 @@ class ParallelMinimumValidationTests(unittest.TestCase):
 
     def test_no_duplicate_worker_paths(self):
         specs = worker_specs(Path("/tmp/campaign"))
-        self.assertEqual(len({str(s.stdout_path) for s in specs}), 9)
-        self.assertEqual(len({str(s.stderr_path) for s in specs}), 9)
-        self.assertEqual(len({str(s.progress_path) for s in specs}), 9)
-        self.assertEqual(len({str(s.checkpoint_dir) for s in specs}), 9)
+        self.assertEqual(len({str(s.stdout_path) for s in specs}), 6)
+        self.assertEqual(len({str(s.stderr_path) for s in specs}), 6)
+        self.assertEqual(len({str(s.progress_path) for s in specs}), 6)
+        self.assertEqual(len({str(s.checkpoint_dir) for s in specs}), 6)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """Minimum-validation orchestrator and controlled independent-run scheduler.
 
-The formal minimum-validation contract is three independent model variants ×
+The formal minimum-validation contract is two independent model variants ×
 three seeds × 50,000 accepted decisions, with checkpoints at 25,000 and
 50,000. Parallelism only changes process scheduling; each model×seed run keeps
 its own environment, RNG, optimizer, output and heartbeat.
@@ -48,10 +48,11 @@ MODES = ("single", "sequential", "overlap", "burst")
 # ---------------------------------------------------------------------------
 # Frozen minimum-validation protocol
 # ---------------------------------------------------------------------------
-VARIANTS = ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive")
+VARIANTS = ("PPO-MLP", "GPPO-Adaptive")
 TRAINING_SEEDS = (1101, 2202, 3303)
 DEFAULT_BUDGET = 50_000
 CHECKPOINT_INTERVAL = 25_000
+FIXED_EVALUATION_CHECKPOINT = 50_000
 # Frozen censoring rule: an unrecovered event contributes the protocol's
 # finite observation-horizon penalty to Levels 3 and 4. It is never coerced
 # from None to zero.  The single source of truth is the frozen constant in
@@ -311,7 +312,7 @@ def preliminary_train(
     ppo_config: PPOConfig | None = None,
     formal: bool = True,
 ) -> dict[str, Any]:
-    """Run preliminary training: 3 variants × 3 seeds, periodic checkpoints.
+    """Run preliminary training: 2 variants × 3 seeds, periodic checkpoints.
 
     The P0 gate must be green before formal training starts. Formal mode may
     use the controlled parallel scheduler; every run remains fresh.
@@ -322,7 +323,7 @@ def preliminary_train(
         _validate_hashes_match(gate, "preliminary-train")
         if protocol != PreliminaryProtocol():
             raise SystemExit(
-                "formal minimum-validation requires frozen 50000/25000/3-variant/3-seed protocol"
+                "formal minimum-validation requires frozen 50000/25000/2-variant/3-seed protocol"
             )
     else:
         gate = _developer_attestation()
@@ -480,14 +481,10 @@ def preliminary_train_parallel(output_dir: Path, *, max_workers: int = 3,
 # ---------------------------------------------------------------------------
 
 def generate_validation_bank(output_dir: Path) -> dict[str, Any]:
-    """Generate the frozen Validation bank (100 tapes: 25×4 modes, no Unseen)."""
-    gate = _check_p0_gate_strict()
-    _validate_hashes_match(gate, "generate-validation-bank")
-    return generate_protocol_bank(
-        output_dir / "preliminary",
-        tier="preliminary",
-        split="validation",
-        events_per_tape=5,
+    """Reject formal Validation generation for fixed-checkpoint minimum validation."""
+    raise SystemExit(
+        "minimum-validation has no formal Validation/checkpoint-selection stage; "
+        "freeze the fixed 50000-step checkpoints before generating held-out evaluation"
     )
 
 
@@ -609,7 +606,7 @@ def _validate_formal_checkpoints(
     checkpoints: list[CheckpointRecord],
     gate: dict[str, Any],
 ) -> None:
-    """Require exactly 9 groups × 12 exact checkpoints for formal validation."""
+    """Require exactly 6 groups and 12 checkpoints for formal minimum validation."""
     expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
     groups: dict[tuple[str, int], list[CheckpointRecord]] = {}
     for record in checkpoints:
@@ -654,14 +651,12 @@ def preliminary_validate(
     formal: bool = True,
     validation_manifest: Path | None = None,
 ) -> dict[str, Any]:
-    """Evaluate checkpoints on Validation bank and select best PER (variant, seed).
-
-    Returns 9 selected checkpoints (3 variants × 3 seeds), each independently
-    chosen from its own 12-checkpoint group.
-    """
+    """Developer-only legacy selection; formal minimum validation has no selection."""
     if formal:
-        gate = _check_p0_gate_strict()
-        _validate_hashes_match(gate, "preliminary-validate")
+        raise SystemExit(
+            "formal minimum-validation forbids checkpoint selection; "
+            "preliminary-freeze uses the fixed 50000-step checkpoint"
+        )
     else:
         gate = _developer_attestation()
 
@@ -681,12 +676,12 @@ def preliminary_validate(
     else:
         if not checkpoints:
             raise ValueError("developer validation requires checkpoints")
-        # Developer dry-runs still require exactly the three variants × three
+        # Developer dry-runs still require exactly the two variants × three
         # seeds, but permit a smaller common checkpoint schedule.
         expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
         actual_keys = {(c.variant, int(c.training_seed)) for c in checkpoints}
         if actual_keys != expected_keys:
-            raise SystemExit("developer validation must contain all 9 variant/seed groups")
+            raise SystemExit("developer validation must contain all 6 variant/seed groups")
 
     # Group by (variant, training_seed) → select 1 per group
     groups: dict[tuple[str, int], list[CheckpointRecord]] = {}
@@ -742,49 +737,61 @@ def preliminary_freeze(
     formal: bool = True,
     validation_manifest: Path | None = None,
 ) -> dict[str, Any]:
-    """Freeze selected checkpoints after revalidating hashes and selection cardinality."""
+    """Freeze fixed 50k formal checkpoints or developer-selected checkpoints."""
     if formal:
         gate = _check_p0_gate_strict()
         _validate_hashes_match(gate, "preliminary-freeze")
+        if validation_manifest is not None:
+            raise SystemExit("formal minimum-validation freeze does not accept a Validation manifest")
+        selection_path = output_dir / "preliminary" / "validation_selection.json"
+        if selection_path.exists():
+            raise SystemExit(
+                "formal minimum-validation refuses validation_selection.json; "
+                "the 50000-step checkpoint is fixed before held-out evaluation"
+            )
+        checkpoint_index = output_dir / "preliminary" / "checkpoint_index.json"
+        if not checkpoint_index.exists():
+            raise FileNotFoundError("Run preliminary-train first")
+        raw = json.loads(checkpoint_index.read_text(encoding="utf-8"))
+        checkpoints = [CheckpointRecord(**item) for item in raw]
+        _validate_formal_checkpoints(checkpoints, gate)
+        selected = [
+            asdict(record)
+            for record in checkpoints
+            if int(record.decision_steps) == FIXED_EVALUATION_CHECKPOINT
+        ]
+        expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
+        selected_keys = {(item["variant"], int(item["training_seed"])) for item in selected}
+        if len(selected) != len(expected_keys) or selected_keys != expected_keys:
+            raise SystemExit("fixed 50000-step checkpoint set is incomplete")
+        evidence_namespace = "fixed_checkpoint_step_50000_no_selection"
     else:
         gate = _developer_attestation()
-
-    selection_path = output_dir / "preliminary" / "validation_selection.json"
-    if not selection_path.exists():
-        raise FileNotFoundError("Run preliminary-validate first")
-    selection = json.loads(selection_path.read_text(encoding="utf-8"))
-    if formal and selection.get("formal") is not True:
-        raise SystemExit("formal freeze refuses a developer or legacy selection")
-    provenance_fields = (
-        "source_tree_hash", "attested_source_commit_sha",
-        "protocol_sha256", "seed_manifest_sha256",
-    )
-    if formal and any(selection.get(field) != gate.get(field) for field in provenance_fields):
-        raise SystemExit("selection provenance does not match the current P0 attestation")
-    expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
-    selected = selection.get("selected_checkpoints", [])
-    selected_keys = {(item.get("variant"), int(item.get("training_seed"))) for item in selected}
-    if selected_keys != expected_keys or len(selected) != len(expected_keys):
-        raise SystemExit(
-            f"freeze requires exactly 9 unique variant/seed selections; got {len(selected)}"
+        selection_path = output_dir / "preliminary" / "validation_selection.json"
+        if not selection_path.exists():
+            raise FileNotFoundError("Run preliminary-validate first")
+        selection = json.loads(selection_path.read_text(encoding="utf-8"))
+        expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
+        selected = selection.get("selected_checkpoints", [])
+        selected_keys = {(item.get("variant"), int(item.get("training_seed"))) for item in selected}
+        if selected_keys != expected_keys or len(selected) != len(expected_keys):
+            raise SystemExit(
+                f"developer freeze requires exactly 6 unique variant/seed selections; got {len(selected)}"
+            )
+        manifest_path = validation_manifest or _relative_path(
+            selection.get(
+                "validation_manifest_path",
+                "results/random_event/tapes/dev_validation/manifest.json",
+            )
         )
-
-    manifest_path = validation_manifest or _relative_path(
-        selection.get("validation_manifest_path", "results/random_event/tapes/preliminary_validation_protocol/manifest.json")
-    )
-    if formal:
-        _validate_validation_manifest(manifest_path, gate, formal=True)
-    validation_sha = _sha256_file(manifest_path)
-
-    # Verify validation manifest SHA matches what was recorded at selection time
-    if validation_sha != selection.get("validation_manifest_sha"):
-        raise SystemExit(
-            "Validation manifest SHA mismatch between selection and freeze — "
-            "bank may have been modified"
-        )
+        evidence_namespace = _sha256_file(manifest_path)
+        if evidence_namespace != selection.get("validation_manifest_sha"):
+            raise SystemExit(
+                "developer Validation manifest SHA mismatch between selection and freeze"
+            )
 
     freezes = []
-    for sel in selection["selected_checkpoints"]:
+    for sel in selected:
         # Re-hash checkpoint before freeze (Phase J requirement 9)
         ckpt_path = _relative_path(sel["checkpoint_path"])
         current_ckpt_sha = _sha256_file(ckpt_path)
@@ -803,7 +810,7 @@ def preliminary_freeze(
             source_sha=gate.get("source_tree_hash", "UNKNOWN"),
             protocol_sha=gate.get("protocol_sha256", "UNKNOWN"),
             seed_manifest_sha=gate.get("seed_manifest_sha256", "UNKNOWN"),
-            validation_manifest_sha=validation_sha,
+            validation_manifest_sha=evidence_namespace,
             attested_source_commit_sha=gate.get("attested_source_commit_sha", "UNKNOWN"),
             selected_at=_utc_now(),
         )
@@ -814,7 +821,9 @@ def preliminary_freeze(
         "freeze_count": len(freezes),
         "freezes": freezes,
         "formal": formal,
-        "validation_manifest_sha256": validation_sha,
+        "checkpoint_selection": not formal,
+        "fixed_evaluation_checkpoint": FIXED_EVALUATION_CHECKPOINT if formal else None,
+        "evaluation_evidence_namespace": evidence_namespace,
         "source_tree_hash": gate.get("source_tree_hash"),
         "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
         "protocol_sha256": gate.get("protocol_sha256"),
@@ -839,13 +848,20 @@ def _validate_freeze_payload(freeze_payload: dict[str, Any], gate: dict[str, Any
     """Validate the complete formal freeze provenance before any Test access."""
     if freeze_payload.get("formal") is not True:
         raise SystemExit("formal Test requires a formal freeze manifest")
-    if int(freeze_payload.get("freeze_count", 0)) != 9:
-        raise SystemExit("formal Test requires exactly nine frozen checkpoints")
+    expected_count = len(VARIANTS) * len(TRAINING_SEEDS)
+    if int(freeze_payload.get("freeze_count", 0)) != expected_count:
+        raise SystemExit("formal held-out evaluation requires exactly six frozen checkpoints")
+    if freeze_payload.get("checkpoint_selection") is not False:
+        raise SystemExit("formal minimum-validation freeze must not use checkpoint selection")
+    if int(freeze_payload.get("fixed_evaluation_checkpoint", 0)) != FIXED_EVALUATION_CHECKPOINT:
+        raise SystemExit("formal minimum-validation freeze must use the fixed 50000-step checkpoint")
     expected_keys = {(variant, seed) for variant in VARIANTS for seed in TRAINING_SEEDS}
     freezes = freeze_payload.get("freezes", [])
     keys = {(item.get("variant"), int(item.get("training_seed"))) for item in freezes}
-    if len(freezes) != 9 or keys != expected_keys:
-        raise SystemExit("formal freeze keys are not exactly the 3x3 protocol")
+    if len(freezes) != expected_count or keys != expected_keys:
+        raise SystemExit("formal freeze keys are not exactly the 2x3 protocol")
+    if any(int(item.get("selected_step", 0)) != FIXED_EVALUATION_CHECKPOINT for item in freezes):
+        raise SystemExit("formal freeze contains a non-50000 checkpoint")
     global_fields = {
         "source_tree_hash": gate.get("source_tree_hash"),
         "attested_source_commit_sha": gate.get("attested_source_commit_sha"),
@@ -869,13 +885,13 @@ def _validate_freeze_payload(freeze_payload: dict[str, Any], gate: dict[str, Any
 
 
 def _validate_test_manifest(manifest_path: Path, gate: dict[str, Any]) -> tuple[dict[str, Any], str]:
-    """Validate the immutable official 200-tape Test bank and return its SHA."""
+    """Validate the immutable 100-case held-out bank and return its SHA."""
     if not manifest_path.exists():
         raise FileNotFoundError("Run generate_test_bank first")
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     required = {
         "tier": "preliminary", "split": "test", "complete_frozen_bank": True,
-        "expected_tape_count": 200, "tape_count": 200,
+        "expected_tape_count": 100, "tape_count": 100,
         "checkpoint_selection": False, "reward_tuning": False,
         "seed_manifest_sha256": gate.get("seed_manifest_sha256"),
         "protocol_sha256": gate.get("protocol_sha256"),
@@ -883,8 +899,8 @@ def _validate_test_manifest(manifest_path: Path, gate: dict[str, Any]) -> tuple[
     for field, expected in required.items():
         if payload.get(field) != expected:
             raise SystemExit(f"Test manifest contract mismatch: {field}")
-    expected_sets = {f"Test-{mode.title()}": 40 for mode in MODES}
-    expected_sets["Test-Unseen"] = 40
+    expected_sets = {f"Test-{mode.title()}": 20 for mode in MODES}
+    expected_sets["Test-Unseen"] = 20
     set_counts: dict[str, int] = {}
     for entry in payload.get("entries", []):
         label = entry.get("set_name")
@@ -908,15 +924,15 @@ def _test_lock_path(output_dir: Path) -> Path:
 
 
 def generate_test_bank(output_dir: Path) -> dict[str, Any]:
-    """Generate the frozen Test bank (200 tapes: 40×5 sets).
+    """Generate the frozen held-out bank (100 cases: 20×5 sets).
 
-    Requires frozen selection to exist before generating.
+    Requires the six fixed 50k checkpoint freezes to exist before generating.
     """
     freeze_path = output_dir / "preliminary" / "frozen_manifests.json"
     if not freeze_path.exists():
         raise SystemExit(
             "Cannot generate Test bank: run preliminary-freeze first. "
-            "Test bank must not be generated before checkpoint selection is frozen."
+            "Held-out bank must not be generated before fixed checkpoints are frozen."
         )
     freeze_payload = json.loads(freeze_path.read_text(encoding="utf-8"))
     gate = _check_p0_gate_strict()
@@ -965,7 +981,7 @@ def generate_test_bank(output_dir: Path) -> dict[str, Any]:
 
 
 def preliminary_test(output_dir: Path) -> dict[str, Any]:
-    """Run Test bank on all 9 frozen checkpoints.
+    """Run held-out evaluation on all 6 fixed 50k checkpoints.
 
     Each checkpoint gets its own test run.  The test ledger records
     consumption status to prevent re-testing.
@@ -1078,7 +1094,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
                     _check_provenance(entry, key)
                     all_results.append({
                         "variant": freeze["variant"], "seed": freeze["training_seed"],
-                        "resumed": True, "tape_count": 200,
+                        "resumed": True, "tape_count": 100,
                     })
                     continue
                 # B: journal consumed but ledger entry missing (crash between
@@ -1104,7 +1120,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
                 _json_file(ledger_path, ledger)
                 all_results.append({
                     "variant": freeze["variant"], "seed": freeze["training_seed"],
-                    "resumed": True, "tape_count": 200,
+                    "resumed": True, "tape_count": 100,
                 })
                 continue
             if state == "running":
@@ -1121,7 +1137,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
                     _json_file(journal_path, journal)
                     all_results.append({
                         "variant": freeze["variant"], "seed": freeze["training_seed"],
-                        "resumed": True, "tape_count": 200,
+                        "resumed": True, "tape_count": 100,
                     })
                     continue
                 # A: journal running + no consumed ledger entry -> ambiguous.
@@ -1241,7 +1257,7 @@ def preliminary_test(output_dir: Path) -> dict[str, Any]:
         # can resume only against this exact locked manifest.
         _json_file(ledger_path, ledger)
 
-    ledger["completed"] = len(entries_ledger) == 9 and all(
+    ledger["completed"] = len(entries_ledger) == len(VARIANTS) * len(TRAINING_SEEDS) and all(
         item.get("consumed") is True for item in entries_ledger.values()
     )
     ledger["test_manifest_sha256"] = test_manifest_sha
@@ -1291,7 +1307,7 @@ def generate_developer_validation_bank(output_dir: Path) -> dict[str, Any]:
 def dry_run(output_dir: Path) -> dict[str, Any]:
     """Small-budget DRY RUN to verify the orchestrator pipeline.
 
-    3 variants × 3 seeds × 2 checkpoints (64, 128 steps).
+    2 variants × 3 seeds × 2 checkpoints (64, 128 steps).
     Validates: checkpoint creation, save/load, validation selection, freeze,
     test isolation guard.
 
@@ -1327,7 +1343,7 @@ def dry_run(output_dir: Path) -> dict[str, Any]:
     )
     num_selected = val_result["selected_count"]
 
-    # Step 3: Freeze exactly nine developer selections.
+    # Step 3: Freeze exactly six developer selections.
     freeze_result = preliminary_freeze(
         output_dir,
         formal=False,
@@ -1380,7 +1396,10 @@ def add_phase_j_args(parser: argparse.ArgumentParser) -> None:
     train_p.add_argument("--budget", type=int, default=DEFAULT_BUDGET, help=argparse.SUPPRESS)
     train_p.add_argument("--checkpoint-interval", type=int, default=CHECKPOINT_INTERVAL, help=argparse.SUPPRESS)
 
-    val_p = sub.add_parser("preliminary-validate", help="Run validation selection")
+    val_p = sub.add_parser(
+        "preliminary-validate",
+        help="Developer-only legacy selection; formal minimum-validation forbids this stage",
+    )
     val_p.add_argument("--output-dir", default="results/random_event")
 
     freeze_p = sub.add_parser("preliminary-freeze", help="Freeze selected checkpoints")

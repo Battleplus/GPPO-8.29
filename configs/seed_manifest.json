@@ -90,8 +90,8 @@
       "budget_decision_steps": 50000,
       "checkpoint_interval": 25000,
       "checkpoint_steps": [25000, 50000],
-      "expected_checkpoint_count": 18,
-      "variants": ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+      "expected_checkpoint_count": 12,
+      "variants": ["PPO-MLP", "GPPO-Adaptive"],
       "episodes_per_training_seed": 50001,
       "runtime_mapping": {
         "instance_seed": "training_seed*1000003+episode_index",
@@ -151,7 +151,9 @@
       }
     },
     "validation": {
-      "checkpoint_selection": true,
+      "enabled": false,
+      "checkpoint_selection": false,
+      "purpose": "legacy_validation_namespace_disabled_for_fixed_50000_minimum_validation",
       "reward_tuning": false,
       "tapes_total": 100,
       "tapes_per_mode": 25,
@@ -210,19 +212,21 @@
     "test": {
       "checkpoint_selection": false,
       "reward_tuning": false,
-      "tapes_total": 200,
-      "tapes_per_set": 40,
+      "held_out_evaluation": true,
+      "fixed_checkpoint_step": 50000,
+      "tapes_total": 100,
+      "tapes_per_set": 20,
       "sets": {
         "Test-Single": {
           "protocol": "P1_anchored_exact_pair",
           "instance_seeds": {
             "start": 310001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           },
           "event_seeds": {
             "start": 311001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           }
         },
@@ -230,12 +234,12 @@
           "protocol": "P2_continuous_exogenous_tape",
           "instance_seeds": {
             "start": 320001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           },
           "event_seeds": {
             "start": 321001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           }
         },
@@ -243,12 +247,12 @@
           "protocol": "P2_continuous_exogenous_tape",
           "instance_seeds": {
             "start": 330001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           },
           "event_seeds": {
             "start": 331001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           }
         },
@@ -256,12 +260,12 @@
           "protocol": "P2_continuous_exogenous_tape_and_P1_anchored_burst",
           "instance_seeds": {
             "start": 340001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           },
           "event_seeds": {
             "start": 341001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           }
         },
@@ -276,12 +280,12 @@
           ],
           "instance_seeds": {
             "start": 350001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           },
           "event_seeds": {
             "start": 351001,
-            "count": 40,
+            "count": 20,
             "stride": 1
           }
         }

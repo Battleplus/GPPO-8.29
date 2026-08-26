@@ -13,7 +13,7 @@ Gate logic:
         - protocol / seed-manifest hashes are recorded and current
         - train/validation/test seed namespaces are disjoint
         - Test is never used for checkpoint selection
-        - all three model variants pass save->load->deterministic inference
+        - both formal model variants pass save->load->deterministic inference
         - reward invariant holds on all four nominal modes
         - concurrency invariants hold (stale rejection, exclusive holder,
           no duplicate assignment, no late-ACK resurrection)
@@ -71,6 +71,7 @@ SOURCE_FILES = [
     "ppo_allocation/random_event/progress.py",
     "ppo_allocation/random_event/parallel.py",
     "scripts/run_minimum_validation_worker.py",
+    "scripts/monitor_minimum_validation_progress.ps1",
     "ppo_allocation/random_event/models.py",
     "ppo_allocation/random_event/trainer.py",
     "ppo_allocation/random_event/runtime_bridge.py",
@@ -91,6 +92,7 @@ SOURCE_FILES = [
     "ppo_allocation/tests_random_event/test_random_event_core.py",
     "ppo_allocation/tests_random_event/test_random_event_training.py",
     "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
+    "ppo_allocation/tests_random_event/test_build_p0_gate_bootstrap.py",
     "ppo_allocation/random_event/phase_j.py",
     "ppo_allocation/tests_random_event/test_phase_j.py",
     "run_phase_j.py",
@@ -104,6 +106,7 @@ SOURCE_FILES = [
 # compatibility").  If the dependency is missing the suite errors and the gate
 # stays training_allowed=false -- that is the intended honest behaviour.
 REQUIRED_TEST_SUITES = [
+    ("build_p0_gate_bootstrap", "ppo_allocation/tests_random_event", "test_build_p0_gate_bootstrap.py"),
     ("core_contracts", "ppo_allocation/tests_random_event", "test_random_event_core.py"),
     ("training_contracts", "ppo_allocation/tests_random_event", "test_random_event_training.py"),
     ("event_runtime_integration", "ppo_allocation/tests_random_event", "test_event_runtime_integration.py"),
@@ -344,23 +347,39 @@ def verify_config_contract() -> dict:
 
     checks = {
         "preliminary_seeds": manifest["training_seeds"]["preliminary"] == [1101, 2202, 3303],
-        "minimum_validation_variants": manifest["preliminary"]["train"].get("variants") == ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+        "minimum_validation_variants": manifest["preliminary"]["train"].get("variants") == ["PPO-MLP", "GPPO-Adaptive"],
         "minimum_validation_budget": manifest["preliminary"]["train"].get("budget_decision_steps") == 50000,
         "minimum_validation_checkpoint_interval": manifest["preliminary"]["train"].get("checkpoint_interval") == 25000,
         "minimum_validation_checkpoint_steps": manifest["preliminary"]["train"].get("checkpoint_steps") == [25000, 50000],
-        "minimum_validation_checkpoint_count": manifest["preliminary"]["train"].get("expected_checkpoint_count") == 18,
-        "protocol_minimum_validation_variants": protocol["evaluation"]["preliminary"].get("training_variants") == ["PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"],
+        "minimum_validation_run_count": (
+            len(manifest["preliminary"]["train"].get("variants", []))
+            * len(manifest["training_seeds"]["preliminary"])
+        ) == 6,
+        "minimum_validation_checkpoint_count": manifest["preliminary"]["train"].get("expected_checkpoint_count") == 12,
+        "protocol_minimum_validation_variants": protocol["evaluation"]["preliminary"].get("training_variants") == ["PPO-MLP", "GPPO-Adaptive"],
         "protocol_minimum_validation_budget": protocol["evaluation"]["preliminary"].get("training_budget_decision_steps") == 50000,
         "protocol_minimum_validation_checkpoints": protocol["evaluation"]["preliminary"].get("checkpoint_steps") == [25000, 50000],
-        "validation_tapes_100": manifest["preliminary"]["validation"]["tapes_total"] == 100,
-        "validation_per_mode_25": all(
-            spec["instance_seeds"]["count"] == 25
-            for spec in manifest["preliminary"]["validation"]["modes"].values()
+        "protocol_minimum_validation_run_count": protocol["evaluation"]["preliminary"].get("expected_run_count") == 6,
+        "protocol_minimum_validation_checkpoint_count": protocol["evaluation"]["preliminary"].get("expected_checkpoint_count") == 12,
+        "fixed_evaluation_checkpoint_50000": protocol["evaluation"]["preliminary"].get("fixed_evaluation_checkpoint") == 50000,
+        "no_checkpoint_selection": (
+            manifest["preliminary"]["validation"].get("enabled") is False
+            and manifest["preliminary"]["validation"].get("checkpoint_selection") is False
+            and protocol["evaluation"]["preliminary"].get("checkpoint_selection") is False
         ),
-        "validation_no_unseen": "unseen" not in manifest["preliminary"]["validation"]["modes"],
-        "test_tapes_200": manifest["preliminary"]["test"]["tapes_total"] == 200,
-        "test_per_set_40": manifest["preliminary"]["test"]["tapes_per_set"] == 40,
-        "test_has_unseen": "Test-Unseen" in manifest["preliminary"]["test"]["sets"],
+        "held_out_tapes_100": manifest["preliminary"]["test"]["tapes_total"] == 100,
+        "held_out_per_set_20": (
+            manifest["preliminary"]["test"]["tapes_per_set"] == 20
+            and all(
+                spec["instance_seeds"]["count"] == 20
+                and spec["event_seeds"]["count"] == 20
+                for spec in manifest["preliminary"]["test"]["sets"].values()
+            )
+        ),
+        "held_out_five_scenarios": set(manifest["preliminary"]["test"]["sets"]) == {
+            "Test-Single", "Test-Sequential", "Test-Overlap", "Test-Burst", "Test-Unseen",
+        },
+        "held_out_fixed_checkpoint": manifest["preliminary"]["test"].get("fixed_checkpoint_step") == 50000,
         "burst_window_100ms": protocol["event_scheduler"]["modes"]["burst"]["window_seconds"] == 0.1,
         "test_not_for_selection": manifest["preliminary"]["test"]["checkpoint_selection"] is False,
     }
@@ -673,12 +692,12 @@ def run_invariant_checks() -> dict:
         results["overlap_received_order"] = {"passed": False, "error": str(exc)}
         results["unseen_isolation"] = {"passed": False, "error": str(exc)}
 
-    # --- Model save/load determinism for all three variants ---
+    # --- Model save/load determinism for both formal variants ---
     try:
         from random_event.environment import RandomEventAllocationEnv
         from random_event.trainer import PPOConfig, PPOTrainer
         variant_results = {}
-        for variant in ("PPO-MLP", "GPPO-NoGate", "GPPO-Adaptive"):
+        for variant in ("PPO-MLP", "GPPO-Adaptive"):
             env = RandomEventAllocationEnv(initial_seed=42, event_seed=42001, mode="sequential", events_per_episode=3)
             config = PPOConfig(rollout_steps=16, update_epochs=1, minibatch_size=8, seed=1, device="cpu")
             trainer = PPOTrainer(env=env, variant=variant, config=config)
