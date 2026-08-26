@@ -1,98 +1,108 @@
 {
-  "test_working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+  "test_working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
   "schema_version": "1.0.0",
   "gate_name": "P0_READINESS_GATE",
   "generated_by": "scripts/build_p0_gate.py",
   "created_at": "2026-08-21T06:00:00Z",
-  "generated_at": "2026-08-25T01:08:05.703443+00:00",
+  "generated_at": "2026-08-26T01:44:39.340207+00:00",
   "training_allowed": true,
   "training_allowed_reason": "All machine checks PASS",
+  "runtime_head_sha": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
   "checks": {
     "test_suites": {
       "status": "PASS",
       "details": {
         "core_contracts": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_random_event_core.py",
           "tests_run": 18,
           "failures": 0,
           "errors": 0,
-          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 2.435s\n\nOK\n"
+          "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 1.001s\n\nOK\n"
         },
         "training_contracts": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_random_event_training.py",
           "tests_run": 1,
           "failures": 0,
           "errors": 0,
-          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 4.111s\n\nOK\n"
+          "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.383s\n\nOK\n"
         },
         "event_runtime_integration": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_event_runtime_integration.py",
           "tests_run": 8,
           "failures": 0,
           "errors": 0,
-          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.027s\n\nOK\n"
+          "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK\n"
         },
         "confirmation_timelines": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_confirmation_timelines.py",
           "tests_run": 15,
           "failures": 0,
           "errors": 0,
-          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.012s\n\nOK\n"
+          "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.003s\n\nOK\n"
         },
         "concurrency_invariants": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_concurrency_invariants.py",
           "tests_run": 23,
           "failures": 0,
           "errors": 0,
-          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.063s\n\nOK\n"
+          "output": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.017s\n\nOK\n"
         },
         "p0_gate_contract": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_p0_gate_contract.py",
           "tests_run": 4,
           "failures": 0,
           "errors": 0,
-          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 11.019s\n\nOK\n"
+          "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 5.236s\n\nOK\n"
+        },
+        "gate_integrity": {
+          "passed": true,
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
+          "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_gate_integrity.py",
+          "tests_run": 6,
+          "failures": 0,
+          "errors": 0,
+          "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.004s\n\nOK\n"
         },
         "legacy_compatibility": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_legacy_compatibility.py",
           "tests_run": 2,
           "failures": 0,
           "errors": 0,
-          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 12.237s\n\nOK\n"
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 3.697s\n\nOK\n"
         },
         "phase_j": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_phase_j.py",
           "tests_run": 46,
           "failures": 0,
           "errors": 0,
-          "output": "..............................................\n----------------------------------------------------------------------\nRan 46 tests in 158.284s\n\nOK\n"
+          "output": "..............................................\n----------------------------------------------------------------------\nRan 46 tests in 84.321s\n\nOK\n"
         },
         "parallel_minimum_validation": {
           "passed": true,
-          "working_directory": "E:\\Z博士\\8.20\\54_20-master\\ppo_allocation",
+          "working_directory": "E:\\Z博士\\26日\\source_lf_781047b\\ppo_allocation",
           "invocation": "D:\\anaconda\\python.exe -m unittest discover -s tests_random_event -p test_parallel_minimum_validation.py",
           "tests_run": 6,
           "failures": 0,
           "errors": 0,
-          "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.141s\n\nOK\n"
+          "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.124s\n\nOK\n"
         },
-        "total_tests": 123
+        "total_tests": 129
       }
     },
     "seed_namespace_isolation": {
@@ -367,28 +377,24 @@
           "burst": 20
         },
         "mode_ok": true,
-        "summary_sha256": "c0066ae3abcdb5e2cf4912cbb5263924be935c14d3ca89f78f600efcc184f8ed",
-        "manifest_file_sha256": "ce323f0bccaff131d786aa0123d928acab0cdd59e8e8b7f15b7cd60af25e8758",
-        "environment_metadata_sha256": "5f6693c29f87140127b0a1bf86edac81ff5dc729b84107f1d0c35b2fb58d310c",
+        "summary_sha256": "7048c3fdbda7c7e2fe841446bf1cdb876d8f6b13cb31345870bc35da3d22e0fc",
+        "manifest_file_sha256": "93e798406b3742408728766b54c13e7d622b3cd1e6ea7c8fa33967937c5fbae4",
+        "environment_metadata_sha256": "8279b5cee0515c253fb968b368b1f609bced5a2291b8b1f115581e2183744976",
         "environment_metadata": {
           "python": "3.11.5 | packaged by Anaconda, Inc. | (main, Sep 11 2023, 13:26:23) [MSC v.1916 64 bit (AMD64)]",
           "python_311": true,
-          "git_commit": "cb7af788fecdb97eaa139fc4cf3c8c0b5277ea9e",
+          "git_commit": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
           "git_commit_matches_attested": true,
-          "torch": "2.5.0+cpu",
-          "numpy": "2.0.2",
-          "sb3_contrib": "2.9.0",
-          "stable_baselines3": "2.9.0",
-          "gymnasium": "1.3.0",
           "frozen_packages_ok": true
-        }
+        },
+        "smoke_namespace": "ppo_allocation\\results\\random_event\\minimum_validation_p0_smoke_781047b8"
       }
     },
     "source_hash_integrity": {
       "status": "PASS",
       "details": {
-        "git_commit_sha": "cb7af788fecdb97eaa139fc4cf3c8c0b5277ea9e",
-        "source_tree_hash": "d95f1dfce8051e18fbe43aab9c6497229023145296f93f545f929c5c692675dd",
+        "git_commit_sha": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
+        "source_tree_hash": "cee4324bde86479393d12cee54faaa8ef001e61d1a65bea001e48b18a32c6fdb",
         "missing": [],
         "working_tree_clean": true,
         "dirty_paths": [],
@@ -398,8 +404,8 @@
       }
     }
   },
-  "test_count": 123,
-  "required_test_count": 123,
+  "test_count": 129,
+  "required_test_count": 129,
   "protected_source_files": [
     "configs/random_event_protocol.json",
     "configs/seed_manifest.json",
@@ -415,6 +421,7 @@
     "ppo_allocation/random_event/environment.py",
     "ppo_allocation/random_event/events.py",
     "ppo_allocation/random_event/experiment.py",
+    "ppo_allocation/random_event/gate_integrity.py",
     "ppo_allocation/random_event/graph.py",
     "ppo_allocation/random_event/legacy_adapter.py",
     "ppo_allocation/random_event/metrics.py",
@@ -429,6 +436,7 @@
     "ppo_allocation/tests_random_event/test_concurrency_invariants.py",
     "ppo_allocation/tests_random_event/test_confirmation_timelines.py",
     "ppo_allocation/tests_random_event/test_event_runtime_integration.py",
+    "ppo_allocation/tests_random_event/test_gate_integrity.py",
     "ppo_allocation/tests_random_event/test_legacy_compatibility.py",
     "ppo_allocation/tests_random_event/test_p0_gate_contract.py",
     "ppo_allocation/tests_random_event/test_phase_j.py",
@@ -438,14 +446,14 @@
     "scripts/build_p0_gate.py",
     "scripts/run_minimum_validation_worker.py"
   ],
-  "attested_source_commit_sha": "cb7af788fecdb97eaa139fc4cf3c8c0b5277ea9e",
-  "git_commit_sha": "cb7af788fecdb97eaa139fc4cf3c8c0b5277ea9e",
-  "source_tree_hash": "d95f1dfce8051e18fbe43aab9c6497229023145296f93f545f929c5c692675dd",
+  "attested_source_commit_sha": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
+  "git_commit_sha": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
+  "source_tree_hash": "cee4324bde86479393d12cee54faaa8ef001e61d1a65bea001e48b18a32c6fdb",
   "protocol_sha256": "411dfcf2fe21530f478ed26c27a740a615a89ab872511330f1c1bacde5997876",
   "seed_manifest_sha256": "8fbbf8829c34d28cde49772a5f002ba5d251c56efbadedacd70ea9b28098b000",
   "source_hashes": {
-    "git_commit_sha": "cb7af788fecdb97eaa139fc4cf3c8c0b5277ea9e",
-    "source_tree_hash": "d95f1dfce8051e18fbe43aab9c6497229023145296f93f545f929c5c692675dd",
+    "git_commit_sha": "781047b83958e1b406ed633c25c2eff6d09f2dc3",
+    "source_tree_hash": "cee4324bde86479393d12cee54faaa8ef001e61d1a65bea001e48b18a32c6fdb",
     "source": {
       "event_runtime/concurrency.py": "ee88114bfe10038fe5e795f82b50d10a0910ea0e06dc047789c4422e79277a5d",
       "event_runtime/adapter.py": "6cc1b89d9723433da143d00b84e57b682b7bfa1b5139e7ba5472247943986f1a",
@@ -455,7 +463,7 @@
       "event_runtime/state_machine.py": "2de4de42cfdf3d72d82eaa65f29658b8c24e8350ca2ea60b6d4a1a7b14c797d4",
       "event_runtime/observation.py": "d9ba1b9b1958d5d673fd320a3044572be602d08c291e8f923c2b0b72e0ef63bf",
       "ppo_allocation/random_event/environment.py": "781a6871766a452a77bdc3dd461db859b42a04e69cc62bd0324424fa7bde19f6",
-      "ppo_allocation/random_event/experiment.py": "0a42d391f61b965f099e19799a26ed76cc3ed357008420906fec69bb8578046f",
+      "ppo_allocation/random_event/experiment.py": "b9c62b7196566a62e8c5e4fd645a7c74f32efec11f5be901ac510627801660ab",
       "ppo_allocation/random_event/metrics.py": "5d2a224a609b03568dbbd1b67fe2de3a4e8e03139b7ef7e6847511f2818bd0e9",
       "ppo_allocation/random_event/progress.py": "bb11edff71e5d7a52f965e407aad6f9ac257015f871c0a9c46f1641271062e97",
       "ppo_allocation/random_event/parallel.py": "5dccc4ea3ef510fde079fd85a00a913117f9664eda3b50f9f4308b0f03dd578e",
@@ -464,20 +472,22 @@
       "ppo_allocation/random_event/trainer.py": "f4363ce42001dc0bfd34454d369838a8848d53264a141cc4035206d2a1902653",
       "ppo_allocation/random_event/runtime_bridge.py": "2259c124812e8a04344d4b38ad79a92180cfc162e96431f116c030c07fce94fc",
       "ppo_allocation/random_event/scheduler.py": "cd23443ebda782c7239b052c6aecc7ac785a33ae221757a1a3590a2d8e72aa08",
+      "ppo_allocation/random_event/gate_integrity.py": "15330806340eb61ba05674789ec59545ec5230d00eab2ff6e5b452fc3324b25b",
       "ppo_allocation/random_event/graph.py": "c2ddec3c2dd378fe64e750726c5065bc6a72dd8d14a10980b85aafb25e70dd1f",
       "ppo_allocation/random_event/reward.py": "22f693cc47c8ba81aec6bf8d0d26f77ff75f59167d6d077d4b28b228d6f87394",
       "ppo_allocation/random_event/baselines.py": "da9134a5953f96533f90323c59f13b24e07f4b17bdd232bb56069939bb8c7cd5",
       "ppo_allocation/random_event/events.py": "942c309746c28568cc9f534bad839fb5a45c1d38f052aaa253182a8ca353b4c2",
       "ppo_allocation/random_event/legacy_adapter.py": "f9fe0e627f8952b3e3d22a4594bc9a87c07908c335454a60f92455bf39f36259",
       "ppo_allocation/config.py": "2dbfb766e1717d0524024f5881736e59599cb74c0466e140db6bd6d7a4cdc7f9",
-      "scripts/build_p0_gate.py": "4a0565b7ccafae81229b487c9ed521d4720e3ad32375b386b4002665c1e601e0",
+      "scripts/build_p0_gate.py": "41bcce86ba6c5aeabf8977fd164223e0cd88ccf66b371af9c3306b9b953b06db",
       "ppo_allocation/tests_random_event/test_event_runtime_integration.py": "1009f23f4cd6ebdedd1e82f4e4a8f379b71ac0fa074b690255d5b5f81a098280",
       "ppo_allocation/tests_random_event/test_confirmation_timelines.py": "4152685b38497412d3b3841b94161ca6fdd6eb88b7bd245ebe1defcb2ea3c570",
       "ppo_allocation/tests_random_event/test_concurrency_invariants.py": "28bf17783c48beb96436c2e275326615479fcfb39cc5911e972e3340f7015dc6",
       "ppo_allocation/tests_random_event/test_p0_gate_contract.py": "1d4ec8f5664e4ffabc5789c8bb1139ef0ed1c04d0c3d935bc07f1e7bc5461516",
+      "ppo_allocation/tests_random_event/test_gate_integrity.py": "ccfc5aec03852f2de0be7ad6e2ae909b4c06b5591ea647d31e7a9e70c34ce75f",
       "ppo_allocation/tests_random_event/test_random_event_core.py": "16a0e8fc3a3a3619f4cb1a741a9a72bb90e160c52bdbc2baa50533cd34bb9bd1",
       "ppo_allocation/tests_random_event/test_random_event_training.py": "ecb907458158135bbbcae273ac023db4b7357cdc41ce7b73fa1d4ef79acc808a",
-      "ppo_allocation/tests_random_event/test_legacy_compatibility.py": "afc17b48a6910e2a9a6192d0ec53cd70e0079aa5ea315ececf517aa3f99ba0f7",
+      "ppo_allocation/tests_random_event/test_legacy_compatibility.py": "794d68b3004dd783c4fd6d776d3e4a2956d3a9343c1da97b90980031a3c66573",
       "ppo_allocation/random_event/phase_j.py": "1d9054d02bde310f93b67a7f36fa105486a24f91b87effd20ccb1c5c244804a7",
       "ppo_allocation/tests_random_event/test_phase_j.py": "14e24fa86802d7f99f27270d190e561741e4f044e32345b02a15adcbf0038d01",
       "run_phase_j.py": "92d6e594106c379aab9f02020dafea41c5c01743302517c089fc227857d53f79",
