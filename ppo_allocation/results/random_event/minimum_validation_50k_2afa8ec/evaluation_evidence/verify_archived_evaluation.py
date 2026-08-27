@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import collections
 import hashlib
 import json
@@ -17,7 +18,7 @@ PRELIMINARY_DIR = CAMPAIGN_DIR / "preliminary"
 WORKTREE = Path(__file__).resolve().parents[5]
 PPO_DIR = WORKTREE / "ppo_allocation"
 ARCHIVE_MANIFEST = EVIDENCE_DIR / "archive_sha256_manifest.json"
-PARENT_HEAD = "2afa8ec1cb481deb57645dbd30240d90d32d2233"
+BASE_EVIDENCE_HEAD = "2afa8ec1cb481deb57645dbd30240d90d32d2233"
 SOURCE_COMMIT = "32974ec85be71e192b12cae85d00eb877d5fe07d"
 EXPECTED_METRICS = (
     "event_success_rate",
@@ -55,10 +56,10 @@ def git(*args: str) -> str:
     ).stdout.strip()
 
 
-def run_checked(args: list[str]) -> str:
+def run_checked(args: list[str], *, cwd: Path = WORKTREE) -> str:
     return subprocess.run(
         args,
-        cwd=WORKTREE,
+        cwd=cwd,
         check=True,
         capture_output=True,
         text=True,
@@ -108,16 +109,28 @@ def verify_manifest(manifest: dict[str, Any]) -> list[str]:
     return errors
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--gate-reference-worktree",
+        type=Path,
+        required=True,
+        help="clean worktree checked out at the formal evidence HEAD, used to execute _check_p0_gate()",
+    )
+    args = parser.parse_args(argv)
+    gate_reference = args.gate_reference_worktree.resolve()
     errors: list[str] = []
     head = git("rev-parse", "HEAD")
-    parent = git("rev-parse", "HEAD^")
-    if parent != PARENT_HEAD:
-        errors.append(f"parent HEAD mismatch:{parent}")
+    ancestry = subprocess.run(
+        ["git", "-C", str(WORKTREE), "merge-base", "--is-ancestor", BASE_EVIDENCE_HEAD, head],
+        check=False,
+    ).returncode
+    if ancestry != 0:
+        errors.append(f"base evidence HEAD is not an ancestor:{BASE_EVIDENCE_HEAD}")
     if git("status", "--porcelain"):
         errors.append("worktree not clean before verification")
 
-    changed = set(git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").splitlines())
+    changed = set(git("diff", "--name-only", f"{BASE_EVIDENCE_HEAD}..{head}").splitlines())
     if not changed or any(not allowed_archive_path(path) for path in changed):
         errors.append("commit contains a path outside the evidence-only allowlist")
     if any(path.lower().endswith((".pt", ".pth", ".ckpt")) for path in changed):
@@ -135,7 +148,7 @@ def main() -> int:
     training = read_json(CAMPAIGN_DIR / "training_evidence/training_evidence.json")
     if training.get("status") != "PASS":
         errors.append("training seal status")
-    if training.get("provenance", {}).get("runtime_evidence_head") != PARENT_HEAD:
+    if training.get("provenance", {}).get("runtime_evidence_head") != BASE_EVIDENCE_HEAD:
         errors.append("training evidence HEAD")
     if training.get("provenance", {}).get("attested_source_commit_sha") != SOURCE_COMMIT:
         errors.append("training source provenance")
@@ -220,13 +233,34 @@ def main() -> int:
 
     rebuild_output = run_checked([sys.executable, str(EVIDENCE_DIR / "analyze_evaluation.py"), "--archive-mode"])
     errors.extend(verify_manifest(manifest))
+    reference_head = subprocess.run(
+        ["git", "-C", str(gate_reference), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    reference_status = subprocess.run(
+        ["git", "-C", str(gate_reference), "status", "--porcelain"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    if reference_head != BASE_EVIDENCE_HEAD:
+        errors.append(f"gate reference HEAD mismatch:{reference_head}")
+    if reference_status:
+        errors.append("gate reference worktree is not clean")
+    if errors:
+        raise SystemExit("GATE REFERENCE PRECHECK FAIL\n" + "\n".join(f"- {error}" for error in errors))
     gate_output = run_checked(
         [
             sys.executable,
             "-c",
             "from ppo_allocation.random_event.experiment import _check_p0_gate; "
             "_check_p0_gate(); print('FORMAL_CHECK_P0_GATE=PASS')",
-        ]
+        ],
+        cwd=gate_reference,
     )
     if git("status", "--porcelain"):
         errors.append("worktree dirty after byte-identical report rebuild")
@@ -237,7 +271,7 @@ def main() -> int:
         "schema_version": 1,
         "status": "PASS",
         "evaluation_evidence_commit": head,
-        "parent_evidence_head": parent,
+        "base_evidence_head": BASE_EVIDENCE_HEAD,
         "attested_source_commit_sha": SOURCE_COMMIT,
         "checks": {
             "clean_before": "PASS",
@@ -249,7 +283,10 @@ def main() -> int:
             "held_out_bank": "100 unique; five scenarios x20 PASS",
             "model_case_results": "600/600 unique PASS",
             "report_rebuild": "byte-identical PASS",
-            "formal_p0_gate": "PASS",
+            "formal_p0_gate_at_base_evidence_head": "PASS",
+            "archive_head_gate_policy": (
+                "not a formal runtime HEAD; immutable gate whitelist intentionally excludes evaluation archive paths"
+            ),
             "clean_after": "PASS",
         },
         "test_manifest_sha256": manifest_sha,
