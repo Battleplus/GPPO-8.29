@@ -1,0 +1,198 @@
+{
+  "analysis": {
+    "aggregate_records": 480,
+    "analysis_summary": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/analysis_summary.json",
+    "answers": {
+      "evidence_sufficiency": "The 50k evidence is sufficient for an auditable preliminary comparison under this frozen 100-case bank, but only three independent training seeds and mixed quality effects are insufficient for a general claim that one model is better. No additional checkpoint was inspected or selected.",
+      "overall_gppo_vs_ppo": "Quality outcomes are mostly equal, small, or mixed across seeds. GPPO-Adaptive has materially higher inference latency and higher normalized distance; the frozen evidence does not establish overall superiority over PPO-MLP.",
+      "scenarios": "Episode return is directionally higher for GPPO-Adaptive in Sequential, Overlap, and Burst, and lower in Single and Unseen, but every scenario-level three-seed interval crosses zero.",
+      "seed_consistency": "Episode-return effects are mixed across seeds (1101 favors PPO-MLP, 2202 favors GPPO-Adaptive, 3303 is near a tie), so the quality-effect direction is not seed-stable."
+    },
+    "canonical_rows": 600,
+    "comparison_report": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/comparison_report.html",
+    "paired_effect_records": 240,
+    "status": "PASS"
+  },
+  "evaluation_results": {
+    "expected": 600,
+    "ledger_completed": true,
+    "metrics": [
+      "event_success_rate",
+      "legal_coverage_rate",
+      "recovery_delay",
+      "cumulative_uncovered_time",
+      "normalized_distance",
+      "load_gap",
+      "switch_count",
+      "episode_return",
+      "communication_bytes",
+      "inference_latency_ms"
+    ],
+    "observed": 600,
+    "result_files": [
+      {
+        "bytes": 166921,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed1101.json",
+        "result_count": 100,
+        "sha256": "d366acf7b383e0bd0bf518438b5f1f26abb9964ae36668ce1bda3dbd21c791a7",
+        "training_seed": 1101,
+        "variant": "GPPO-Adaptive"
+      },
+      {
+        "bytes": 167004,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed2202.json",
+        "result_count": 100,
+        "sha256": "d8b84fc897b85c5a517a34388e816a08fee97a2296ffbe495d0a319032b0558f",
+        "training_seed": 2202,
+        "variant": "GPPO-Adaptive"
+      },
+      {
+        "bytes": 166973,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed3303.json",
+        "result_count": 100,
+        "sha256": "e4199c75aab9230d9503d3e6da8a5c47f1fec6d2736f140b5d3ac2084c91c15d",
+        "training_seed": 3303,
+        "variant": "GPPO-Adaptive"
+      },
+      {
+        "bytes": 162669,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed1101.json",
+        "result_count": 100,
+        "sha256": "df3d93cce807986fc3616bf1a8a82df66b121a37391b44d3af8dfeb6a077ad63",
+        "training_seed": 1101,
+        "variant": "PPO-MLP"
+      },
+      {
+        "bytes": 162651,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed2202.json",
+        "result_count": 100,
+        "sha256": "1a42fc513fa38d7fdd83c0e8d7090be731d881610dfb1efef4c55e16fdc4e50a",
+        "training_seed": 2202,
+        "variant": "PPO-MLP"
+      },
+      {
+        "bytes": 162683,
+        "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed3303.json",
+        "result_count": 100,
+        "sha256": "985bacac7f00008b3b1a706d2deef9cfe3924c9b125333add6a4aea7989b89e2",
+        "training_seed": 3303,
+        "variant": "PPO-MLP"
+      }
+    ],
+    "scenario_counts": {
+      "Test-Burst": 120,
+      "Test-Overlap": 120,
+      "Test-Sequential": 120,
+      "Test-Single": 120,
+      "Test-Unseen": 120
+    },
+    "state_journals_consumed": 6,
+    "status": "PASS",
+    "unique_model_seed_tape_results": 600
+  },
+  "evidence_type": "minimum_validation_50k_fixed_heldout_evaluation",
+  "freeze": {
+    "checkpoint_count": 6,
+    "checkpoint_selection": false,
+    "checkpoints": [
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_1101/models/ppo_mlp_seed1101_step50000.pt",
+        "checkpoint_sha256": "cc0d3d77d0d93ef7ae910b84795405d0bb50811317eb5f310c031d709d30b4e5",
+        "selected_step": 50000,
+        "training_seed": 1101,
+        "variant": "PPO-MLP"
+      },
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_1101/models/gppo_adaptive_seed1101_step50000.pt",
+        "checkpoint_sha256": "2f378fc0d7bf6c23dc97402a9f8d0c1e20a5aa7f4a698e32a7ede0d494980b88",
+        "selected_step": 50000,
+        "training_seed": 1101,
+        "variant": "GPPO-Adaptive"
+      },
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_2202/models/ppo_mlp_seed2202_step50000.pt",
+        "checkpoint_sha256": "c88d41a7f2ca7b0173303035d441bb1e3a0bdb09cf4776f9fa43dac1d64d4cf0",
+        "selected_step": 50000,
+        "training_seed": 2202,
+        "variant": "PPO-MLP"
+      },
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_2202/models/gppo_adaptive_seed2202_step50000.pt",
+        "checkpoint_sha256": "3350ddee817e440d673517141a3c5d42bcaaf8419c90730933e91e8514f3a33f",
+        "selected_step": 50000,
+        "training_seed": 2202,
+        "variant": "GPPO-Adaptive"
+      },
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_3303/models/ppo_mlp_seed3303_step50000.pt",
+        "checkpoint_sha256": "5fe8988e4980eccdff55ccc5d3cbb099ffd2dafa0ff1798b0ef41994113216e3",
+        "selected_step": 50000,
+        "training_seed": 3303,
+        "variant": "PPO-MLP"
+      },
+      {
+        "checkpoint_path": "results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_3303/models/gppo_adaptive_seed3303_step50000.pt",
+        "checkpoint_sha256": "595253bce8e56358e077b57e3ae9d56c7babaeb6e5a3539be3663c8bf7b0a3c0",
+        "selected_step": 50000,
+        "training_seed": 3303,
+        "variant": "GPPO-Adaptive"
+      }
+    ],
+    "fixed_checkpoint_step": 50000,
+    "status": "PASS"
+  },
+  "held_out_bank": {
+    "lock_completed": true,
+    "manifest_sha256": "f295bc42ba932ed192162f231670de3865dedae7f2d737331576b90f2cf88bf5",
+    "sets": {
+      "Test-Burst": 20,
+      "Test-Overlap": 20,
+      "Test-Sequential": 20,
+      "Test-Single": 20,
+      "Test-Unseen": 20
+    },
+    "status": "PASS",
+    "unique_cases": 100
+  },
+  "inventory": {
+    "artifact_count": 143,
+    "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/sha256_inventory.json",
+    "sha256": "6d0e1bf4d8b50081b8f422abf5f10576499a044e87d7c767926ed1110f8de5ad"
+  },
+  "operations_not_performed": {
+    "checkpoint_25000_performance_read_or_compare": "NOT_PERFORMED",
+    "checkpoint_selection": "NOT_PERFORMED",
+    "parameter_tuning": "NOT_PERFORMED",
+    "protocol_edit": "NOT_PERFORMED",
+    "resume_training": "NOT_PERFORMED",
+    "retraining": "NOT_PERFORMED",
+    "source_edit": "NOT_PERFORMED",
+    "validation": "NOT_PERFORMED"
+  },
+  "provenance": {
+    "attested_source_commit_sha": "32974ec85be71e192b12cae85d00eb877d5fe07d",
+    "freeze_manifest_sha256": "551a9a99f8a98973060204331e72114bfce3e86e5d763375d7f64d0d7d13b82a",
+    "protocol_sha256": "f9e476724e9cfeeb5053fcefa4ddd2d900c78bb7666e3fe62b3b8d342fcb0778",
+    "runtime_evidence_head": "2afa8ec1cb481deb57645dbd30240d90d32d2233",
+    "seed_manifest_sha256": "fc11024f06113bee25e528edc1c174edc3f59119ab3ed55d81514a9a9a1db01c",
+    "source_tree_hash": "c35d351033d1d8723454d98e01c827848211ee2dbeec9a66adf7ff4c4a83820c",
+    "test_manifest_sha256": "f295bc42ba932ed192162f231670de3865dedae7f2d737331576b90f2cf88bf5"
+  },
+  "schema_version": 1,
+  "sealed_at": "2026-08-27T08:43:07.765461+00:00",
+  "status": "PASS",
+  "training_precondition": {
+    "checkpoint_25000": 6,
+    "checkpoint_50000": 6,
+    "checkpoints": 12,
+    "inventory_artifacts_verified": 48,
+    "runs": 6,
+    "seal_sha256": {
+      "readonly_revalidation.json": "130d1957029ef6f8e4c7c37a7cb31dcebc44ef9b4e93c82d0e33cc1f768e59ed",
+      "sha256_inventory.json": "f2aaedf59f86dfaf0dd2b6bc7c1181b0b262e5ebacba870b1602b4759053e4d8",
+      "training_evidence.json": "500e89659e05876861a95f23af61f49a6b96679a6b1329ca0286b5956944102b"
+    },
+    "status": "PASS",
+    "total_steps": 300000
+  }
+}

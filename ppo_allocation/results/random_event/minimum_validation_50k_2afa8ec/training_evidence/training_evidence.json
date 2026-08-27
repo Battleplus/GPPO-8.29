@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "evidence_type": "minimum_validation_50k_training_seal",
+  "status": "PASS",
+  "campaign": "minimum_validation_50k_2afa8ec",
+  "training_worktree": "E:/Z博士/26日/two_model_training_2afa8ec",
+  "provenance": {
+    "runtime_evidence_head": "2afa8ec1cb481deb57645dbd30240d90d32d2233",
+    "attested_source_commit_sha": "32974ec85be71e192b12cae85d00eb877d5fe07d",
+    "source_tree_hash": "c35d351033d1d8723454d98e01c827848211ee2dbeec9a66adf7ff4c4a83820c",
+    "protocol_sha256": "f9e476724e9cfeeb5053fcefa4ddd2d900c78bb7666e3fe62b3b8d342fcb0778",
+    "seed_manifest_sha256": "fc11024f06113bee25e528edc1c174edc3f59119ab3ed55d81514a9a9a1db01c",
+    "provenance_model": "runtime training launched at the evidence HEAD; protected training records attest the source commit named by P0_GATE"
+  },
+  "contract": {
+    "variants": [
+      "PPO-MLP",
+      "GPPO-Adaptive"
+    ],
+    "training_seeds": [
+      1101,
+      2202,
+      3303
+    ],
+    "budget_steps_per_run": 50000,
+    "checkpoint_steps": [
+      25000,
+      50000
+    ],
+    "expected_runs": 6,
+    "expected_total_steps": 300000,
+    "expected_checkpoints": 12,
+    "fixed_evaluation_step": 50000,
+    "checkpoint_selection": false
+  },
+  "summary": {
+    "completed_runs": 6,
+    "total_steps": 300000,
+    "checkpoint_count": 12,
+    "checkpoint_25000_count": 6,
+    "checkpoint_50000_count": 6,
+    "controller_status": "complete",
+    "controller_worker_limit": 2,
+    "controller_passed_workers": 6,
+    "worker_stderr_nonempty_count": 0,
+    "controller_stderr_bytes": 0,
+    "forbidden_evaluation_artifact_count": 0
+  },
+  "runs": [
+    {
+      "variant": "PPO-MLP",
+      "seed": 1101,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 1101,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 2202,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 2202,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 3303,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 3303,
+      "total_steps": 50000,
+      "checkpoint_count": 2,
+      "status": "done"
+    }
+  ],
+  "checkpoints": [
+    {
+      "variant": "PPO-MLP",
+      "seed": 1101,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_1101/models/ppo_mlp_seed1101_step25000.pt",
+      "bytes": 530134,
+      "sha256": "6e067671cc4086b2932b3377f28ae076bf9e29a573984c9b893cd0fbea542a07"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 1101,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_1101/models/ppo_mlp_seed1101_step50000.pt",
+      "bytes": 539222,
+      "sha256": "cc0d3d77d0d93ef7ae910b84795405d0bb50811317eb5f310c031d709d30b4e5"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 1101,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_1101/models/gppo_adaptive_seed1101_step25000.pt",
+      "bytes": 2541410,
+      "sha256": "9a95a19f4342c5b00030680bd1b8c9e06e86745691769b3b684afc844d4d36af"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 1101,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_1101/models/gppo_adaptive_seed1101_step50000.pt",
+      "bytes": 2572130,
+      "sha256": "2f378fc0d7bf6c23dc97402a9f8d0c1e20a5aa7f4a698e32a7ede0d494980b88"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 2202,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_2202/models/ppo_mlp_seed2202_step25000.pt",
+      "bytes": 530134,
+      "sha256": "e6818c970cf10f1b6c51ed2e177b80018e68ed5a2f3050e29957956240f739bb"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 2202,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_2202/models/ppo_mlp_seed2202_step50000.pt",
+      "bytes": 539222,
+      "sha256": "c88d41a7f2ca7b0173303035d441bb1e3a0bdb09cf4776f9fa43dac1d64d4cf0"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 2202,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_2202/models/gppo_adaptive_seed2202_step25000.pt",
+      "bytes": 2541410,
+      "sha256": "030d57516689067b3df42abcc81482468fa735b2b59f55478bcc8bb9395d7763"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 2202,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_2202/models/gppo_adaptive_seed2202_step50000.pt",
+      "bytes": 2572130,
+      "sha256": "3350ddee817e440d673517141a3c5d42bcaaf8419c90730933e91e8514f3a33f"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 3303,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_3303/models/ppo_mlp_seed3303_step25000.pt",
+      "bytes": 530134,
+      "sha256": "5b5dcdb87ad8634a0f7577ab1d0e006e5fc7a9aa5ece44b08884eae14aeaecef"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 3303,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_3303/models/ppo_mlp_seed3303_step50000.pt",
+      "bytes": 539222,
+      "sha256": "5fe8988e4980eccdff55ccc5d3cbb099ffd2dafa0ff1798b0ef41994113216e3"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 3303,
+      "step": 25000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_3303/models/gppo_adaptive_seed3303_step25000.pt",
+      "bytes": 2541410,
+      "sha256": "4ca5d011a53a6ae1dabd507909868ca8c32826a5e64f2a6e3a25980d9da0d361"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 3303,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_3303/models/gppo_adaptive_seed3303_step50000.pt",
+      "bytes": 2572130,
+      "sha256": "595253bce8e56358e077b57e3ae9d56c7babaeb6e5a3539be3663c8bf7b0a3c0"
+    }
+  ],
+  "fixed_50000_evaluation_candidates": [
+    {
+      "variant": "PPO-MLP",
+      "seed": 1101,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_1101/models/ppo_mlp_seed1101_step50000.pt",
+      "sha256": "cc0d3d77d0d93ef7ae910b84795405d0bb50811317eb5f310c031d709d30b4e5"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 1101,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_1101/models/gppo_adaptive_seed1101_step50000.pt",
+      "sha256": "2f378fc0d7bf6c23dc97402a9f8d0c1e20a5aa7f4a698e32a7ede0d494980b88"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 2202,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_2202/models/ppo_mlp_seed2202_step50000.pt",
+      "sha256": "c88d41a7f2ca7b0173303035d441bb1e3a0bdb09cf4776f9fa43dac1d64d4cf0"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 2202,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_2202/models/gppo_adaptive_seed2202_step50000.pt",
+      "sha256": "3350ddee817e440d673517141a3c5d42bcaaf8419c90730933e91e8514f3a33f"
+    },
+    {
+      "variant": "PPO-MLP",
+      "seed": 3303,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/PPO-MLP/seed_3303/models/ppo_mlp_seed3303_step50000.pt",
+      "sha256": "5fe8988e4980eccdff55ccc5d3cbb099ffd2dafa0ff1798b0ef41994113216e3"
+    },
+    {
+      "variant": "GPPO-Adaptive",
+      "seed": 3303,
+      "step": 50000,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/runs/GPPO-Adaptive/seed_3303/models/gppo_adaptive_seed3303_step50000.pt",
+      "sha256": "595253bce8e56358e077b57e3ae9d56c7babaeb6e5a3539be3663c8bf7b0a3c0"
+    }
+  ],
+  "checks": {
+    "formal_p0_gate": "PASS",
+    "run_matrix_exact": "PASS",
+    "run_steps_exact": "PASS",
+    "total_steps_exact": "PASS",
+    "checkpoint_grid_exact": "PASS",
+    "checkpoint_files_exact": "PASS",
+    "checkpoint_sha256_recomputed": "PASS",
+    "checkpoint_internal_metadata": "PASS",
+    "source_provenance": "PASS",
+    "protocol_provenance": "PASS",
+    "seed_manifest_provenance": "PASS",
+    "worker_isolation": "PASS",
+    "controller_results": "PASS",
+    "stderr_empty": "PASS",
+    "no_forbidden_evaluation_artifacts": "PASS",
+    "protected_source_diff": "NONE"
+  },
+  "inventory": {
+    "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/sha256_inventory.json",
+    "sha256": "f2aaedf59f86dfaf0dd2b6bc7c1181b0b262e5ebacba870b1602b4759053e4d8",
+    "artifact_count": 48
+  },
+  "readonly_revalidation_file": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/readonly_revalidation.json",
+  "operations_not_performed": {
+    "validation": true,
+    "freeze": true,
+    "test": true,
+    "held_out_evaluation": true,
+    "checkpoint_selection": true,
+    "model_effect_evaluation": true,
+    "checkpoint_comparison": true,
+    "resume_or_retraining": true,
+    "source_or_contract_modification": true,
+    "old_campaign_modification": true
+  }
+}

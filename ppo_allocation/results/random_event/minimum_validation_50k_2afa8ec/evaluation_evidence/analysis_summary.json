@@ -1,0 +1,110 @@
+{
+  "answers": {
+    "evidence_sufficiency": "The 50k evidence is sufficient for an auditable preliminary comparison under this frozen 100-case bank, but only three independent training seeds and mixed quality effects are insufficient for a general claim that one model is better. No additional checkpoint was inspected or selected.",
+    "overall_gppo_vs_ppo": "Quality outcomes are mostly equal, small, or mixed across seeds. GPPO-Adaptive has materially higher inference latency and higher normalized distance; the frozen evidence does not establish overall superiority over PPO-MLP.",
+    "scenarios": "Episode return is directionally higher for GPPO-Adaptive in Sequential, Overlap, and Burst, and lower in Single and Unseen, but every scenario-level three-seed interval crosses zero.",
+    "seed_consistency": "Episode-return effects are mixed across seeds (1101 favors PPO-MLP, 2202 favors GPPO-Adaptive, 3303 is near a tie), so the quality-effect direction is not seed-stable."
+  },
+  "overall": {
+    "assessment": "No uniform GPPO-Adaptive superiority is supported at the fixed 50k checkpoint.",
+    "exact_ties": [
+      "legal_coverage_rate",
+      "communication_bytes"
+    ],
+    "key_deltas_gppo_minus_ppo": {
+      "communication_bytes": 0.0,
+      "cumulative_uncovered_time": -0.05033000000000004,
+      "episode_return": 0.014409719195647543,
+      "event_success_rate": 0.0026666666666666666,
+      "inference_latency_ms": 14.553069535835826,
+      "legal_coverage_rate": 0.0,
+      "load_gap": -0.010722222222222223,
+      "normalized_distance": 0.011211543707961978,
+      "recovery_delay": -0.008372977752715768,
+      "switch_count": -0.02
+    },
+    "robust_by_three_seed_ci_favors_gppo": [],
+    "robust_by_three_seed_ci_favors_ppo": [
+      "normalized_distance",
+      "inference_latency_ms"
+    ],
+    "uncertain": [
+      "event_success_rate",
+      "recovery_delay",
+      "cumulative_uncovered_time",
+      "load_gap",
+      "switch_count",
+      "episode_return"
+    ]
+  },
+  "scenario_episode_return": {
+    "Test-Burst": {
+      "direction": "uncertain",
+      "mean_difference_gppo_minus_ppo": 0.26223209275164744,
+      "seed_consistency": "all_seeds_favor_GPPO",
+      "seed_stability_ci95": [
+        -0.28726519876428447,
+        0.8117293842675792
+      ]
+    },
+    "Test-Overlap": {
+      "direction": "uncertain",
+      "mean_difference_gppo_minus_ppo": 0.13122632069986506,
+      "seed_consistency": "mixed_or_tied",
+      "seed_stability_ci95": [
+        -0.7069988676227893,
+        0.9694515090225194
+      ]
+    },
+    "Test-Sequential": {
+      "direction": "uncertain",
+      "mean_difference_gppo_minus_ppo": 0.10444120768008774,
+      "seed_consistency": "mixed_or_tied",
+      "seed_stability_ci95": [
+        -0.9238722189794227,
+        1.1327546343395982
+      ]
+    },
+    "Test-Single": {
+      "direction": "uncertain",
+      "mean_difference_gppo_minus_ppo": -0.27998646184957404,
+      "seed_consistency": "mixed_or_tied",
+      "seed_stability_ci95": [
+        -1.8230245462574557,
+        1.2630516225583077
+      ]
+    },
+    "Test-Unseen": {
+      "direction": "uncertain",
+      "mean_difference_gppo_minus_ppo": -0.14586456330378847,
+      "seed_consistency": "all_seeds_favor_PPO",
+      "seed_stability_ci95": [
+        -0.3370773485893349,
+        0.045348221981758
+      ]
+    }
+  },
+  "seed_episode_return": {
+    "1101": {
+      "case_pair_bootstrap_ci95": [
+        -0.861910039337748,
+        0.30315996934151096
+      ],
+      "mean_difference_gppo_minus_ppo": -0.2972239808997855
+    },
+    "2202": {
+      "case_pair_bootstrap_ci95": [
+        -0.2428694180231595,
+        0.9379649586861203
+      ],
+      "mean_difference_gppo_minus_ppo": 0.3309976370552299
+    },
+    "3303": {
+      "case_pair_bootstrap_ci95": [
+        -0.3686056555248751,
+        0.4244067506837115
+      ],
+      "mean_difference_gppo_minus_ppo": 0.00945550143149827
+    }
+  }
+}

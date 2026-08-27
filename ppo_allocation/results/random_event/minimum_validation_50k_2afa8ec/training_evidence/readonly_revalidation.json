@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "revalidation_type": "post_seal_readonly_revalidation",
+  "status": "PASS",
+  "checked_at": "2026-08-27T10:38:52.1170412+08:00",
+  "runtime_evidence_head": "2afa8ec1cb481deb57645dbd30240d90d32d2233",
+  "attested_source_commit_sha": "32974ec85be71e192b12cae85d00eb877d5fe07d",
+  "training_evidence": {
+    "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/training_evidence.json",
+    "bytes": 10134,
+    "sha256": "500e89659e05876861a95f23af61f49a6b96679a6b1329ca0286b5956944102b"
+  },
+  "sha256_inventory": {
+    "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/sha256_inventory.json",
+    "bytes": 12603,
+    "sha256": "f2aaedf59f86dfaf0dd2b6bc7c1181b0b262e5ebacba870b1602b4759053e4d8",
+    "verified_artifacts": 48,
+    "mismatches": 0
+  },
+  "checks": {
+    "evidence_json_parse": "PASS",
+    "inventory_json_parse": "PASS",
+    "inventory_sha_matches_evidence": "PASS",
+    "inventory_all_48_match": "PASS",
+    "evidence_head": "PASS",
+    "formal_p0_gate_entrypoint": "PASS",
+    "run_matrix": "PASS",
+    "run_steps": "PASS",
+    "total_steps": "PASS",
+    "checkpoint_count": "PASS",
+    "checkpoint_sha_crosscheck": "PASS",
+    "fixed_50000_candidates_exact": "PASS",
+    "no_forbidden_evaluation_artifacts": "PASS",
+    "controller_complete": "PASS",
+    "prohibited_operations_not_performed": "PASS"
+  },
+  "result": {
+    "runs": 6,
+    "total_steps": 300000,
+    "checkpoints": 12,
+    "checkpoint_25000_count": 6,
+    "checkpoint_50000_count": 6,
+    "fixed_50000_evaluation_candidates": 6,
+    "forbidden_evaluation_artifacts": 0
+  }
+}

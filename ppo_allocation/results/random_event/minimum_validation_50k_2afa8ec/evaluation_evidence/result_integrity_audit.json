@@ -1,0 +1,96 @@
+{
+  "attested_source_commit_sha": "32974ec85be71e192b12cae85d00eb877d5fe07d",
+  "checkpoint_binary_verification_policy": "verify local binary SHA when present; in archive mode, require matching SHA provenance across the training seal and formal Freeze without loading checkpoint performance",
+  "checkpoint_selection": false,
+  "evidence_head": "2afa8ec1cb481deb57645dbd30240d90d32d2233",
+  "fixed_checkpoint_step": 50000,
+  "formal_test_completed_at": "2026-08-27T03:15:28.527099+00:00",
+  "formal_test_lock_complete": true,
+  "freeze_count": 6,
+  "freeze_manifest_sha256": "551a9a99f8a98973060204331e72114bfce3e86e5d763375d7f64d0d7d13b82a",
+  "held_out_tapes": 100,
+  "metrics": [
+    "event_success_rate",
+    "legal_coverage_rate",
+    "recovery_delay",
+    "cumulative_uncovered_time",
+    "normalized_distance",
+    "load_gap",
+    "switch_count",
+    "episode_return",
+    "communication_bytes",
+    "inference_latency_ms"
+  ],
+  "model_case_results": 600,
+  "protocol_sha256": "f9e476724e9cfeeb5053fcefa4ddd2d900c78bb7666e3fe62b3b8d342fcb0778",
+  "result_files": [
+    {
+      "bytes": 166921,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed1101.json",
+      "result_count": 100,
+      "sha256": "d366acf7b383e0bd0bf518438b5f1f26abb9964ae36668ce1bda3dbd21c791a7",
+      "training_seed": 1101,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "bytes": 167004,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed2202.json",
+      "result_count": 100,
+      "sha256": "d8b84fc897b85c5a517a34388e816a08fee97a2296ffbe495d0a319032b0558f",
+      "training_seed": 2202,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "bytes": 166973,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/gppo_adaptive_seed3303.json",
+      "result_count": 100,
+      "sha256": "e4199c75aab9230d9503d3e6da8a5c47f1fec6d2736f140b5d3ac2084c91c15d",
+      "training_seed": 3303,
+      "variant": "GPPO-Adaptive"
+    },
+    {
+      "bytes": 162669,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed1101.json",
+      "result_count": 100,
+      "sha256": "df3d93cce807986fc3616bf1a8a82df66b121a37391b44d3af8dfeb6a077ad63",
+      "training_seed": 1101,
+      "variant": "PPO-MLP"
+    },
+    {
+      "bytes": 162651,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed2202.json",
+      "result_count": 100,
+      "sha256": "1a42fc513fa38d7fdd83c0e8d7090be731d881610dfb1efef4c55e16fdc4e50a",
+      "training_seed": 2202,
+      "variant": "PPO-MLP"
+    },
+    {
+      "bytes": 162683,
+      "path": "ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/preliminary/test_results/ppo_mlp_seed3303.json",
+      "result_count": 100,
+      "sha256": "985bacac7f00008b3b1a706d2deef9cfe3924c9b125333add6a4aea7989b89e2",
+      "training_seed": 3303,
+      "variant": "PPO-MLP"
+    }
+  ],
+  "scenario_result_counts": {
+    "Test-Burst": 120,
+    "Test-Overlap": 120,
+    "Test-Sequential": 120,
+    "Test-Single": 120,
+    "Test-Unseen": 120
+  },
+  "scenario_tape_counts": {
+    "Test-Burst": 20,
+    "Test-Overlap": 20,
+    "Test-Sequential": 20,
+    "Test-Single": 20,
+    "Test-Unseen": 20
+  },
+  "seed_manifest_sha256": "fc11024f06113bee25e528edc1c174edc3f59119ab3ed55d81514a9a9a1db01c",
+  "source_tree_hash": "c35d351033d1d8723454d98e01c827848211ee2dbeec9a66adf7ff4c4a83820c",
+  "state_journals_consumed": 6,
+  "status": "PASS",
+  "test_ledger_complete": true,
+  "test_manifest_sha256": "f295bc42ba932ed192162f231670de3865dedae7f2d737331576b90f2cf88bf5"
+}
