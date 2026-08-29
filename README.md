@@ -229,3 +229,8 @@ python scripts\audit_stale_decision_race.py `
 4. 实现 Beam-MPC / Rolling-Horizon Planner；
 5. 将规划器蒸馏为低时延 MLP，并研究 Recurrent QR-DQN / R2D2；
 6. 在动态规模和全新 Extreme-V2 hidden bank 上比较 PPO、GPPO 与规划方法。
+
+执行中抢占与动态重分配已在独立研究合同中启动，详见：
+
+- [Execution-Preemption V1 中文协议](docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
+- [Execution-Preemption V1 机器可读合同](configs/execution_preemption_v1.json)
