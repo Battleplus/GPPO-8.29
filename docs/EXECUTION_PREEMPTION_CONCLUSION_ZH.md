@@ -120,6 +120,7 @@ remaining_work = 1 - progress
 | 4/8/16/32 UAV 图 schema smoke | 4/4 PASS |
 | Reward/metrics/training contract smoke | PASS，training_allowed=false |
 | PPO/GPPO unified adapter smoke | 4/8/16/32 PASS，training_allowed=false |
+| Direct/deferred atomic transaction parity | 400/400 PASS，state SHA parity 400/400 |
 | 正式训练 | 未启动 |
 | Validation / Freeze / Test / held-out | 未启动 |
 
@@ -238,3 +239,4 @@ P0 事件处理率 = 100%
 - 训练合同 smoke：[`training_contract_smoke.json`](../experiments/dynamic_preemption/dev_v1/training_contract_smoke.json)
 - 统一策略适配器：[Policy Adapter V1](POLICY_ADAPTER_V1_ZH.md)
 - Adapter smoke：[`policy_adapter_smoke.json`](../experiments/dynamic_preemption/dev_v1/policy_adapter_smoke.json)
+- 延迟原子事务 parity：[`deferred_transaction_parity.json`](../experiments/dynamic_preemption/dev_v1/deferred_transaction_parity.json)

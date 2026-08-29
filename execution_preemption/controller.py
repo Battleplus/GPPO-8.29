@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass, replace
 
 from .allocation import (
+    AllocationProposal,
+    AllocationRequest,
     Allocator,
     MaxEnergyMarginAllocator,
     build_allocation_request,
@@ -23,6 +26,28 @@ from .models import (
     UAVAvailability,
     UAVRuntime,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class ArbitrationPlan:
+    """Rule decision plus an optional deferred allocation request."""
+
+    event: RuntimeEvent
+    decision: EventDecision
+    allocation_request: AllocationRequest | None = None
+
+
+class _AllocationDeferred(RuntimeError):
+    def __init__(self, request: AllocationRequest) -> None:
+        super().__init__("allocation deferred to policy adapter")
+        self.request = request
+
+
+class _CaptureAllocator:
+    allocator_id = "deferred_policy_adapter_v1"
+
+    def propose(self, request: AllocationRequest) -> AllocationProposal:
+        raise _AllocationDeferred(request)
 
 
 class PreemptionController:
@@ -248,4 +273,77 @@ class PreemptionController:
             graph_version=graph_version,
             allocation_request_id=allocation_request_id,
             allocator_id=allocator_id,
+        )
+
+    def plan(
+        self,
+        event: RuntimeEvent,
+        tasks: Mapping[str, TaskRuntime],
+        uavs: Mapping[str, UAVRuntime],
+        *,
+        graph_version: int,
+    ) -> ArbitrationPlan:
+        """Run rule arbitration without allowing an allocator to choose yet.
+
+        Direct safety actions return a complete decision.  Whenever UAV
+        selection is genuinely discretionary, the exact AllocationRequest is
+        captured and returned with ``selected_uav=None`` for a policy adapter.
+        """
+
+        planner = PreemptionController(_CaptureAllocator())
+        try:
+            decision = planner.decide(
+                event,
+                tasks,
+                uavs,
+                graph_version=graph_version,
+            )
+            return ArbitrationPlan(event=event, decision=decision, allocation_request=None)
+        except _AllocationDeferred as deferred:
+            request = deferred.request
+            decision = EventDecision(
+                event_id=event.event_id,
+                priority=event.priority,
+                information_age=event.information_age,
+                confidence=event.confidence,
+                decision=request.decision_type,
+                displaced_task_id=request.displaced_task_id,
+                selected_uav=None,
+                reason=request.reason,
+                graph_version=graph_version,
+                allocation_request_id=request.request_id,
+                allocator_id=None,
+            )
+            return ArbitrationPlan(
+                event=event,
+                decision=decision,
+                allocation_request=request,
+            )
+
+    @staticmethod
+    def resolve_plan(
+        plan: ArbitrationPlan,
+        proposal: AllocationProposal | None,
+        *,
+        current_graph_version: int,
+    ) -> EventDecision:
+        """Bind a policy proposal to a deferred plan and validate it."""
+
+        request = plan.allocation_request
+        if request is None:
+            if proposal is not None:
+                raise ValueError("direct arbitration plan must not receive a proposal")
+            return plan.decision
+        if proposal is None:
+            raise ValueError("deferred arbitration plan requires a proposal")
+        validated = validate_proposal(
+            request,
+            proposal,
+            current_graph_version=current_graph_version,
+        )
+        return replace(
+            plan.decision,
+            selected_uav=validated.uav_id,
+            allocation_request_id=request.request_id,
+            allocator_id=validated.allocator_id,
         )

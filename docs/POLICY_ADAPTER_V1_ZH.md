@@ -137,6 +137,33 @@ graph_sha256
 
 机器可读结果见 [`policy_adapter_smoke.json`](../experiments/dynamic_preemption/dev_v1/policy_adapter_smoke.json)，其分类为 `adapter_pretraining_smoke_not_model_evidence`。
 
+### 8.1 原子批次延迟提交
+
+同一个 burst/simultaneous 事件批次可能按确定性顺序产生多个 allocation requests。V1 在一个 staged runtime 中依次暂停并等待 proposal，所有 proposal 通过后才一次性替换 live runtime：
+
+```text
+复制 live runtime
+→ 整批 graph_version + 1
+→ 规则处理事件 1
+→ 若需分配，暂停并取得 proposal 1
+→ 在同一 staged runtime 继续处理事件 2
+→ 若需分配，暂停并取得 proposal 2
+→ 全部事件和 proposal 通过不变量检查
+→ 一次性 commit
+```
+
+任何 proposal 错误、推理期间 live state 变化或 graph version 漂移都会拒绝整批提交。进度 tick 即使没有手工增加 graph version，也会因 live state SHA-256 改变而使旧 transaction 失效。
+
+在全部 200 条开发 tapes 上，First Available 和 Max Energy Margin 分别完成直接回放与延迟提交回放对照：
+
+- 400/400 allocator-tape runs 的 decision parity PASS；
+- 400/400 最终 runtime state SHA-256 parity PASS；
+- 每个 allocator 均为 280 个事件决策、80 个延迟分配请求；
+- 一个原子 batch 只增加一次 graph version；
+- commit 前 live runtime mutation：false。
+
+机器可读证据见 [`deferred_transaction_parity.json`](../experiments/dynamic_preemption/dev_v1/deferred_transaction_parity.json)。该结果证明接口等价性和原子性，不评价 allocator 或模型效果。
+
 ## 9. 尚未完成
 
 - 适配到 Gymnasium reset/step 生命周期；
@@ -148,4 +175,3 @@ graph_sha256
 - 任何模型训练、Validation、Freeze、Test 或 Hidden 评估。
 
 下一步必须先实现一个只跑极短 deterministic rollout 的 framework smoke，并证明 reward、mask、action 解码、事务提交和日志字段一致；在此之前 `training_allowed` 继续保持 `false`。
-

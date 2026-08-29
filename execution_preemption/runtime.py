@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field, is_dataclass
+from enum import Enum
+import hashlib
+import json
 from typing import Iterable
 
-from .controller import PreemptionController
+from .controller import ArbitrationPlan, PreemptionController
+from .allocation import AllocationProposal
 from .models import (
     CommandStatus,
     CommunicationState,
@@ -41,6 +45,96 @@ class EventBatchResult:
     revoked_commands: tuple[str, ...]
 
 
+@dataclass(slots=True)
+class PendingEventTransaction:
+    """A staged one-event transaction awaiting an optional policy proposal."""
+
+    transaction_id: str
+    event: RuntimeEvent
+    plan: ArbitrationPlan
+    graph_version_before: int
+    graph_version_after: int
+    source_state_sha256: str
+    revoked_commands: tuple[str, ...]
+    _source_runtime_id: int
+    _staged: "ExecutionRuntime"
+    _committed: bool = False
+
+    @property
+    def allocation_request(self):
+        return self.plan.allocation_request
+
+    @property
+    def decision(self) -> EventDecision:
+        return self.plan.decision
+
+    def staged_runtime_copy(self) -> "ExecutionRuntime":
+        return copy.deepcopy(self._staged)
+
+
+@dataclass(slots=True)
+class PendingEventBatchTransaction:
+    """One atomic event batch that can pause for several policy proposals."""
+
+    transaction_id: str
+    events: tuple[RuntimeEvent, ...]
+    graph_version_before: int
+    graph_version_after: int
+    source_state_sha256: str
+    now: float
+    _source_runtime_id: int
+    _controller: PreemptionController
+    _staged: "ExecutionRuntime"
+    _next_event_index: int = 0
+    _current_plan: ArbitrationPlan | None = None
+    _decisions: list[EventDecision] = field(default_factory=list)
+    _revoked_commands: list[str] = field(default_factory=list)
+    _committed: bool = False
+
+    @property
+    def awaiting_allocation(self) -> bool:
+        return self._current_plan is not None
+
+    @property
+    def allocation_request(self):
+        return None if self._current_plan is None else self._current_plan.allocation_request
+
+    @property
+    def decision(self) -> EventDecision | None:
+        return None if self._current_plan is None else self._current_plan.decision
+
+    @property
+    def complete(self) -> bool:
+        return self._current_plan is None and self._next_event_index >= len(self.events)
+
+    @property
+    def decisions(self) -> tuple[EventDecision, ...]:
+        return tuple(self._decisions)
+
+    def staged_runtime_copy(self) -> "ExecutionRuntime":
+        return copy.deepcopy(self._staged)
+
+
+def _canonicalize(value):
+    if isinstance(value, Enum):
+        return value.value
+    if is_dataclass(value):
+        return _canonicalize(asdict(value))
+    if isinstance(value, dict):
+        return {str(key): _canonicalize(value[key]) for key in sorted(value, key=str)}
+    if isinstance(value, (list, tuple)):
+        return [_canonicalize(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        return sorted((_canonicalize(item) for item in value), key=lambda item: str(item))
+    if isinstance(value, float):
+        if not (float("-inf") < value < float("inf")):
+            raise ValueError("runtime fingerprint cannot contain non-finite floats")
+        return value
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    return str(value)
+
+
 class ExecutionRuntime:
     """Own task/UAV state and commit each confirmed-event batch atomically."""
 
@@ -60,6 +154,29 @@ class ExecutionRuntime:
             raise ValueError(f"duplicate task_id {task.task_id}")
         self.tasks[task.task_id] = copy.deepcopy(task)
         self.validate_invariants()
+
+    def state_sha256(self) -> str:
+        """Hash all decision-relevant runtime state for stale transaction checks."""
+
+        value = {
+            "progress_policy": self.progress_policy,
+            "tasks": self.tasks,
+            "uavs": self.uavs,
+            "commands": self.commands,
+            "graph_version": self.graph_version,
+            "next_fencing_token": self._next_fencing_token,
+            "latest_fence_by_task": self._latest_fence_by_task,
+            "processed_events": self._processed_events,
+            "decision_log": self.decision_log,
+        }
+        payload = json.dumps(
+            _canonicalize(value),
+            sort_keys=True,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
 
     def add_uav(self, uav: UAVRuntime) -> None:
         if uav.uav_id in self.uavs:
@@ -415,6 +532,214 @@ class ExecutionRuntime:
             graph_version_after=self.graph_version,
             decisions=tuple(decisions),
             revoked_commands=tuple(sorted(set(revoked))),
+        )
+
+    def begin_event_transaction(
+        self,
+        event: RuntimeEvent,
+        controller: PreemptionController,
+        *,
+        now: float,
+    ) -> PendingEventTransaction:
+        """Stage one event without mutating live state or choosing a UAV."""
+
+        existing = self._processed_events.get(event.event_id)
+        if existing is not None:
+            if existing != event:
+                raise ValueError(f"event_id {event.event_id} was reused with different content")
+            raise ValueError(f"event_id {event.event_id} was already committed")
+        if event.received_at > now:
+            raise ValueError("cannot process an event before it is received")
+        source_sha = self.state_sha256()
+        staged = copy.deepcopy(self)
+        before = staged.graph_version
+        staged.graph_version += 1
+        revoked = tuple(sorted(set(staged._revoke_affected_commands(event))))
+        plan = controller.plan(
+            event,
+            staged.tasks,
+            staged.uavs,
+            graph_version=staged.graph_version,
+        )
+        return PendingEventTransaction(
+            transaction_id=f"txn:{event.event_id}:{before}:{staged.graph_version}",
+            event=event,
+            plan=plan,
+            graph_version_before=before,
+            graph_version_after=staged.graph_version,
+            source_state_sha256=source_sha,
+            revoked_commands=revoked,
+            _source_runtime_id=id(self),
+            _staged=staged,
+        )
+
+    def commit_event_transaction(
+        self,
+        pending: PendingEventTransaction,
+        *,
+        proposal: AllocationProposal | None = None,
+        now: float,
+    ) -> EventBatchResult:
+        """Atomically commit a staged event after exact proposal validation."""
+
+        if not isinstance(pending, PendingEventTransaction):
+            raise TypeError("pending must be PendingEventTransaction")
+        if pending._source_runtime_id != id(self):
+            raise StaleExecutionCommand("transaction belongs to another runtime")
+        if pending._committed:
+            raise StaleExecutionCommand("transaction was already committed")
+        if pending.event.received_at > now:
+            raise ValueError("cannot commit an event before it is received")
+        if self.state_sha256() != pending.source_state_sha256:
+            raise StaleExecutionCommand("live runtime changed while policy was deciding")
+        if self.graph_version != pending.graph_version_before:
+            raise StaleExecutionCommand("live graph_version changed while policy was deciding")
+
+        staged = pending._staged
+        decision = PreemptionController.resolve_plan(
+            pending.plan,
+            proposal,
+            current_graph_version=pending.graph_version_after,
+        )
+        staged._apply_decision(pending.event, decision, at=now)
+        staged.validate_invariants()
+        staged._processed_events[pending.event.event_id] = pending.event
+        staged.decision_log.append(decision)
+        self.__dict__.clear()
+        self.__dict__.update(staged.__dict__)
+        pending._committed = True
+        return EventBatchResult(
+            graph_version_before=pending.graph_version_before,
+            graph_version_after=self.graph_version,
+            decisions=(decision,),
+            revoked_commands=pending.revoked_commands,
+        )
+
+    def _check_pending_batch_live(self, pending: PendingEventBatchTransaction) -> None:
+        if not isinstance(pending, PendingEventBatchTransaction):
+            raise TypeError("pending must be PendingEventBatchTransaction")
+        if pending._source_runtime_id != id(self):
+            raise StaleExecutionCommand("batch transaction belongs to another runtime")
+        if pending._committed:
+            raise StaleExecutionCommand("batch transaction was already committed")
+        if self.state_sha256() != pending.source_state_sha256:
+            raise StaleExecutionCommand("live runtime changed while batch policy was deciding")
+        if self.graph_version != pending.graph_version_before:
+            raise StaleExecutionCommand("live graph_version changed while batch policy was deciding")
+
+    @staticmethod
+    def _advance_pending_batch(pending: PendingEventBatchTransaction) -> None:
+        while pending._next_event_index < len(pending.events):
+            event = pending.events[pending._next_event_index]
+            pending._revoked_commands.extend(pending._staged._revoke_affected_commands(event))
+            plan = pending._controller.plan(
+                event,
+                pending._staged.tasks,
+                pending._staged.uavs,
+                graph_version=pending.graph_version_after,
+            )
+            if plan.allocation_request is not None:
+                pending._current_plan = plan
+                return
+            decision = PreemptionController.resolve_plan(
+                plan,
+                None,
+                current_graph_version=pending.graph_version_after,
+            )
+            pending._staged._apply_decision(event, decision, at=pending.now)
+            pending._staged.validate_invariants()
+            pending._staged._processed_events[event.event_id] = event
+            pending._staged.decision_log.append(decision)
+            pending._decisions.append(decision)
+            pending._next_event_index += 1
+
+    def begin_event_batch_transaction(
+        self,
+        events: Iterable[RuntimeEvent],
+        controller: PreemptionController,
+        *,
+        now: float,
+    ) -> PendingEventBatchTransaction:
+        """Stage an atomic batch and stop at its first allocation request."""
+
+        ordered_input = tuple(sorted(events, key=RuntimeEvent.ordering_key))
+        unique: dict[str, RuntimeEvent] = {}
+        for event in ordered_input:
+            existing = unique.get(event.event_id) or self._processed_events.get(event.event_id)
+            if existing is not None:
+                if existing != event:
+                    raise ValueError(f"event_id {event.event_id} was reused with different content")
+                continue
+            unique[event.event_id] = event
+        ordered = tuple(unique.values())
+        if not ordered:
+            raise ValueError("event batch has no new event")
+        if any(event.received_at > now for event in ordered):
+            raise ValueError("cannot process an event before it is received")
+
+        source_sha = self.state_sha256()
+        staged = copy.deepcopy(self)
+        before = staged.graph_version
+        staged.graph_version += 1
+        pending = PendingEventBatchTransaction(
+            transaction_id=f"batch:{ordered[0].event_id}:{before}:{staged.graph_version}",
+            events=ordered,
+            graph_version_before=before,
+            graph_version_after=staged.graph_version,
+            source_state_sha256=source_sha,
+            now=float(now),
+            _source_runtime_id=id(self),
+            _controller=controller,
+            _staged=staged,
+        )
+        self._advance_pending_batch(pending)
+        return pending
+
+    def submit_event_batch_proposal(
+        self,
+        pending: PendingEventBatchTransaction,
+        proposal: AllocationProposal,
+    ) -> PendingEventBatchTransaction:
+        """Apply one proposal inside the staged batch and advance to the next."""
+
+        self._check_pending_batch_live(pending)
+        plan = pending._current_plan
+        if plan is None or plan.allocation_request is None:
+            raise ValueError("batch is not awaiting an allocation proposal")
+        decision = PreemptionController.resolve_plan(
+            plan,
+            proposal,
+            current_graph_version=pending.graph_version_after,
+        )
+        event = pending.events[pending._next_event_index]
+        pending._staged._apply_decision(event, decision, at=pending.now)
+        pending._staged.validate_invariants()
+        pending._staged._processed_events[event.event_id] = event
+        pending._staged.decision_log.append(decision)
+        pending._decisions.append(decision)
+        pending._next_event_index += 1
+        pending._current_plan = None
+        self._advance_pending_batch(pending)
+        return pending
+
+    def commit_event_batch_transaction(
+        self,
+        pending: PendingEventBatchTransaction,
+    ) -> EventBatchResult:
+        """Commit the full staged batch only after all proposals are resolved."""
+
+        self._check_pending_batch_live(pending)
+        if not pending.complete:
+            raise ValueError("batch still awaits an allocation proposal")
+        pending._staged.validate_invariants()
+        self.__dict__.clear()
+        self.__dict__.update(pending._staged.__dict__)
+        pending._committed = True
+        return EventBatchResult(
+            graph_version_before=pending.graph_version_before,
+            graph_version_after=self.graph_version,
+            decisions=tuple(pending._decisions),
+            revoked_commands=tuple(sorted(set(pending._revoked_commands))),
         )
 
     def issue_assignment_command(

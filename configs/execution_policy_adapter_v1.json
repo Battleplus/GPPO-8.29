@@ -36,6 +36,13 @@
     "graph_sha256_exact_match_required": true,
     "proposal_validator_required": true
   },
+  "deferred_atomic_transaction": {
+    "live_runtime_read_only_before_commit": true,
+    "multiple_policy_requests_per_event_batch": true,
+    "graph_version_increment_per_batch": 1,
+    "live_state_sha256_stale_guard": true,
+    "all_or_nothing_commit": true
+  },
   "reactive_context": "all_zero_16_vector",
   "rule_arbiter_context": [
     "present",
