@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "schema_id": "execution-preemption-heterograph-v1",
+  "status": "FROZEN_FOR_DEVELOPMENT",
+  "node_types": {
+    "UAV": {
+      "feature_dimension": 15,
+      "features": [
+        "energy_ratio",
+        "reserve_energy",
+        "estimated_rtb_energy",
+        "energy_margin",
+        "communication_age",
+        "active_task_progress",
+        "availability_available",
+        "availability_busy",
+        "availability_paused",
+        "availability_returning",
+        "availability_failed",
+        "availability_communication_lost",
+        "communication_connected",
+        "communication_degraded",
+        "communication_lost"
+      ]
+    },
+    "Task": {
+      "feature_dimension": 17,
+      "features": [
+        "priority",
+        "deadline_remaining",
+        "progress",
+        "remaining_work",
+        "preemptible",
+        "interruption_count",
+        "exclusive",
+        "state_pending",
+        "state_assigned",
+        "state_running",
+        "state_paused",
+        "state_preempted",
+        "state_migrating",
+        "state_resuming",
+        "state_completed",
+        "state_failed",
+        "state_cancelled"
+      ]
+    },
+    "Region": {
+      "feature_dimension": 5,
+      "features": [
+        "vacant",
+        "demand",
+        "priority",
+        "deadline_remaining",
+        "uncertainty"
+      ]
+    },
+    "Target": {
+      "feature_dimension": 6,
+      "features": [
+        "status_unknown",
+        "status_detected",
+        "status_tracked",
+        "status_destroyed",
+        "confidence",
+        "priority"
+      ]
+    },
+    "Event": {
+      "feature_dimension": 12,
+      "features": [
+        "priority",
+        "severity",
+        "information_age",
+        "confidence",
+        "type_task_arrival",
+        "type_task_cancelled",
+        "type_task_priority_changed",
+        "type_task_deadline_changed",
+        "type_uav_low_energy",
+        "type_uav_comm_lost",
+        "type_uav_comm_recovered",
+        "type_execution_failure"
+      ]
+    }
+  },
+  "relations": [
+    ["UAV", "executes", "Task"],
+    ["UAV", "can_execute", "Task"],
+    ["Task", "located_in", "Region"],
+    ["Task", "depends_on", "Task"],
+    ["Event", "affects", "UAV"],
+    ["Event", "affects", "Task"],
+    ["Task", "preempts", "Task"]
+  ],
+  "normalization": {
+    "priority_scale": 100.0,
+    "deadline_horizon": 100.0,
+    "information_age_horizon": 10.0,
+    "communication_age_horizon": 10.0,
+    "interruption_count_scale": 10.0
+  },
+  "action": {
+    "type": "dynamic_uav_task_edge",
+    "safe_candidate_mask_required": true,
+    "noop_required": true,
+    "graph_version_exact_match_required": true
+  },
+  "scale_smoke": {
+    "uav_counts": [4, 8, 16, 32],
+    "tasks_per_uav": 2
+  },
+  "old_checkpoint_compatible": false,
+  "requires_new_training_contract": true
+}

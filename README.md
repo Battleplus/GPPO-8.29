@@ -233,6 +233,7 @@ python scripts\audit_stale_decision_race.py `
 执行中抢占与动态重分配已在独立研究合同中启动，详见：
 
 - [Execution-Preemption V1 中文协议](docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
+- [Execution-Preemption V1 阶段性研究结论](docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md)
 - [Execution-Preemption V1 机器可读合同](configs/execution_preemption_v1.json)
 - [Execution-Preemption V1 算法分配边界](docs/ALLOCATION_BOUNDARY_V1_ZH.md)
 - [Dynamic-Preemption-Dev 10×20 开发事件带](experiments/dynamic_preemption/README.md)
