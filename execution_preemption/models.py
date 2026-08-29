@@ -244,6 +244,8 @@ class EventDecision:
     selected_uav: str | None
     reason: str
     graph_version: int
+    allocation_request_id: str | None = None
+    allocator_id: str | None = None
 
 
 @dataclass
