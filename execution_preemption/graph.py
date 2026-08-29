@@ -8,6 +8,7 @@ import json
 import math
 from typing import Any, Iterable, Mapping
 
+from .allocation import AllocationRequest
 from .models import (
     CommunicationState,
     EventPriority,
@@ -274,6 +275,7 @@ def build_execution_graph(
     regions: Iterable[RegionRuntime] = (),
     targets: Iterable[TargetRuntime] = (),
     preemption_links: Iterable[tuple[str, str]] = (),
+    allocation_request: AllocationRequest | None = None,
 ) -> ExecutionGraphSnapshot:
     event_items = tuple(sorted(events, key=lambda item: item.event_id))
     region_items = tuple(sorted(regions, key=lambda item: item.region_id))
@@ -324,6 +326,23 @@ def build_execution_graph(
     for source, destination in preemption_links:
         if source in tasks and destination in tasks:
             edges.add(GraphEdge("Task", "preempts", "Task", source, destination))
+    if allocation_request is not None:
+        if allocation_request.graph_version != runtime.graph_version:
+            raise ValueError("allocation request graph_version does not match runtime")
+        if allocation_request.task_id not in tasks:
+            raise ValueError("allocation request references unknown task")
+        for candidate in allocation_request.candidates:
+            if candidate.uav_id not in uavs:
+                raise ValueError("allocation request references unknown UAV")
+            if candidate.task_id != allocation_request.task_id:
+                raise ValueError("allocation request candidate task_id mismatch")
+            edges.add(GraphEdge(
+                "UAV",
+                "can_execute",
+                "Task",
+                candidate.uav_id,
+                allocation_request.task_id,
+            ))
     sorted_edges = tuple(sorted(edges))
     candidates = tuple(sorted(
         (edge.src_id, edge.dst_id)

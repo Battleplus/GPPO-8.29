@@ -62,6 +62,9 @@ class PolicyAdapterTests(unittest.TestCase):
         self.assertEqual(config["action"]["capacity"], ACTION_CAPACITY)
         self.assertFalse(config["training_allowed"])
         self.assertFalse(config["model_weights_loaded_in_this_stage"])
+        self.assertTrue(config["deferred_atomic_transaction"]["multiple_policy_requests_per_event_batch"])
+        self.assertEqual(config["deferred_atomic_transaction"]["graph_version_increment_per_batch"], 1)
+        self.assertTrue(config["deferred_atomic_transaction"]["all_or_nothing_commit"])
 
     def test_flat_dimension_and_action_capacity_are_fixed_across_scales(self) -> None:
         for uav_count in (4, 8, 16, 32):
@@ -237,4 +240,3 @@ class PolicyAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

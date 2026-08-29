@@ -1,6 +1,6 @@
 """Execution-in-progress preemption contract, independent of PPO/GPPO."""
 
-from .controller import PreemptionController
+from .controller import ArbitrationPlan, PreemptionController
 from .allocation import (
     AllocationCandidate,
     AllocationProposal,
@@ -32,6 +32,8 @@ from .models import (
 from .runtime import (
     EventBatchResult,
     ExecutionRuntime,
+    PendingEventBatchTransaction,
+    PendingEventTransaction,
     RuntimeInvariantError,
     StaleExecutionCommand,
 )
@@ -108,6 +110,7 @@ __all__ = [
     "AllocationCandidate",
     "AllocationProposal",
     "AllocationRequest",
+    "ArbitrationPlan",
     "AllocationValidationError",
     "ACTION_CAPACITY",
     "ADAPTER_ID",
@@ -150,6 +153,8 @@ __all__ = [
     "NODE_FEATURE_VECTOR_DIMENSION",
     "NODE_PRESENCE_VECTOR_DIMENSION",
     "PreemptionController",
+    "PendingEventTransaction",
+    "PendingEventBatchTransaction",
     "ProgressPolicy",
     "REWARD_CONTRACT_ID",
     "REWARD_WEIGHTS",

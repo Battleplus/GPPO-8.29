@@ -169,7 +169,8 @@ P0 事件处理率 = 100%
 | V1-E1 | 算法无关候选集、proposal 与版本校验接口 | 已实现，400 个确定性 allocator-tape runs PASS |
 | V1-E2a | 五类节点异构图、Reward、指标与训练合同 | 已实现，训练许可仍为 false |
 | V1-E2b | PPO/GPPO/Planner observation/action adapter | 已实现，4/8/16/32 smoke PASS |
-| V1-E2c | Gym/PyTorch/PyG 环境接线与 rollout smoke | 未开始 |
+| V1-E2c | 多请求原子批次延迟提交 | 已实现，400/400 direct/deferred parity PASS |
+| V1-E2d | Gym/PyTorch/PyG 环境接线与 rollout smoke | 未开始 |
 | V1-F | 重新训练与 4/8/16 UAV 比较 | 未开始 |
 | V1-G | Hidden-V1 一次性验证与 evidence 分支 | 未开始 |
 
