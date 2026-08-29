@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "contract_id": "execution-preemption-training-v1",
-  "status": "FROZEN_FOR_ADAPTER_IMPLEMENTATION",
+  "status": "FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION",
   "research_branch": "research/execution-preemption-v1",
   "contract_parent_remote_commit": "acb03a9aab5462a81978d4c52d6a94563f3db06f",
   "source_binding": {
@@ -79,7 +79,9 @@
     "flat_observation_dimension": 37976,
     "action_capacity": 3073,
     "flat_and_hetero_share_action_space": true,
-    "framework_tensor_conversion_complete": false
+    "torch_tensor_conversion_complete": true,
+    "gym_rollout_smoke_complete": true,
+    "native_pyg_required": false
   },
   "comparison": {
     "methods": [

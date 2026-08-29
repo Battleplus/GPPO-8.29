@@ -60,6 +60,7 @@ class PolicyAdapterTests(unittest.TestCase):
         self.assertEqual(config["flat_observation"]["dimension"], FLAT_OBSERVATION_DIMENSION)
         self.assertEqual(config["flat_observation"]["layout_sha256"], adapter_layout_sha256())
         self.assertEqual(config["action"]["capacity"], ACTION_CAPACITY)
+        self.assertTrue(config["action"]["noop_masked_during_required_allocation"])
         self.assertFalse(config["training_allowed"])
         self.assertFalse(config["model_weights_loaded_in_this_stage"])
         self.assertTrue(config["deferred_atomic_transaction"]["multiple_policy_requests_per_event_batch"])
@@ -103,6 +104,7 @@ class PolicyAdapterTests(unittest.TestCase):
             generated_at=2.0,
         )
         observation = build_flat_observation(graph, request=request)
+        self.assertFalse(observation.action_space.mask[0])
         enabled = {
             binding
             for binding, active in zip(
@@ -182,6 +184,7 @@ class PolicyAdapterTests(unittest.TestCase):
     def test_stale_hash_version_masked_and_noop_fail_closed(self) -> None:
         graph = build_execution_graph(self.runtime(), now=2.0)
         observation = build_flat_observation(graph)
+        self.assertTrue(observation.action_space.mask[0])
         valid_index = next(index for index, active in enumerate(observation.action_space.mask) if active and index)
         with self.assertRaisesRegex(AdapterValidationError, "graph_version"):
             decode_policy_action(

@@ -1,7 +1,7 @@
 # Execution-Preemption V1：PPO/GPPO/Planner 统一适配器
 
 > Adapter ID：`execution-preemption-policy-adapter-v1`
-> 状态：`FROZEN_FOR_FRAMEWORK_INTEGRATION`
+> 状态：`FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION`
 > 当前训练许可：`false`
 
 ## 1. 结论
@@ -55,7 +55,7 @@ layout_sha256 = f903860f4ede2ffd8a0ac79fdaf90486c06232169211d9d81e993b41ef9ec544
 - 空关系类型仍显式保留为空数组；
 - 与 PPO 完全相同的规则上下文和动作空间快照。
 
-当前适配器只输出 Python 不可变数据，不导入 PyTorch、PyG 或模型代码。框架 tensor 转换属于下一层，不能改变节点顺序、关系顺序、action table 或 mask。
+适配器核心仍只输出 Python 不可变数据；框架层已在不改变节点顺序、关系顺序、action table 或 mask 的前提下，将其确定性转换为原生 PyTorch typed tensors。当前 GPPO 使用仓库内的关系感知 PyTorch 实现，不依赖 PyG 才能运行。
 
 ## 5. 统一动作空间
 
@@ -80,7 +80,7 @@ action index 在固定容量内
 → allocator_id 非空
 ```
 
-`NOOP` 是合法策略动作，但不能伪装成一个必需的 allocation proposal。控制器可把 NOOP 解释为继续等待或排队；proposal 接口会显式拒绝它。
+`NOOP` 永久保留在动作表 index 0，但 mask 具有上下文语义：没有必需 allocation request 时可启用；控制器已经产生非空安全候选集并要求 proposal 时必须关闭。即使调用方错误地绕过 mask，proposal 接口仍会显式拒绝 NOOP。
 
 ## 6. Reactive 与 Rule-Arbiter 语义
 
@@ -164,14 +164,23 @@ graph_sha256
 
 机器可读证据见 [`deferred_transaction_parity.json`](../experiments/dynamic_preemption/dev_v1/deferred_transaction_parity.json)。该结果证明接口等价性和原子性，不评价 allocator 或模型效果。
 
-## 9. 尚未完成
+## 9. Framework rollout smoke
 
-- 适配到 Gymnasium reset/step 生命周期；
-- 把平坦输入转换为 PPO tensor；
-- 把异构输入转换为 GPPO/PyG tensor；
+当前已经完成：
+
+- Gymnasium `reset/step` 生命周期；
+- 平坦输入到 PPO tensor 的确定性转换；
+- 五类节点、七类关系到 GPPO typed tensors 的确定性转换；
 - 从实际 environment transition 生成冻结 reward signals；
+- PPO-MLP 与 GPPO-Adaptive 共用同一环境、action table、mask、proposal 校验与原子事务；
+- 两个极端场景、两类策略共 4 次 rollout，mask 违规、资源冲突、旧命令复活和能源安全违规均为 0。
+
+机器可读结果见 [`framework_rollout_smoke.json`](../experiments/dynamic_preemption/dev_v1/framework_rollout_smoke.json)。本机安装的 PyG 因 NumPy/Pandas 二进制不兼容无法原生导入；该情况已作为可选依赖健康信息记录，不影响当前仓库原生 PyTorch GPPO，也不能被描述为 PyG 已通过。
+
+仍未完成：
+
 - 训练日志、checkpoint 和 RNG 状态封存；
 - source-bound 训练 Gate；
 - 任何模型训练、Validation、Freeze、Test 或 Hidden 评估。
 
-下一步必须先实现一个只跑极短 deterministic rollout 的 framework smoke，并证明 reward、mask、action 解码、事务提交和日志字段一致；在此之前 `training_allowed` 继续保持 `false`。
+下一步是实现 source-bound 训练 Gate，并把当前框架 smoke、专项测试、原有 required tests、源码哈希和 clean-worktree 约束纳入同一证据闭环；在 Gate 完成以前 `training_allowed` 继续保持 `false`。

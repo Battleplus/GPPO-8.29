@@ -189,7 +189,9 @@ class TrainingContractTests(unittest.TestCase):
         self.assertEqual(value["adapter"]["flat_observation_dimension"], 37976)
         self.assertEqual(value["adapter"]["action_capacity"], 3073)
         self.assertTrue(value["adapter"]["flat_and_hetero_share_action_space"])
-        self.assertFalse(value["adapter"]["framework_tensor_conversion_complete"])
+        self.assertTrue(value["adapter"]["torch_tensor_conversion_complete"])
+        self.assertTrue(value["adapter"]["gym_rollout_smoke_complete"])
+        self.assertFalse(value["adapter"]["native_pyg_required"])
 
     def test_contract_rejects_training_or_checkpoint_drift(self) -> None:
         value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))

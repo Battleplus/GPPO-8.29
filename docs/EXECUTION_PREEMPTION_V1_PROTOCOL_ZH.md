@@ -170,7 +170,7 @@ P0 事件处理率 = 100%
 | V1-E2a | 五类节点异构图、Reward、指标与训练合同 | 已实现，训练许可仍为 false |
 | V1-E2b | PPO/GPPO/Planner observation/action adapter | 已实现，4/8/16/32 smoke PASS |
 | V1-E2c | 多请求原子批次延迟提交 | 已实现，400/400 direct/deferred parity PASS |
-| V1-E2d | Gym/PyTorch/PyG 环境接线与 rollout smoke | 未开始 |
+| V1-E2d | Gym/PyTorch 环境接线与 rollout smoke | 已实现，PPO/GPPO 4 次确定性 rollout PASS；PyG 为非必需可选依赖且本机导入失败已记录 |
 | V1-F | 重新训练与 4/8/16 UAV 比较 | 未开始 |
 | V1-G | Hidden-V1 一次性验证与 evidence 分支 | 未开始 |
 

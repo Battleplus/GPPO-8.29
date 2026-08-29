@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "adapter_id": "execution-preemption-policy-adapter-v1",
-  "status": "FROZEN_FOR_FRAMEWORK_INTEGRATION",
+  "status": "FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION",
   "graph_schema_id": "execution-preemption-heterograph-v1",
   "node_capacities": {
     "UAV": 32,
@@ -29,6 +29,8 @@
   "action": {
     "capacity": 3073,
     "index_zero": ["NOOP", "NOOP"],
+    "noop_enabled_without_required_allocation": true,
+    "noop_masked_during_required_allocation": true,
     "remaining_layout": "1 + uav_slot * 96 + task_slot",
     "safe_mask_required": true,
     "allocation_request_can_narrow_mask": true,
@@ -52,7 +54,9 @@
     "confidence",
     "has_displaced_task"
   ],
-  "framework_tensor_conversion_in_this_stage": false,
+  "torch_tensor_conversion_complete": true,
+  "gym_rollout_smoke_complete": true,
+  "native_pyg_required": false,
   "model_weights_loaded_in_this_stage": false,
   "training_allowed": false
 }
