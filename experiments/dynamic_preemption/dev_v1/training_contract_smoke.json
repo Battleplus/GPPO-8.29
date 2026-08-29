@@ -1,0 +1,59 @@
+{
+  "acceptance_smoke": {
+    "cumulative_vacancy_relative_improvement": 0.2,
+    "status": "PASS",
+    "urgent_deadline_miss_relative_improvement": 0.15,
+    "violations": []
+  },
+  "checkpoint_selection": false,
+  "classification": "training_precondition_contract_smoke_not_model_evidence",
+  "contract": {
+    "canonical_sha256": "29269b5aa8b7d8dd3ab019ab68f2636b9ec51bb86dd071b5942ba0045a144a44",
+    "checkpoint_count": 72,
+    "contract_id": "execution-preemption-training-v1",
+    "learned_run_count": 36,
+    "path": "configs/execution_training_contract_v1.json",
+    "status": "FROZEN_FOR_ADAPTER_IMPLEMENTATION",
+    "training_allowed": false
+  },
+  "freeze_started": false,
+  "hidden_evaluation_started": false,
+  "legacy_checkpoint_compatible": false,
+  "legacy_evidence_reusable": false,
+  "reward_smoke": {
+    "contract_id": "execution-preemption-reward-v1",
+    "definition": "sum(weight_i * normalized_transition_signal_i)",
+    "eligible_for_learning": true,
+    "hard_constraints_in_reward": false,
+    "raw_signals": {
+      "energy_consumed": 0.1,
+      "load_gap": 0.2,
+      "normalized_distance": 0.4,
+      "progress_loss": 0.1,
+      "starvation_exposure": 0.1,
+      "switch_time": 0.2,
+      "urgent_deadline_miss_rate": 0.1,
+      "weighted_progress_gain": 0.5,
+      "weighted_vacancy_time": 0.2
+    },
+    "reward": -1.3,
+    "weighted_components": {
+      "energy_consumed": -0.1,
+      "load_gap": -0.1,
+      "normalized_distance": -0.2,
+      "progress_loss": -0.4,
+      "starvation_exposure": -0.30000000000000004,
+      "switch_time": -0.2,
+      "urgent_deadline_miss_rate": -1.0,
+      "weighted_progress_gain": 2.0,
+      "weighted_vacancy_time": -1.0
+    }
+  },
+  "schema_version": 1,
+  "source_bound_launch_gate_created": false,
+  "status": "PASS",
+  "test_started": false,
+  "training_allowed": false,
+  "training_started": false,
+  "validation_started": false
+}
