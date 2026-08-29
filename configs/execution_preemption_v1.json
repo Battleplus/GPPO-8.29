@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "contract_id": "execution-preemption-v1",
+  "status": "FROZEN_FOR_DEVELOPMENT",
+  "base_commit": "a4207527f713e6f15dcdbc538134aeaca28a03ac",
+  "research_branch": "research/execution-preemption-v1",
+  "algorithm_boundary": {
+    "safety_arbiter": "deterministic_rule_controller",
+    "learned_policy_role": "uav_task_reallocation_only",
+    "ppo_or_gppo_changes_in_v1": false,
+    "legacy_minimum_validation_mutable": false,
+    "retraining_required_before_algorithm_comparison": true
+  },
+  "task_progress": {
+    "total_work": 1.0,
+    "progress_range": [0.0, 1.0],
+    "same_uav_retention": 1.0,
+    "migration_retention": 0.9,
+    "allowed_migration_retention_range": [0.8, 1.0],
+    "switch_time_cost": 0.25,
+    "update_rule": "progress += effective_work_rate * delta_time"
+  },
+  "task_states": [
+    "PENDING",
+    "ASSIGNED",
+    "RUNNING",
+    "PAUSED",
+    "PREEMPTED",
+    "MIGRATING",
+    "RESUMING",
+    "COMPLETED",
+    "FAILED",
+    "CANCELLED"
+  ],
+  "event_priority": {
+    "P0": ["UAV_DESTROYED", "COLLISION_RISK", "ENERGY_UNABLE_TO_RTB"],
+    "P1": ["URGENT_SHORT_TASK", "HIGH_VALUE_TARGET"],
+    "P2": ["UAV_LOW_ENERGY", "UAV_COMM_LOST"],
+    "P3": ["TASK_ARRIVAL", "TASK_PRIORITY_CHANGED", "TASK_DEADLINE_CHANGED"],
+    "P4": ["LOW_VALUE_STATE_UPDATE"]
+  },
+  "same_priority_order": [
+    "earliest_deadline",
+    "highest_task_priority",
+    "smallest_information_age",
+    "earliest_received_at",
+    "event_id"
+  ],
+  "runtime_event_types": [
+    "TASK_ARRIVAL",
+    "TASK_CANCELLED",
+    "TASK_PRIORITY_CHANGED",
+    "TASK_DEADLINE_CHANGED",
+    "UAV_LOW_ENERGY",
+    "UAV_COMM_LOST",
+    "UAV_COMM_RECOVERED",
+    "EXECUTION_FAILURE"
+  ],
+  "decision_types": [
+    "CONTINUE",
+    "QUEUE",
+    "PAUSE",
+    "PREEMPT",
+    "MIGRATE",
+    "ABORT",
+    "RTB"
+  ],
+  "atomicity_invariants": {
+    "max_active_uavs_per_exclusive_task": 1,
+    "max_active_tasks_per_uav": 1,
+    "stale_graph_command_rejected": true,
+    "stale_fencing_ack_rejected": true,
+    "progress_double_count_forbidden": true,
+    "event_batch_graph_version_increment": 1
+  },
+  "development_bank": {
+    "name": "Dynamic-Preemption-Dev",
+    "scenario_count": 10,
+    "tapes_per_scenario": 20,
+    "case_count": 200,
+    "hidden_bank": "Dynamic-Preemption-Hidden-V1",
+    "hidden_seed_overlap_allowed": false
+  },
+  "scale_sequence": {
+    "uav_counts": [4, 8, 16, 32],
+    "task_ratio": [2, 3],
+    "advance_condition": "all semantic and consistency gates pass at the previous scale"
+  },
+  "acceptance": {
+    "resource_conflicts": 0,
+    "stale_command_resurrections": 0,
+    "energy_safety_violations": 0,
+    "p0_handling_rate": 1.0,
+    "urgent_deadline_miss_relative_improvement_min": 0.1,
+    "cumulative_vacancy_relative_improvement_min": 0.1,
+    "normal_task_recovery_rate_min": 0.95
+  },
+  "prohibited_in_v1": [
+    "modify_ppo_or_gppo_policy_semantics",
+    "modify_legacy_reward",
+    "reuse_legacy_minimum_validation_as_new_evidence",
+    "claim_post_hoc_development_results_as_held_out",
+    "start_formal_training_before_contract_and_tests_are_frozen"
+  ]
+}
