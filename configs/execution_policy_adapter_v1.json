@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "adapter_id": "execution-preemption-policy-adapter-v1",
+  "status": "FROZEN_FOR_FRAMEWORK_INTEGRATION",
+  "graph_schema_id": "execution-preemption-heterograph-v1",
+  "node_capacities": {
+    "UAV": 32,
+    "Task": 96,
+    "Region": 96,
+    "Target": 32,
+    "Event": 8
+  },
+  "max_tasks_per_uav": 3,
+  "flat_observation": {
+    "dimension": 37976,
+    "layout_sha256": "f903860f4ede2ffd8a0ac79fdaf90486c06232169211d9d81e993b41ef9ec544",
+    "node_features": "type_order_then_lexical_node_id_with_zero_padding",
+    "node_presence_mask": true,
+    "relations": "relation_order_dense_binary_incidence",
+    "rule_context_dimension": 16,
+    "fixed_across_uav_scales": [4, 8, 16, 32]
+  },
+  "heterogeneous_observation": {
+    "typed_node_features": true,
+    "typed_relation_indices": true,
+    "lexical_node_id_order": true,
+    "empty_relation_retained": true
+  },
+  "action": {
+    "capacity": 3073,
+    "index_zero": ["NOOP", "NOOP"],
+    "remaining_layout": "1 + uav_slot * 96 + task_slot",
+    "safe_mask_required": true,
+    "allocation_request_can_narrow_mask": true,
+    "graph_version_exact_match_required": true,
+    "graph_sha256_exact_match_required": true,
+    "proposal_validator_required": true
+  },
+  "reactive_context": "all_zero_16_vector",
+  "rule_arbiter_context": [
+    "present",
+    "decision_type_one_hot_7",
+    "event_priority_one_hot_5",
+    "information_age_normalized",
+    "confidence",
+    "has_displaced_task"
+  ],
+  "framework_tensor_conversion_in_this_stage": false,
+  "model_weights_loaded_in_this_stage": false,
+  "training_allowed": false
+}

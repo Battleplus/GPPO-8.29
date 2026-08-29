@@ -10,6 +10,12 @@ from typing import Any, Mapping
 
 from .metrics import METRICS_SCHEMA_ID
 from .reward import REWARD_CONTRACT_ID, REWARD_WEIGHTS
+from .adapter import (
+    ACTION_CAPACITY,
+    ADAPTER_ID,
+    FLAT_OBSERVATION_DIMENSION,
+    adapter_layout_sha256,
+)
 
 
 TRAINING_CONTRACT_ID = "execution-preemption-training-v1"
@@ -116,6 +122,17 @@ def validate_training_contract(
         "inference_latency_p95_ms",
         "inference_latency_p99_ms",
     }.issubset(required_metrics), "required metrics are incomplete")
+
+    adapter = value.get("adapter", {})
+    _expect(adapter.get("adapter_id") == ADAPTER_ID, "adapter id drift")
+    _expect(adapter.get("layout_sha256") == adapter_layout_sha256(), "adapter layout drift")
+    _expect(adapter.get("flat_observation_dimension") == FLAT_OBSERVATION_DIMENSION,
+            "flat observation dimension drift")
+    _expect(adapter.get("action_capacity") == ACTION_CAPACITY, "action capacity drift")
+    _expect(adapter.get("flat_and_hetero_share_action_space") is True,
+            "flat and hetero action spaces must be shared")
+    _expect(adapter.get("framework_tensor_conversion_complete") is False,
+            "framework integration must remain incomplete at this stage")
 
     comparison = value.get("comparison", {})
     methods = tuple(comparison.get("methods", ()))

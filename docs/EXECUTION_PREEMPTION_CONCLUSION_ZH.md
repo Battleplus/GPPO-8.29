@@ -119,6 +119,7 @@ remaining_work = 1 - progress
 | 确定性 allocator-tape runs | 400/400 PASS |
 | 4/8/16/32 UAV 图 schema smoke | 4/4 PASS |
 | Reward/metrics/training contract smoke | PASS，training_allowed=false |
+| PPO/GPPO unified adapter smoke | 4/8/16/32 PASS，training_allowed=false |
 | 正式训练 | 未启动 |
 | Validation / Freeze / Test / held-out | 未启动 |
 
@@ -202,7 +203,7 @@ P0 事件处理率 = 100%
 
 - 当前 200 条事件带是开发集，覆盖的是机制边界，不代表真实任务分布；
 - 当前两个确定性分配器在这些 tapes 上选择计数相同，说明场景还需加入更强的空间、能耗、deadline 和负载差异；
-- 图 schema、reward、指标和训练合同已经冻结，但 PPO/GPPO adapter 与环境接线尚未实现；
+- 图 schema、reward、指标、训练合同和统一 PPO/GPPO adapter 已经冻结，但 Gym/PyTorch/PyG 环境接线尚未实现；
 - 尚未执行新合同下的 PPO/GPPO/Beam-MPC 训练与同带效果比较；
 - 尚未生成独立 hidden bank，因此没有最终泛化结论；
 - 32 UAV 的候选边会快速增长，必须同时报告算法效果和尾部推理时延；
@@ -214,7 +215,7 @@ P0 事件处理率 = 100%
 
 最稳妥的阶段性表述是：
 
-> 已经证明执行中抢占与动态重分配机制在十类极端事件下能够保持安全、一致和可追溯；已经冻结把 PPO、GPPO 与规划器接入统一安全候选集所需的图、reward、指标与训练合同。尚未证明任何学习算法在新合同下优于 PPO，下一阶段必须完成 adapter 和 source-bound Gate、重新训练，并通过独立 hidden bank 才能形成最终算法结论。
+> 已经证明执行中抢占与动态重分配机制在十类极端事件下能够保持安全、一致和可追溯；已经冻结 PPO、GPPO 与规划器共享的图、reward、指标、训练合同和版本化动作接口。尚未证明任何学习算法在新合同下优于 PPO，下一阶段必须完成框架接线和 source-bound Gate、重新训练，并通过独立 hidden bank 才能形成最终算法结论。
 
 ## 10. 向学姐汇报的建议口径
 
@@ -222,7 +223,7 @@ P0 事件处理率 = 100%
 
 1. **机制进展：** 系统已经从事件后重分配扩展到任务执行中的暂停、抢占、迁移、恢复和返航，并用版本、ACK、lease 和 fencing 防止旧命令复活。
 2. **证据进展：** 十类场景、200 条开发事件带全部通过规则回放；两个确定性分配器共 400 次同带回放，没有资源冲突或事务不变量失败；4/8/16/32 UAV 图构建 smoke 已跑通。
-3. **结论边界：** 目前完成的是机制、接口和训练合同验证，不是模型胜负。下一阶段会实现新 adapter，重新训练 PPO/GPPO，并加入 Beam-MPC；只有独立 hidden 结果出来后才讨论谁超过 PPO。
+3. **结论边界：** 目前完成的是机制、接口和训练合同验证，不是模型胜负。下一阶段会完成框架接线，重新训练 PPO/GPPO，并加入 Beam-MPC；只有独立 hidden 结果出来后才讨论谁超过 PPO。
 
 ## 11. 证据入口
 
@@ -235,3 +236,5 @@ P0 事件处理率 = 100%
 - 图规模 smoke：[`graph_schema_smoke.json`](../experiments/dynamic_preemption/dev_v1/graph_schema_smoke.json)
 - Reward、指标与训练合同：[Execution Training Contract V1](EXECUTION_TRAINING_CONTRACT_V1_ZH.md)
 - 训练合同 smoke：[`training_contract_smoke.json`](../experiments/dynamic_preemption/dev_v1/training_contract_smoke.json)
+- 统一策略适配器：[Policy Adapter V1](POLICY_ADAPTER_V1_ZH.md)
+- Adapter smoke：[`policy_adapter_smoke.json`](../experiments/dynamic_preemption/dev_v1/policy_adapter_smoke.json)
