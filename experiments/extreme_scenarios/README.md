@@ -21,6 +21,7 @@ reports, a long blind burst, rapid task churn, and an eight-event storm.
 
 ## Results
 
+- [Chinese research conclusion](CONCLUSION_ZH.md)
 - [Interpretation](results_20260827/INTERPRETATION.md)
 - [Full scenario report](results_20260827/REPORT.md)
 - [Run summary](results_20260827/run_summary.json)
