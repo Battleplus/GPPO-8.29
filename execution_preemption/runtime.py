@@ -336,6 +336,10 @@ class ExecutionRuntime:
                 at=at,
                 reason=decision.reason,
             )
+            if event.event_type is RuntimeEventType.EXECUTION_FAILURE and event.uav_id is not None:
+                failed_uav = self._uav(event.uav_id)
+                failed_uav.active_task_id = None
+                failed_uav.availability = UAVAvailability.FAILED
             return
 
         if decision.decision is DecisionType.ABORT:

@@ -1,0 +1,156 @@
+{
+  "bank": "Dynamic-Preemption-Dev",
+  "case_index": 15,
+  "case_seed": 829109015,
+  "classification": "development_only_not_held_out",
+  "contract_id": "execution-preemption-v1",
+  "events": [
+    {
+      "batch_id": "E-15-recovered",
+      "confidence": 1.0,
+      "deadline": null,
+      "event_id": "E-15-recovered",
+      "event_type": "UAV_COMM_RECOVERED",
+      "occurred_at": 5.196795,
+      "payload": {},
+      "priority": "P2",
+      "received_at": 5.196795,
+      "task_id": null,
+      "task_priority": 0,
+      "uav_id": "U0"
+    },
+    {
+      "batch_id": "E-15-urgent",
+      "confidence": 1.0,
+      "deadline": 7.196795,
+      "event_id": "E-15-urgent",
+      "event_type": "TASK_ARRIVAL",
+      "occurred_at": 5.246795,
+      "payload": {},
+      "priority": "P1",
+      "received_at": 5.246795,
+      "task_id": "URGENT",
+      "task_priority": 95,
+      "uav_id": null
+    }
+  ],
+  "initial_state": {
+    "tasks": [
+      {
+        "assigned_uav": "U0",
+        "deadline": 100.0,
+        "preemptible": true,
+        "priority": 10,
+        "progress": 0.25,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "PAUSED",
+        "task_id": "BASE",
+        "task_type": "SEARCH"
+      },
+      {
+        "assigned_uav": "U1",
+        "deadline": 100.0,
+        "preemptible": true,
+        "priority": 41,
+        "progress": 0.2,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "RUNNING",
+        "task_id": "FILLER-1",
+        "task_type": "SEARCH"
+      },
+      {
+        "assigned_uav": "U2",
+        "deadline": 100.0,
+        "preemptible": true,
+        "priority": 42,
+        "progress": 0.2,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "RUNNING",
+        "task_id": "FILLER-2",
+        "task_type": "SEARCH"
+      },
+      {
+        "assigned_uav": "U3",
+        "deadline": 100.0,
+        "preemptible": true,
+        "priority": 43,
+        "progress": 0.2,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "RUNNING",
+        "task_id": "FILLER-3",
+        "task_type": "SEARCH"
+      },
+      {
+        "assigned_uav": null,
+        "deadline": 7.196795,
+        "preemptible": true,
+        "priority": 95,
+        "progress": 0.0,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "PENDING",
+        "task_id": "URGENT",
+        "task_type": "URGENT"
+      }
+    ],
+    "uavs": [
+      {
+        "communication_state": "LOST",
+        "energy_ratio": 0.92,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U0"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U1"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.88,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U2"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.86,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U3"
+      }
+    ]
+  },
+  "paired": true,
+  "required_invariants": [
+    "exclusive_task_owner_count<=1",
+    "active_task_count_per_uav<=1",
+    "stale_command_resurrection=0",
+    "progress_double_count=0"
+  ],
+  "scenario_id": "event_during_resume",
+  "schema_version": 1,
+  "tape_id": "event_during_resume-15-829109015"
+}

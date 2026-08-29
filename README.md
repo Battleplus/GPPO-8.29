@@ -234,3 +234,4 @@ python scripts\audit_stale_decision_race.py `
 
 - [Execution-Preemption V1 中文协议](docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
 - [Execution-Preemption V1 机器可读合同](configs/execution_preemption_v1.json)
+- [Dynamic-Preemption-Dev 10×20 开发事件带](experiments/dynamic_preemption/README.md)

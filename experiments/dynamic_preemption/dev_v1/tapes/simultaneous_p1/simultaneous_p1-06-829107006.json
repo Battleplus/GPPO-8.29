@@ -1,0 +1,123 @@
+{
+  "bank": "Dynamic-Preemption-Dev",
+  "case_index": 6,
+  "case_seed": 829107006,
+  "classification": "development_only_not_held_out",
+  "contract_id": "execution-preemption-v1",
+  "events": [
+    {
+      "batch_id": "B-06",
+      "confidence": 1.0,
+      "deadline": 9.209734,
+      "event_id": "E-06-p1-a",
+      "event_type": "TASK_ARRIVAL",
+      "occurred_at": 5.209734,
+      "payload": {},
+      "priority": "P1",
+      "received_at": 5.209734,
+      "task_id": "URGENT-A",
+      "task_priority": 80,
+      "uav_id": null
+    },
+    {
+      "batch_id": "B-06",
+      "confidence": 1.0,
+      "deadline": 7.209734,
+      "event_id": "E-06-p1-b",
+      "event_type": "TASK_ARRIVAL",
+      "occurred_at": 5.209734,
+      "payload": {},
+      "priority": "P1",
+      "received_at": 5.209734,
+      "task_id": "URGENT-B",
+      "task_priority": 90,
+      "uav_id": null
+    }
+  ],
+  "initial_state": {
+    "tasks": [
+      {
+        "assigned_uav": null,
+        "deadline": 9.209734,
+        "preemptible": true,
+        "priority": 80,
+        "progress": 0.0,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "PENDING",
+        "task_id": "URGENT-A",
+        "task_type": "URGENT"
+      },
+      {
+        "assigned_uav": null,
+        "deadline": 7.209734,
+        "preemptible": true,
+        "priority": 90,
+        "progress": 0.0,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "PENDING",
+        "task_id": "URGENT-B",
+        "task_type": "URGENT"
+      }
+    ],
+    "uavs": [
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U0"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U1"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U2"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U3"
+      }
+    ]
+  },
+  "paired": true,
+  "required_invariants": [
+    "exclusive_task_owner_count<=1",
+    "active_task_count_per_uav<=1",
+    "stale_command_resurrection=0",
+    "progress_double_count=0"
+  ],
+  "scenario_id": "simultaneous_p1",
+  "schema_version": 1,
+  "tape_id": "simultaneous_p1-06-829107006"
+}
