@@ -1,0 +1,119 @@
+{
+  "classification": "training_precondition_smoke_not_model_evidence",
+  "old_checkpoint_compatible": false,
+  "requires_new_training_contract": true,
+  "scale_count": 4,
+  "scales": [
+    {
+      "action_candidate_count": 32,
+      "edge_count": 64,
+      "expected_action_candidate_count": 32,
+      "graph_sha256": "e55bbcce7302ec974cd78f43bb5238a75a68300ff73fbfb7a76233e3fb4e6533",
+      "node_counts": {
+        "Event": 8,
+        "Region": 8,
+        "Target": 4,
+        "Task": 8,
+        "UAV": 4
+      },
+      "noop_present": true,
+      "relation_counts": {
+        "Event|affects|Task": 8,
+        "Event|affects|UAV": 8,
+        "Task|depends_on|Task": 7,
+        "Task|located_in|Region": 8,
+        "Task|preempts|Task": 1,
+        "UAV|can_execute|Task": 32
+      },
+      "status": "PASS",
+      "task_count": 8,
+      "uav_count": 4
+    },
+    {
+      "action_candidate_count": 128,
+      "edge_count": 176,
+      "expected_action_candidate_count": 128,
+      "graph_sha256": "ab256f3c1721fb72ba4a5868606847cf1e8b0a1d5e94c3b1d1e95ac52e025e8d",
+      "node_counts": {
+        "Event": 8,
+        "Region": 16,
+        "Target": 8,
+        "Task": 16,
+        "UAV": 8
+      },
+      "noop_present": true,
+      "relation_counts": {
+        "Event|affects|Task": 8,
+        "Event|affects|UAV": 8,
+        "Task|depends_on|Task": 15,
+        "Task|located_in|Region": 16,
+        "Task|preempts|Task": 1,
+        "UAV|can_execute|Task": 128
+      },
+      "status": "PASS",
+      "task_count": 16,
+      "uav_count": 8
+    },
+    {
+      "action_candidate_count": 512,
+      "edge_count": 592,
+      "expected_action_candidate_count": 512,
+      "graph_sha256": "c16cc9706c6d30ff6ef6808a0e3431699fd8c1b76ba0e5ea4befcc471d20622d",
+      "node_counts": {
+        "Event": 8,
+        "Region": 32,
+        "Target": 16,
+        "Task": 32,
+        "UAV": 16
+      },
+      "noop_present": true,
+      "relation_counts": {
+        "Event|affects|Task": 8,
+        "Event|affects|UAV": 8,
+        "Task|depends_on|Task": 31,
+        "Task|located_in|Region": 32,
+        "Task|preempts|Task": 1,
+        "UAV|can_execute|Task": 512
+      },
+      "status": "PASS",
+      "task_count": 32,
+      "uav_count": 16
+    },
+    {
+      "action_candidate_count": 2048,
+      "edge_count": 2192,
+      "expected_action_candidate_count": 2048,
+      "graph_sha256": "53d472022b9138a88d142c47638630426197f5b6235b22e679baf5b3e4f0a6de",
+      "node_counts": {
+        "Event": 8,
+        "Region": 64,
+        "Target": 32,
+        "Task": 64,
+        "UAV": 32
+      },
+      "noop_present": true,
+      "relation_counts": {
+        "Event|affects|Task": 8,
+        "Event|affects|UAV": 8,
+        "Task|depends_on|Task": 63,
+        "Task|located_in|Region": 64,
+        "Task|preempts|Task": 1,
+        "UAV|can_execute|Task": 2048
+      },
+      "status": "PASS",
+      "task_count": 64,
+      "uav_count": 32
+    }
+  ],
+  "schema_id": "execution-preemption-heterograph-v1",
+  "schema_version": 1,
+  "status": "PASS",
+  "tasks_per_uav": 2,
+  "training_started": false,
+  "uav_counts": [
+    4,
+    8,
+    16,
+    32
+  ]
+}

@@ -35,6 +35,14 @@ from .runtime import (
     RuntimeInvariantError,
     StaleExecutionCommand,
 )
+from .graph import (
+    ExecutionGraphSnapshot,
+    GraphEdge,
+    GraphNode,
+    RegionRuntime,
+    TargetRuntime,
+    build_execution_graph,
+)
 
 __all__ = [
     "CommandStatus",
@@ -50,7 +58,10 @@ __all__ = [
     "EventPriority",
     "ExecutionCommand",
     "ExecutionRuntime",
+    "ExecutionGraphSnapshot",
     "FirstAvailableAllocator",
+    "GraphEdge",
+    "GraphNode",
     "MaxEnergyMarginAllocator",
     "PreemptionController",
     "ProgressPolicy",
@@ -58,12 +69,15 @@ __all__ = [
     "RuntimeEvent",
     "RuntimeEventType",
     "RuntimeInvariantError",
+    "RegionRuntime",
     "StaleExecutionCommand",
     "TaskProgressRecord",
     "TaskRuntime",
     "TaskState",
+    "TargetRuntime",
     "UAVAvailability",
     "UAVRuntime",
     "build_allocation_request",
+    "build_execution_graph",
     "validate_proposal",
 ]
