@@ -17,6 +17,7 @@
 - [场景目录](dev_v1/scenario_catalog.json)
 - [机器可读 manifest 与 SHA-256 inventory](dev_v1/manifest.json)
 - [规则回放结果说明](dev_v1/RULE_REPLAY_REPORT_ZH.md)
+- [分配器接口回放摘要](dev_v1/allocator_replay_summary.json)
 - [V1 协议](../../docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
 
 ## 复现

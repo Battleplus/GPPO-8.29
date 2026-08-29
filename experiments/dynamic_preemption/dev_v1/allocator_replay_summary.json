@@ -1,0 +1,80 @@
+{
+  "allocator_count": 2,
+  "allocator_tape_runs": 400,
+  "bank": "Dynamic-Preemption-Dev",
+  "bank_canonical_sha256": "57de08c76a3c13db6d970f8ac8d0aa31edfd6ba24c60d7f62c246abe65ed93fb",
+  "checkpoint_selection": false,
+  "classification": "development_interface_validation_not_effectiveness_evidence",
+  "contract_id": "execution-preemption-v1",
+  "model_effectiveness_evaluated": false,
+  "results": [
+    {
+      "allocation_request_count": 80,
+      "allocator_id": "first_available_v1",
+      "decision_count": 280,
+      "decision_counts": {
+        "ABORT": 20,
+        "CONTINUE": 120,
+        "MIGRATE": 20,
+        "PREEMPT": 40,
+        "QUEUE": 40,
+        "RTB": 40
+      },
+      "invariant_failures": 0,
+      "scenario_run_counts": {
+        "delayed_task_cancel": 20,
+        "event_during_inference": 20,
+        "event_during_resume": 20,
+        "execution_uav_destroyed": 20,
+        "low_energy_rtb": 20,
+        "low_value_at_90": 20,
+        "nonpreemptible_strike": 20,
+        "repeated_priority_change": 20,
+        "simultaneous_p1": 20,
+        "urgent_at_40": 20
+      },
+      "selected_uav_counts": {
+        "U0": 140,
+        "U1": 60
+      },
+      "status": "PASS",
+      "tape_count": 200
+    },
+    {
+      "allocation_request_count": 80,
+      "allocator_id": "max_energy_margin_v1",
+      "decision_count": 280,
+      "decision_counts": {
+        "ABORT": 20,
+        "CONTINUE": 120,
+        "MIGRATE": 20,
+        "PREEMPT": 40,
+        "QUEUE": 40,
+        "RTB": 40
+      },
+      "invariant_failures": 0,
+      "scenario_run_counts": {
+        "delayed_task_cancel": 20,
+        "event_during_inference": 20,
+        "event_during_resume": 20,
+        "execution_uav_destroyed": 20,
+        "low_energy_rtb": 20,
+        "low_value_at_90": 20,
+        "nonpreemptible_strike": 20,
+        "repeated_priority_change": 20,
+        "simultaneous_p1": 20,
+        "urgent_at_40": 20
+      },
+      "selected_uav_counts": {
+        "U0": 140,
+        "U1": 60
+      },
+      "status": "PASS",
+      "tape_count": 200
+    }
+  ],
+  "schema_version": 1,
+  "status": "PASS",
+  "tape_count": 200,
+  "training_started": false
+}

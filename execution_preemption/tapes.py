@@ -371,9 +371,13 @@ def runtime_from_tape(tape: Mapping[str, Any]) -> ExecutionRuntime:
     return runtime
 
 
-def replay_tape(tape: Mapping[str, Any]) -> tuple[ExecutionRuntime, tuple[EventDecision, ...]]:
+def replay_tape(
+    tape: Mapping[str, Any],
+    *,
+    controller: PreemptionController | None = None,
+) -> tuple[ExecutionRuntime, tuple[EventDecision, ...]]:
     runtime = runtime_from_tape(tape)
-    controller = PreemptionController()
+    controller = controller or PreemptionController()
     grouped: list[list[RuntimeEvent]] = []
     batch_indexes: dict[str, int] = {}
     for item in tape["events"]:

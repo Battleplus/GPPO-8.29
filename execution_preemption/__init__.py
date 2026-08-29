@@ -1,6 +1,17 @@
 """Execution-in-progress preemption contract, independent of PPO/GPPO."""
 
 from .controller import PreemptionController
+from .allocation import (
+    AllocationCandidate,
+    AllocationProposal,
+    AllocationRequest,
+    AllocationValidationError,
+    CallbackAllocator,
+    FirstAvailableAllocator,
+    MaxEnergyMarginAllocator,
+    build_allocation_request,
+    validate_proposal,
+)
 from .models import (
     CommandStatus,
     CommunicationState,
@@ -27,6 +38,11 @@ from .runtime import (
 
 __all__ = [
     "CommandStatus",
+    "AllocationCandidate",
+    "AllocationProposal",
+    "AllocationRequest",
+    "AllocationValidationError",
+    "CallbackAllocator",
     "CommunicationState",
     "DecisionType",
     "EventBatchResult",
@@ -34,6 +50,8 @@ __all__ = [
     "EventPriority",
     "ExecutionCommand",
     "ExecutionRuntime",
+    "FirstAvailableAllocator",
+    "MaxEnergyMarginAllocator",
     "PreemptionController",
     "ProgressPolicy",
     "ResumePolicy",
@@ -46,4 +64,6 @@ __all__ = [
     "TaskState",
     "UAVAvailability",
     "UAVRuntime",
+    "build_allocation_request",
+    "validate_proposal",
 ]

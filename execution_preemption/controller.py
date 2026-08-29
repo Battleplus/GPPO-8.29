@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from .allocation import (
+    Allocator,
+    MaxEnergyMarginAllocator,
+    build_allocation_request,
+    validate_proposal,
+)
+
 from .models import (
     CommunicationState,
     DecisionType,
@@ -24,6 +31,9 @@ class PreemptionController:
     PPO/GPPO will later select a UAV--Task allocation after this controller has
     made the safety-critical continue/preempt/migrate/RTB decision.
     """
+
+    def __init__(self, allocator: Allocator | None = None) -> None:
+        self.allocator = allocator or MaxEnergyMarginAllocator()
 
     @staticmethod
     def _available_uavs(
@@ -56,6 +66,36 @@ class PreemptionController:
         task_id = uavs[uav_id].active_task_id
         return tasks.get(task_id) if task_id is not None else None
 
+    def _allocate(
+        self,
+        *,
+        event: RuntimeEvent,
+        task: TaskRuntime,
+        candidates: list[UAVRuntime],
+        decision_type: DecisionType,
+        reason: str,
+        graph_version: int,
+        displaced_task_id: str | None = None,
+    ) -> tuple[str, str, str]:
+        request_id = f"alloc:{event.event_id}:{task.task_id}:{graph_version}"
+        request = build_allocation_request(
+            request_id=request_id,
+            graph_version=graph_version,
+            task=task,
+            uavs=candidates,
+            decision_type=decision_type,
+            reason=reason,
+            generated_at=event.received_at,
+            displaced_task_id=displaced_task_id,
+            metadata={"event_id": event.event_id},
+        )
+        proposal = validate_proposal(
+            request,
+            self.allocator.propose(request),
+            current_graph_version=graph_version,
+        )
+        return proposal.uav_id, request_id, proposal.allocator_id
+
     def decide(
         self,
         event: RuntimeEvent,
@@ -69,6 +109,8 @@ class PreemptionController:
         decision = DecisionType.CONTINUE
         displaced: str | None = None
         selected: str | None = None
+        allocation_request_id: str | None = None
+        allocator_id: str | None = None
         reason = "event does not require interruption"
 
         if event.event_type is RuntimeEventType.TASK_ARRIVAL:
@@ -76,8 +118,15 @@ class PreemptionController:
                 raise ValueError(f"arrival references unknown task {event.task_id!r}")
             idle = self._available_uavs(task, uavs)
             if idle:
-                selected = idle[0].uav_id
                 reason = "dispatch new task on an idle compatible UAV"
+                selected, allocation_request_id, allocator_id = self._allocate(
+                    event=event,
+                    task=task,
+                    candidates=idle,
+                    decision_type=DecisionType.CONTINUE,
+                    reason=reason,
+                    graph_version=graph_version,
+                )
             else:
                 candidates = sorted(
                     (
@@ -139,8 +188,16 @@ class PreemptionController:
                 displaced = active.task_id
                 if active.preemptible and replacements:
                     decision = DecisionType.MIGRATE
-                    selected = replacements[0].uav_id
                     reason = "migrate preemptible task away from communication-lost UAV"
+                    selected, allocation_request_id, allocator_id = self._allocate(
+                        event=event,
+                        task=active,
+                        candidates=replacements,
+                        decision_type=decision,
+                        reason=reason,
+                        graph_version=graph_version,
+                        displaced_task_id=active.task_id,
+                    )
                 else:
                     decision = DecisionType.PAUSE
                     selected = event.uav_id
@@ -164,8 +221,16 @@ class PreemptionController:
             )
             if failed_task.preemptible and replacements:
                 decision = DecisionType.MIGRATE
-                selected = replacements[0].uav_id
                 reason = "execution failure triggers migration to a safe compatible UAV"
+                selected, allocation_request_id, allocator_id = self._allocate(
+                    event=event,
+                    task=failed_task,
+                    candidates=replacements,
+                    decision_type=decision,
+                    reason=reason,
+                    graph_version=graph_version,
+                    displaced_task_id=failed_task.task_id,
+                )
             else:
                 decision = DecisionType.ABORT
                 selected = failed_task.assigned_uav
@@ -181,4 +246,6 @@ class PreemptionController:
             selected_uav=selected,
             reason=reason,
             graph_version=graph_version,
+            allocation_request_id=allocation_request_id,
+            allocator_id=allocator_id,
         )
