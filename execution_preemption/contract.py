@@ -87,7 +87,7 @@ def validate_training_contract(
 ) -> ValidatedTrainingContract:
     _expect(value.get("contract_id") == TRAINING_CONTRACT_ID, "contract_id drift")
     _expect(value.get("schema_version") == 1, "schema_version must equal 1")
-    _expect(value.get("status") == "FROZEN_FOR_ADAPTER_IMPLEMENTATION", "status drift")
+    _expect(value.get("status") == "FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION", "status drift")
 
     compatibility = value.get("compatibility", {})
     _expect(compatibility.get("legacy_checkpoint_compatible") is False,
@@ -131,8 +131,12 @@ def validate_training_contract(
     _expect(adapter.get("action_capacity") == ACTION_CAPACITY, "action capacity drift")
     _expect(adapter.get("flat_and_hetero_share_action_space") is True,
             "flat and hetero action spaces must be shared")
-    _expect(adapter.get("framework_tensor_conversion_complete") is False,
-            "framework integration must remain incomplete at this stage")
+    _expect(adapter.get("torch_tensor_conversion_complete") is True,
+            "torch tensor conversion must be complete")
+    _expect(adapter.get("gym_rollout_smoke_complete") is True,
+            "Gym rollout smoke must be complete")
+    _expect(adapter.get("native_pyg_required") is False,
+            "the repository-native GPPO backend must not require PyG")
 
     comparison = value.get("comparison", {})
     methods = tuple(comparison.get("methods", ()))

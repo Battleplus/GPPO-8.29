@@ -1,0 +1,121 @@
+{
+  "checkpoint_loaded": false,
+  "checkpoint_written": false,
+  "classification": "framework_rollout_smoke_not_training_or_model_evidence",
+  "freeze_started": false,
+  "gppo_backend": "repository_native_pytorch_relation_aware",
+  "gym_reset_step_contract": "PASS",
+  "gymnasium_version": "1.3.0",
+  "hidden_evaluation_started": false,
+  "model_parameter_counts": {
+    "gppo_adaptive_framework_smoke_v1": 12243,
+    "ppo_mlp_framework_smoke_v1": 660162
+  },
+  "model_weights_loaded": false,
+  "numpy_version": "2.0.2",
+  "optimizer_created": false,
+  "optimizer_step_count": 0,
+  "pyg_health": {
+    "classification": "HOST_NUMPY_PANDAS_BINARY_INCOMPATIBILITY_OPTIONAL",
+    "installed": true,
+    "native_import_pass": false,
+    "required_for_current_gppo": false,
+    "version": "2.7.0"
+  },
+  "python_version": "3.11.5",
+  "run_count": 4,
+  "runs": [
+    {
+      "accepted_decision_count": 1,
+      "action_count": 1,
+      "actions": [
+        289
+      ],
+      "energy_safety_violations": 0,
+      "final_runtime_sha256": "4081e91416e2e76a02ed13d1c36f453701c3c9601210fb9a6f8bc0813a7d077f",
+      "graph_version": 1,
+      "mask_violations": 0,
+      "policy_id": "ppo_mlp_framework_smoke_v1",
+      "resource_conflicts": 0,
+      "reward_sequence": [
+        -0.73
+      ],
+      "reward_sum": -0.73,
+      "scenario_id": "execution_uav_destroyed",
+      "stale_command_resurrections": 0,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_count": 2,
+      "action_count": 2,
+      "actions": [
+        194,
+        289
+      ],
+      "energy_safety_violations": 0,
+      "final_runtime_sha256": "ee3df18d0cd1587543d3800fab3f00e55c0e0759c1ff20580e7c0b9de4cf2c91",
+      "graph_version": 1,
+      "mask_violations": 0,
+      "policy_id": "ppo_mlp_framework_smoke_v1",
+      "resource_conflicts": 0,
+      "reward_sequence": [
+        0.0,
+        -0.5
+      ],
+      "reward_sum": -0.5,
+      "scenario_id": "simultaneous_p1",
+      "stale_command_resurrections": 0,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_count": 1,
+      "action_count": 1,
+      "actions": [
+        97
+      ],
+      "energy_safety_violations": 0,
+      "final_runtime_sha256": "f7fea1c59d4c16439c3598f58d9fcc7ce9597dc7eb3af5a7779feda262b511f8",
+      "graph_version": 1,
+      "mask_violations": 0,
+      "policy_id": "gppo_adaptive_framework_smoke_v1",
+      "resource_conflicts": 0,
+      "reward_sequence": [
+        -0.73
+      ],
+      "reward_sum": -0.73,
+      "scenario_id": "execution_uav_destroyed",
+      "stale_command_resurrections": 0,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_count": 2,
+      "action_count": 2,
+      "actions": [
+        2,
+        97
+      ],
+      "energy_safety_violations": 0,
+      "final_runtime_sha256": "e75ff13bc6494774714e1f4b5cae694a5dea712b3a8927d045adf8e885f16746",
+      "graph_version": 1,
+      "mask_violations": 0,
+      "policy_id": "gppo_adaptive_framework_smoke_v1",
+      "resource_conflicts": 0,
+      "reward_sequence": [
+        0.0,
+        -0.5
+      ],
+      "reward_sum": -0.5,
+      "scenario_id": "simultaneous_p1",
+      "stale_command_resurrections": 0,
+      "status": "PASS"
+    }
+  ],
+  "schema_version": 1,
+  "status": "PASS",
+  "test_started": false,
+  "torch_tensor_conversion": "PASS",
+  "torch_version": "2.5.0+cpu",
+  "training_allowed": false,
+  "training_started": false,
+  "validation_started": false
+}

@@ -104,6 +104,15 @@ from .adapter import (
     decode_policy_action,
     proposal_from_policy_action,
 )
+from .framework import (
+    TorchFlatObservation,
+    TorchHeteroObservation,
+    flat_to_torch,
+    hetero_to_torch,
+)
+from .policy_models import ExecutionGPPOAdaptive, ExecutionPPOMLP
+from .signals import derive_transition_signals
+from .gym_env import ExecutionPreemptionGymEnv, runtime_event_batches
 
 __all__ = [
     "CommandStatus",
@@ -129,6 +138,9 @@ __all__ = [
     "ExecutionMetricAccumulator",
     "ExecutionCommand",
     "ExecutionRuntime",
+    "ExecutionPreemptionGymEnv",
+    "ExecutionGPPOAdaptive",
+    "ExecutionPPOMLP",
     "FLAT_OBSERVATION_DIMENSION",
     "FlatPolicyObservation",
     "ExecutionGraphSnapshot",
@@ -176,6 +188,8 @@ __all__ = [
     "TRAINING_STEPS_PER_RUN",
     "TrainingContractError",
     "TransitionSignals",
+    "TorchFlatObservation",
+    "TorchHeteroObservation",
     "UAVAvailability",
     "UAVRuntime",
     "ValidatedTrainingContract",
@@ -190,9 +204,13 @@ __all__ = [
     "build_hetero_observation",
     "compute_transition_reward",
     "decode_policy_action",
+    "derive_transition_signals",
     "evaluate_acceptance",
+    "flat_to_torch",
+    "hetero_to_torch",
     "load_training_contract",
     "proposal_from_policy_action",
+    "runtime_event_batches",
     "validate_proposal",
     "validate_training_contract",
 ]

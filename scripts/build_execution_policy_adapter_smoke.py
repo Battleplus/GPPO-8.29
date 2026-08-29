@@ -132,7 +132,8 @@ def build_report() -> dict[str, object]:
             "flat_observation_sha256": _sha(list(flat.vector)),
             "hetero_observation_sha256": _sha(_hetero_canonical(hetero)),
             "action_capacity": len(flat.action_space.mask),
-            "valid_action_count_including_noop": flat.action_space.valid_action_count,
+            "valid_action_count": flat.action_space.valid_action_count,
+            "noop_enabled": flat.action_space.mask[0],
             "request_candidate_count": len(request.candidates),
             "selected_action_index": selected_index,
             "selected_uav": proposal.uav_id,
@@ -181,4 +182,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

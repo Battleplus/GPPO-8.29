@@ -68,8 +68,8 @@ class ActionSpaceSnapshot:
             raise AdapterValidationError("invalid graph binding")
         if len(self.bindings) != ACTION_CAPACITY or len(self.mask) != ACTION_CAPACITY:
             raise AdapterValidationError("action capacity drift")
-        if self.bindings[0] != ("NOOP", "NOOP") or not self.mask[0]:
-            raise AdapterValidationError("action zero must be enabled NOOP")
+        if self.bindings[0] != ("NOOP", "NOOP"):
+            raise AdapterValidationError("action zero must be NOOP")
         for index, enabled in enumerate(self.mask[1:], start=1):
             if enabled and self.bindings[index] is None:
                 raise AdapterValidationError("enabled action has no binding")
@@ -241,11 +241,13 @@ def _action_space(
     snapshot: ExecutionGraphSnapshot,
     slot_ids: Mapping[str, tuple[str | None, ...]],
     active_candidates: set[tuple[str, str]],
+    *,
+    noop_enabled: bool,
 ) -> ActionSpaceSnapshot:
     bindings: list[tuple[str, str] | None] = [None] * ACTION_CAPACITY
     mask = [False] * ACTION_CAPACITY
     bindings[0] = ("NOOP", "NOOP")
-    mask[0] = True
+    mask[0] = bool(noop_enabled)
     for uav_index, uav_id in enumerate(slot_ids["UAV"]):
         if uav_id is None:
             continue
@@ -309,7 +311,9 @@ def build_flat_observation(
         )
     context = _rule_context(decision)
     vector.extend(context)
-    action_space = _action_space(snapshot, slot_ids, candidates)
+    action_space = _action_space(
+        snapshot, slot_ids, candidates, noop_enabled=request is None
+    )
     value = FlatPolicyObservation(
         adapter_id=ADAPTER_ID,
         graph_version=snapshot.graph_version,
@@ -354,7 +358,9 @@ def build_hetero_observation(
         ))
         for relation in RELATIONS
     }
-    action_space = _action_space(snapshot, slot_ids, candidates)
+    action_space = _action_space(
+        snapshot, slot_ids, candidates, noop_enabled=request is None
+    )
     value = HeteroPolicyObservation(
         adapter_id=ADAPTER_ID,
         graph_version=snapshot.graph_version,
@@ -469,4 +475,3 @@ __all__ = [
     "decode_policy_action",
     "proposal_from_policy_action",
 ]
-
