@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "contract_id": "execution-preemption-training-v1",
+  "status": "FROZEN_FOR_ADAPTER_IMPLEMENTATION",
+  "research_branch": "research/execution-preemption-v1",
+  "contract_parent_remote_commit": "acb03a9aab5462a81978d4c52d6a94563f3db06f",
+  "source_binding": {
+    "final_source_commit_bound_by_launch_gate": true,
+    "runtime_head_must_descend_from_attested_source": true,
+    "source_hash_inventory_required": true
+  },
+  "compatibility": {
+    "legacy_checkpoint_compatible": false,
+    "legacy_evidence_reusable": false,
+    "modifies_legacy_reward": false,
+    "old_minimum_validation_read_only": true,
+    "old_campaign_read_only": true,
+    "requires_new_checkpoint_namespace": true
+  },
+  "reward": {
+    "contract_id": "execution-preemption-reward-v1",
+    "definition": "sum(weight_i * normalized_transition_signal_i)",
+    "weights": {
+      "weighted_progress_gain": 4.0,
+      "urgent_deadline_miss_rate": -10.0,
+      "weighted_vacancy_time": -5.0,
+      "progress_loss": -4.0,
+      "starvation_exposure": -3.0,
+      "switch_time": -1.0,
+      "energy_consumed": -1.0,
+      "normalized_distance": -0.5,
+      "load_gap": -0.5
+    },
+    "normalized_signal_range": [0.0, 1.0],
+    "hard_constraints_in_reward": false,
+    "hard_failure_signals": [
+      "resource_conflicts",
+      "stale_command_resurrections",
+      "energy_safety_violations"
+    ]
+  },
+  "normalization": {
+    "decision_horizon": 200.0,
+    "deadline_lateness_horizon": 50.0,
+    "starvation_horizon": 100.0,
+    "switch_time_horizon": 5.0,
+    "distance_horizon": "scenario_diagonal",
+    "energy_horizon": 1.0,
+    "clip_soft_signals_to_unit_interval": true,
+    "missing_required_signal_policy": "HARD_ERROR"
+  },
+  "metrics": {
+    "schema_id": "execution-preemption-metrics-v1",
+    "required": [
+      "urgent_deadline_miss_rate",
+      "mean_preemption_response_latency",
+      "cumulative_weighted_vacancy",
+      "normal_task_recovery_rate",
+      "cumulative_progress_loss",
+      "energy_safety_violations",
+      "resource_conflicts",
+      "stale_command_resurrections",
+      "task_starvation_rate",
+      "cumulative_normalized_distance",
+      "mean_load_gap",
+      "inference_latency_mean_ms",
+      "inference_latency_p95_ms",
+      "inference_latency_p99_ms"
+    ],
+    "recovery_censoring": "explicit_right_censored_count",
+    "failed_cases_removed": false,
+    "paired_by_tape": true,
+    "report_raw_training_seed_values": true,
+    "checkpoint_ranking_metric": null
+  },
+  "comparison": {
+    "methods": [
+      "senior_legacy_method_v1",
+      "greedy_priority_v1",
+      "ppo_mlp_reactive_v1",
+      "gppo_adaptive_reactive_v1",
+      "beam_mpc_v1",
+      "ppo_mlp_rule_arbiter_v1",
+      "gppo_adaptive_rule_arbiter_v1"
+    ],
+    "learned_methods": [
+      "ppo_mlp_reactive_v1",
+      "gppo_adaptive_reactive_v1",
+      "ppo_mlp_rule_arbiter_v1",
+      "gppo_adaptive_rule_arbiter_v1"
+    ],
+    "safety_shell_mandatory_for_all_methods": true,
+    "reactive_variant_semantics": "safe_masked_allocator_without_rule_decision_context",
+    "rule_arbiter_variant_semantics": "safe_masked_allocator_with_frozen_EventDecision_context",
+    "p0_or_rtb_policy_control_allowed": false,
+    "shared_event_tapes": true,
+    "shared_action_mask": true
+  },
+  "training": {
+    "namespace": "execution_preemption_v1",
+    "accepted_decision_steps_per_run": 50000,
+    "seeds": [1101, 2202, 3303],
+    "checkpoint_steps": [25000, 50000],
+    "fixed_evaluation_checkpoint": 50000,
+    "checkpoint_selection": false,
+    "training_uav_scales": [4, 8, 16],
+    "zero_shot_scalability_uav_count": 32,
+    "zero_shot_checkpoint_source_uav_count": 16,
+    "tasks_per_uav": [2, 3],
+    "scale_specific_training": true,
+    "reuse_old_campaign": false,
+    "resume_old_checkpoint": false,
+    "formal_training_started": false
+  },
+  "planned_cardinality": {
+    "learned_method_count": 4,
+    "training_seed_count": 3,
+    "training_scale_count": 3,
+    "learned_run_count": 36,
+    "checkpoints_per_run": 2,
+    "checkpoint_count": 72,
+    "fixed_final_checkpoints": 36
+  },
+  "seed_partition": {
+    "identity_rule": "contract_id/namespace/integer",
+    "legacy_numeric_seed_reuse_is_new_identity": true,
+    "development_hidden_overlap_allowed": false,
+    "training": {
+      "namespace": "execution_preemption_v1/train",
+      "policy_seeds": [1101, 2202, 3303]
+    },
+    "development": {
+      "namespace": "Dynamic-Preemption-Dev",
+      "manifest": "experiments/dynamic_preemption/dev_v1/manifest.json"
+    },
+    "hidden": {
+      "namespace": "Dynamic-Preemption-Hidden-V1",
+      "status": "NOT_GENERATED",
+      "seeds": [],
+      "generate_only_after_algorithms_and_thresholds_frozen": true
+    }
+  },
+  "scale_gate": {
+    "order": [4, 8, 16, 32],
+    "advance_only_after_previous_pass": true,
+    "uav_4": "semantic_and_reward_smoke",
+    "uav_8": "execution_consistency_and_worker_isolation",
+    "uav_16": "primary_algorithm_comparison",
+    "uav_32": "zero_shot_scalability_and_tail_latency_only",
+    "failure_policy": "STOP_PRESERVE_ARTIFACTS_NO_AUTOFIX"
+  },
+  "acceptance": {
+    "resource_conflicts": 0,
+    "stale_command_resurrections": 0,
+    "energy_safety_violations": 0,
+    "p0_handling_rate": 1.0,
+    "urgent_deadline_miss_relative_improvement_min": 0.1,
+    "cumulative_vacancy_relative_improvement_min": 0.1,
+    "normal_task_recovery_rate_min": 0.95
+  },
+  "launch_gate": {
+    "training_allowed": false,
+    "requires_source_bound_gate": true,
+    "requires_clean_training_worktree": true,
+    "requires_reward_contract_tests": true,
+    "requires_adapter_smoke": true,
+    "requires_fresh_output_namespace": true,
+    "forbids_validation_freeze_test_hidden_before_training_seal": true
+  }
+}
