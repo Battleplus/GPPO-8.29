@@ -138,4 +138,3 @@ __all__ = [
     "URGENT_PRIORITY_MIN",
     "derive_transition_signals",
 ]
-
