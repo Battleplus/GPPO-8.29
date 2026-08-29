@@ -1,0 +1,51 @@
+{
+  "bank": "Dynamic-Preemption-Dev",
+  "case_count": 200,
+  "cases_per_scenario": 20,
+  "classification": "development_only_not_held_out",
+  "contract_id": "execution-preemption-v1",
+  "scenario_count": 10,
+  "scenarios": [
+    {
+      "description": "搜索执行 40% 时出现 P1 紧急任务",
+      "id": "urgent_at_40"
+    },
+    {
+      "description": "搜索执行 90% 时出现低收益临时任务",
+      "id": "low_value_at_90"
+    },
+    {
+      "description": "不可抢占打击期间出现普通任务",
+      "id": "nonpreemptible_strike"
+    },
+    {
+      "description": "执行 UAV 中途失效并迁移任务",
+      "id": "execution_uav_destroyed"
+    },
+    {
+      "description": "执行 UAV 低能量并安全返航",
+      "id": "low_energy_rtb"
+    },
+    {
+      "description": "旧任务取消报告延迟到达",
+      "id": "delayed_task_cancel"
+    },
+    {
+      "description": "同一任务连续优先级变化",
+      "id": "repeated_priority_change"
+    },
+    {
+      "description": "两个 P1 事件原子同时到达",
+      "id": "simultaneous_p1"
+    },
+    {
+      "description": "重新分配窗口内再次到达安全事件",
+      "id": "event_during_inference"
+    },
+    {
+      "description": "通信恢复窗口内再次到达紧急事件",
+      "id": "event_during_resume"
+    }
+  ],
+  "schema_version": 1
+}

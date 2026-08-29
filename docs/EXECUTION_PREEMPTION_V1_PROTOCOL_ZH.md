@@ -164,8 +164,8 @@ P0 事件处理率 = 100%
 |---|---|---|
 | V1-A | 冻结状态机、事件等级、进度和一致性协议 | 已实现 |
 | V1-B | `TaskRuntime`、`UAVRuntime`、`EventDecision` | 已实现 |
-| V1-C | 确定性 `PreemptionController` 与原子事务 | 已实现，待完整场景扩展 |
-| V1-D | 10×20 固定开发 tapes | 未开始 |
+| V1-C | 确定性 `PreemptionController` 与原子事务 | 已实现 |
+| V1-D | 10×20 固定开发 tapes | 已实现，200/200 规则回放 PASS |
 | V1-E | 接入 PPO/GPPO 重新分配 | 未开始 |
 | V1-F | 重新训练与 4/8/16 UAV 比较 | 未开始 |
 | V1-G | Hidden-V1 一次性验证与 evidence 分支 | 未开始 |

@@ -1,0 +1,98 @@
+{
+  "bank": "Dynamic-Preemption-Dev",
+  "case_index": 2,
+  "case_seed": 829104002,
+  "classification": "development_only_not_held_out",
+  "contract_id": "execution-preemption-v1",
+  "events": [
+    {
+      "batch_id": "E-02-energy",
+      "confidence": 1.0,
+      "deadline": null,
+      "event_id": "E-02-energy",
+      "event_type": "UAV_LOW_ENERGY",
+      "occurred_at": 5.12686,
+      "payload": {},
+      "priority": "P2",
+      "received_at": 5.12686,
+      "task_id": null,
+      "task_priority": 0,
+      "uav_id": "U0"
+    }
+  ],
+  "initial_state": {
+    "tasks": [
+      {
+        "assigned_uav": "U0",
+        "deadline": 100.0,
+        "preemptible": true,
+        "priority": 10,
+        "progress": 0.55,
+        "resume_policy": "ANY_COMPATIBLE",
+        "state": "RUNNING",
+        "task_id": "BASE",
+        "task_type": "SEARCH"
+      }
+    ],
+    "uavs": [
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.180076,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U0"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U1"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U2"
+      },
+      {
+        "communication_state": "CONNECTED",
+        "energy_ratio": 0.9,
+        "estimated_rtb_energy": 0.1,
+        "reserve_energy": 0.1,
+        "supported_task_types": [
+          "SEARCH",
+          "STRIKE",
+          "URGENT"
+        ],
+        "uav_id": "U3"
+      }
+    ]
+  },
+  "paired": true,
+  "required_invariants": [
+    "exclusive_task_owner_count<=1",
+    "active_task_count_per_uav<=1",
+    "stale_command_resurrection=0",
+    "progress_double_count=0"
+  ],
+  "scenario_id": "low_energy_rtb",
+  "schema_version": 1,
+  "tape_id": "low_energy_rtb-02-829104002"
+}
