@@ -1,0 +1,182 @@
+{
+  "event_seed": 9101574,
+  "events": [
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "task_churn-C05-E00",
+      "event_seed": 9101574,
+      "observed_at": 2.0,
+      "occurred_at": 1.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 0,
+        "exploratory_scenario": "task_churn",
+        "generated_region_vacancy": [
+          3
+        ],
+        "stressors": [
+          "task_churn",
+          "rapid_release",
+          "switching_pressure"
+        ],
+        "target_region": 3,
+        "tracker_uav": 3
+      },
+      "severity": 0.792462,
+      "source_event": "target_sensor_detection",
+      "state_version": 0,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "task_churn-C05-E01",
+      "event_seed": 9101575,
+      "observed_at": 2.1,
+      "occurred_at": 1.2,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 0,
+        "exploratory_scenario": "task_churn",
+        "released_uav": 3,
+        "stressors": [
+          "task_churn",
+          "rapid_release",
+          "switching_pressure"
+        ]
+      },
+      "severity": 0.630717,
+      "source_event": "target_status_update",
+      "state_version": 1,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "task_churn-C05-E02",
+      "event_seed": 9101576,
+      "observed_at": 2.2,
+      "occurred_at": 1.4,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 2,
+        "exploratory_scenario": "task_churn",
+        "generated_region_vacancy": [
+          1
+        ],
+        "stressors": [
+          "task_churn",
+          "rapid_release",
+          "switching_pressure"
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "severity": 0.37467,
+      "source_event": "target_sensor_detection",
+      "state_version": 2,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "task_churn-C05-E03",
+      "event_seed": 9101577,
+      "observed_at": 2.3,
+      "occurred_at": 1.6,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 2,
+        "exploratory_scenario": "task_churn",
+        "released_uav": 1,
+        "stressors": [
+          "task_churn",
+          "rapid_release",
+          "switching_pressure"
+        ]
+      },
+      "severity": 0.959682,
+      "source_event": "target_status_update",
+      "state_version": 3,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "task_churn-C05-E04",
+      "event_seed": 9101578,
+      "observed_at": 2.4,
+      "occurred_at": 1.8,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "task_churn",
+        "previous_uav": 3,
+        "stressors": [
+          "task_churn",
+          "rapid_release",
+          "switching_pressure"
+        ],
+        "vacant_region": 1
+      },
+      "severity": 0.485508,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "type": "REGION_VACANCY"
+    }
+  ],
+  "initial_seed": 880006,
+  "mode": "extreme/task_churn",
+  "schema_version": 1
+}

@@ -1,0 +1,70 @@
+{
+  "classification": "system_invariant_audit_not_model_effect_evaluation",
+  "rows": [
+    {
+      "after_inflight_event": {
+        "decision_step": 0,
+        "decision_version": 0,
+        "event_index": 4,
+        "graph_version": 2,
+        "time": 14.5
+      },
+      "before_inflight_event": {
+        "decision_step": 0,
+        "decision_version": 0,
+        "event_index": 3,
+        "graph_version": 1,
+        "time": 11.0
+      },
+      "checkpoint_sha256": "cc0d3d77d0d93ef7ae910b84795405d0bb50811317eb5f310c031d709d30b4e5",
+      "decision_step_after_stale": 0,
+      "family": "PPO-MLP",
+      "final_decision_step": 1,
+      "fresh_action": 0,
+      "fresh_reward": 5.507500000000002,
+      "fresh_submission_rejected": false,
+      "pass": true,
+      "stale_action": 5,
+      "stale_consumed_decision_step": false,
+      "stale_reward": 0.0,
+      "stale_submission_rejected": true,
+      "stale_terminated": false,
+      "stale_truncated": false,
+      "training_seed": 1101
+    },
+    {
+      "after_inflight_event": {
+        "decision_step": 0,
+        "decision_version": 0,
+        "event_index": 4,
+        "graph_version": 2,
+        "time": 14.5
+      },
+      "before_inflight_event": {
+        "decision_step": 0,
+        "decision_version": 0,
+        "event_index": 3,
+        "graph_version": 1,
+        "time": 11.0
+      },
+      "checkpoint_sha256": "2f378fc0d7bf6c23dc97402a9f8d0c1e20a5aa7f4a698e32a7ede0d494980b88",
+      "decision_step_after_stale": 0,
+      "family": "GPPO-Adaptive",
+      "final_decision_step": 1,
+      "fresh_action": 0,
+      "fresh_reward": 5.507500000000002,
+      "fresh_submission_rejected": false,
+      "pass": true,
+      "stale_action": 4,
+      "stale_consumed_decision_step": false,
+      "stale_reward": 0.0,
+      "stale_submission_rejected": true,
+      "stale_terminated": false,
+      "stale_truncated": false,
+      "training_seed": 1101
+    }
+  ],
+  "scenario": "event_arrives_between_inference_and_submission",
+  "schema_version": 1,
+  "status": "PASS"
+}

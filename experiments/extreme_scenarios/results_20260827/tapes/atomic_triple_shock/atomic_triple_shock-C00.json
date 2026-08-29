@@ -1,0 +1,180 @@
+{
+  "event_seed": 9102019,
+  "events": [
+    {
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "atomic_triple_shock-C00-E00",
+      "event_seed": 9102019,
+      "observed_at": 11.0,
+      "occurred_at": 10.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "released_regions": [
+          2
+        ],
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ]
+      },
+      "severity": 0.619688,
+      "source_event": "external_random_scheduler",
+      "state_version": 0,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        0,
+        2
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "atomic_triple_shock-C00-E01",
+      "event_seed": 9102020,
+      "observed_at": 11.0,
+      "occurred_at": 10.03,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "generated_region_vacancy": [
+          0,
+          2
+        ],
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "target_region": 0,
+        "tracker_uav": 0
+      },
+      "severity": 0.977836,
+      "source_event": "target_sensor_detection",
+      "state_version": 1,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "atomic_triple_shock-C00-E02",
+      "event_seed": 9102021,
+      "observed_at": 11.0,
+      "occurred_at": 10.06,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DESTROYED": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "atomic_triple_shock",
+        "previous_uav": 1,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "vacant_region": 1
+      },
+      "severity": 0.366685,
+      "source_event": "direct_region_vacancy",
+      "state_version": 2,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "atomic_triple_shock-C00-E03",
+      "event_seed": 9102022,
+      "observed_at": 14.5,
+      "occurred_at": 14.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "released_uav": 0,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ]
+      },
+      "severity": 0.500482,
+      "source_event": "target_status_update",
+      "state_version": 3,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "atomic_triple_shock-C00-E04",
+      "event_seed": 9102023,
+      "observed_at": 16.5,
+      "occurred_at": 16.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "atomic_triple_shock",
+        "previous_uav": 3,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "vacant_region": 3
+      },
+      "severity": 0.582309,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "type": "REGION_VACANCY"
+    }
+  ],
+  "initial_seed": 880001,
+  "mode": "extreme/atomic_triple_shock",
+  "schema_version": 1
+}

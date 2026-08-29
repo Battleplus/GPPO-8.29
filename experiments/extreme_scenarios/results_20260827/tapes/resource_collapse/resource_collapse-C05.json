@@ -1,0 +1,174 @@
+{
+  "event_seed": 9102318,
+  "events": [
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "resource_collapse-C05-E00",
+      "event_seed": 9102318,
+      "observed_at": 6.0,
+      "occurred_at": 5.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 3,
+        "exploratory_scenario": "resource_collapse",
+        "released_regions": [
+          3
+        ],
+        "stressors": [
+          "resource_scarcity",
+          "rapid_damage",
+          "near_capacity_limit"
+        ]
+      },
+      "severity": 0.965349,
+      "source_event": "external_random_scheduler",
+      "state_version": 0,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "resource_collapse-C05-E01",
+      "event_seed": 9102319,
+      "observed_at": 6.1,
+      "occurred_at": 5.1,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 1,
+        "exploratory_scenario": "resource_collapse",
+        "released_regions": [
+          1
+        ],
+        "stressors": [
+          "resource_scarcity",
+          "rapid_damage",
+          "near_capacity_limit"
+        ]
+      },
+      "severity": 0.54836,
+      "source_event": "external_random_scheduler",
+      "state_version": 1,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        0,
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "resource_collapse-C05-E02",
+      "event_seed": 9102320,
+      "observed_at": 6.2,
+      "occurred_at": 5.2,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 0,
+        "exploratory_scenario": "resource_collapse",
+        "released_regions": [
+          0,
+          3
+        ],
+        "stressors": [
+          "resource_scarcity",
+          "rapid_damage",
+          "near_capacity_limit"
+        ]
+      },
+      "severity": 0.818446,
+      "source_event": "external_random_scheduler",
+      "state_version": 2,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "resource_collapse-C05-E03",
+      "event_seed": 9102321,
+      "observed_at": 6.3,
+      "occurred_at": 6.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0
+        },
+        "exploratory_scenario": "resource_collapse",
+        "previous_uav": 2,
+        "stressors": [
+          "resource_scarcity",
+          "rapid_damage",
+          "near_capacity_limit"
+        ],
+        "vacant_region": 3
+      },
+      "severity": 0.43974,
+      "source_event": "direct_region_vacancy",
+      "state_version": 3,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "resource_collapse-C05-E04",
+      "event_seed": 9102322,
+      "observed_at": 6.3,
+      "occurred_at": 6.1,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0
+        },
+        "exploratory_scenario": "resource_collapse",
+        "previous_uav": 2,
+        "stressors": [
+          "resource_scarcity",
+          "rapid_damage",
+          "near_capacity_limit"
+        ],
+        "vacant_region": 1
+      },
+      "severity": 0.955093,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "type": "REGION_VACANCY"
+    }
+  ],
+  "initial_seed": 880006,
+  "mode": "extreme/resource_collapse",
+  "schema_version": 1
+}

@@ -1,0 +1,192 @@
+{
+  "atomic_triple_shock": {
+    "description": "UAV 损毁、目标发现、区域空缺在同一观测批次到达，随后目标释放与再次空缺。",
+    "observed": [
+      11.0,
+      11.0,
+      11.0,
+      14.5,
+      16.5
+    ],
+    "occurred": [
+      10.0,
+      10.03,
+      10.06,
+      14.0,
+      16.0
+    ],
+    "sequence": [
+      "UAV_DAMAGE",
+      "TARGET_DISCOVERED",
+      "REGION_VACANCY",
+      "TARGET_DESTROYED",
+      "REGION_VACANCY"
+    ],
+    "stressors": [
+      "atomic_batch",
+      "coupled_reallocation",
+      "task_release"
+    ],
+    "title": "原子三重冲击"
+  },
+  "event_storm_8": {
+    "description": "把有效事件序列压缩为八个高度重叠的观测，超过原协议每回合五事件的密度。",
+    "sequence": null,
+    "stressors": [
+      "long_horizon",
+      "dense_overlap",
+      "distribution_shift"
+    ],
+    "title": "八事件持续风暴"
+  },
+  "long_blind_burst": {
+    "description": "五个真实事件在 0.08 秒内发生，但全部延迟到 30 秒后才作为一个批次被观察。",
+    "observed": [
+      30.0,
+      30.0,
+      30.0,
+      30.0,
+      30.0
+    ],
+    "occurred": [
+      1.0,
+      1.02,
+      1.04,
+      1.06,
+      1.08
+    ],
+    "sequence": [
+      "UAV_DAMAGE",
+      "TARGET_DISCOVERED",
+      "REGION_VACANCY",
+      "TARGET_DESTROYED",
+      "REGION_VACANCY"
+    ],
+    "stressors": [
+      "long_information_gap",
+      "atomic_batch",
+      "stale_world_model"
+    ],
+    "title": "长盲区突发批次"
+  },
+  "out_of_order_reports": {
+    "description": "目标销毁报告先于目标发现报告到达，并交错 UAV 损毁与区域空缺报告。",
+    "observed": [
+      12.0,
+      6.0,
+      10.0,
+      8.0,
+      11.0
+    ],
+    "occurred": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0
+    ],
+    "sequence": [
+      "TARGET_DISCOVERED",
+      "TARGET_DESTROYED",
+      "UAV_DAMAGE",
+      "REGION_VACANCY",
+      "TARGET_DISCOVERED"
+    ],
+    "stressors": [
+      "partial_observation",
+      "out_of_order",
+      "causal_inversion"
+    ],
+    "title": "因果报告乱序"
+  },
+  "resource_collapse": {
+    "description": "连续损毁三架 UAV，仅剩一架承担全部搜索任务，再连续制造区域空缺。",
+    "observed": [
+      6.0,
+      6.1,
+      6.2,
+      6.3,
+      6.3
+    ],
+    "occurred": [
+      5.0,
+      5.1,
+      5.2,
+      6.0,
+      6.1
+    ],
+    "sequence": [
+      "UAV_DAMAGE",
+      "UAV_DAMAGE",
+      "UAV_DAMAGE",
+      "REGION_VACANCY",
+      "REGION_VACANCY"
+    ],
+    "stressors": [
+      "resource_scarcity",
+      "rapid_damage",
+      "near_capacity_limit"
+    ],
+    "title": "三级资源坍缩"
+  },
+  "task_churn": {
+    "description": "目标发现与销毁快速交替，UAV 在 SEARCH/TRACK/释放之间频繁切换，最后再出现区域空缺。",
+    "observed": [
+      2.0,
+      2.1,
+      2.2,
+      2.3,
+      2.4
+    ],
+    "occurred": [
+      1.0,
+      1.2,
+      1.4,
+      1.6,
+      1.8
+    ],
+    "sequence": [
+      "TARGET_DISCOVERED",
+      "TARGET_DESTROYED",
+      "TARGET_DISCOVERED",
+      "TARGET_DESTROYED",
+      "REGION_VACANCY"
+    ],
+    "stressors": [
+      "task_churn",
+      "rapid_release",
+      "switching_pressure"
+    ],
+    "title": "任务反复变更"
+  },
+  "tracking_saturation_release": {
+    "description": "三架 UAV 依次转入 TRACK，最后一架搜索 UAV 损毁；系统等待目标销毁报告释放一架 UAV。",
+    "observed": [
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      15.0
+    ],
+    "occurred": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0
+    ],
+    "sequence": [
+      "TARGET_DISCOVERED",
+      "TARGET_DISCOVERED",
+      "TARGET_DISCOVERED",
+      "UAV_DAMAGE",
+      "TARGET_DESTROYED"
+    ],
+    "stressors": [
+      "temporary_infeasibility",
+      "task_contention",
+      "delayed_release"
+    ],
+    "title": "跟踪饱和后延迟释放"
+  }
+}

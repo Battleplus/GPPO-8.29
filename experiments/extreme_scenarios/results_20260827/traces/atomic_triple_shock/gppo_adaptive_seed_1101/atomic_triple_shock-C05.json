@@ -1,0 +1,1586 @@
+{
+  "algorithm": "GPPO-Adaptive seed=1101",
+  "communication_counter_check": {
+    "bytes": 2566,
+    "last_step_bytes_delta": 0,
+    "last_step_trigger_delta": 0,
+    "trigger_count": 5
+  },
+  "decisions": [
+    {
+      "active_events_before": [
+        "atomic_triple_shock-C05-E00",
+        "atomic_triple_shock-C05-E01",
+        "atomic_triple_shock-C05-E02"
+      ],
+      "affected_event_ids": [
+        "atomic_triple_shock-C05-E00",
+        "atomic_triple_shock-C05-E01",
+        "atomic_triple_shock-C05-E02"
+      ],
+      "algorithm": "GPPO-Adaptive seed=1101",
+      "decision_index": 1,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.5707975625991821,
+          "layer0/target": 0.5578524470329285,
+          "layer0/uav": 0.5933198928833008,
+          "layer1/region": 0.6969775557518005,
+          "layer1/target": 0.6037125587463379,
+          "layer1/uav": 0.5939302444458008
+        },
+        "inference_latency_ms": 14.3751,
+        "log_probability": -0.7151622772216797,
+        "pre_mask_invalid_probability": 0.8448132872581482,
+        "predicted_value": 22.279874801635742
+      },
+      "final_infeasible": false,
+      "graph_version_after": 2,
+      "graph_version_before": 1,
+      "invalid_action": false,
+      "mask_rate": 0.6470588235294117,
+      "new_events_after": [],
+      "pending_regions_after": [
+        1,
+        2
+      ],
+      "raw_action": 0,
+      "repaired_action": 0,
+      "reward": 4.740000000000002,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.0,
+          "load_gap": 0.0,
+          "recovery_delay": 2.0,
+          "switches": 1.0,
+          "total": 11.259999999999998,
+          "uncovered": 2.002,
+          "weighted": {
+            "distance": 0.0,
+            "load_gap": 0.0,
+            "recovery_delay": 1.0,
+            "switches": 0.25,
+            "uncovered": 10.009999999999998
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.0,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 16.0,
+          "uncovered": 3.0,
+          "weighted": {
+            "distance": 0.0,
+            "load_gap": 1.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 15.0
+          }
+        },
+        "constraint_term_included": false,
+        "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "reward": 4.740000000000002,
+        "reward_components": {
+          "distance": 0.0,
+          "load_gap": 1.0,
+          "recovery_delay": -1.0,
+          "switches": -0.25,
+          "uncovered": 4.990000000000002
+        }
+      },
+      "simulation_time_after": 12.0,
+      "simulation_time_before": 11.0,
+      "stale_submission_retries": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "atomic_triple_shock-C05-E00",
+        "atomic_triple_shock-C05-E01"
+      ],
+      "affected_event_ids": [
+        "atomic_triple_shock-C05-E00",
+        "atomic_triple_shock-C05-E01"
+      ],
+      "algorithm": "GPPO-Adaptive seed=1101",
+      "decision_index": 2,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.4741494059562683,
+          "layer0/target": 0.5777524709701538,
+          "layer0/uav": 0.5791294574737549,
+          "layer1/region": 0.6121699213981628,
+          "layer1/target": 0.6718360781669617,
+          "layer1/uav": 0.5586370229721069
+        },
+        "inference_latency_ms": 12.7427,
+        "log_probability": -1.0139421224594116,
+        "pre_mask_invalid_probability": 0.9998286962509155,
+        "predicted_value": 21.804763793945312
+      },
+      "final_infeasible": false,
+      "graph_version_after": 3,
+      "graph_version_before": 2,
+      "invalid_action": false,
+      "mask_rate": 0.7647058823529411,
+      "new_events_after": [],
+      "pending_regions_after": [
+        2
+      ],
+      "raw_action": 1,
+      "repaired_action": 1,
+      "reward": 3.63214886980224,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 1.0,
+          "recovery_delay": 2.0,
+          "switches": 1.0,
+          "total": 7.377851130197758,
+          "uncovered": 1.002,
+          "weighted": {
+            "distance": 0.1178511301977579,
+            "load_gap": 1.0,
+            "recovery_delay": 1.0,
+            "switches": 0.25,
+            "uncovered": 5.01
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.0,
+          "load_gap": 0.0,
+          "recovery_delay": 2.0,
+          "switches": 0.0,
+          "total": 11.009999999999998,
+          "uncovered": 2.002,
+          "weighted": {
+            "distance": 0.0,
+            "load_gap": 0.0,
+            "recovery_delay": 1.0,
+            "switches": 0.0,
+            "uncovered": 10.009999999999998
+          }
+        },
+        "constraint_term_included": false,
+        "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "reward": 3.63214886980224,
+        "reward_components": {
+          "distance": -0.1178511301977579,
+          "load_gap": -1.0,
+          "recovery_delay": 0.0,
+          "switches": -0.25,
+          "uncovered": 4.999999999999998
+        }
+      },
+      "simulation_time_after": 13.0,
+      "simulation_time_before": 12.0,
+      "stale_submission_retries": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "atomic_triple_shock-C05-E00"
+      ],
+      "affected_event_ids": [
+        "atomic_triple_shock-C05-E00"
+      ],
+      "algorithm": "GPPO-Adaptive seed=1101",
+      "decision_index": 3,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.3866819143295288,
+          "layer0/target": 0.5852487683296204,
+          "layer0/uav": 0.5493928790092468,
+          "layer1/region": 0.5127514600753784,
+          "layer1/target": 0.5366206169128418,
+          "layer1/uav": 0.5141801834106445
+        },
+        "inference_latency_ms": 13.3404,
+        "log_probability": -0.1327040195465088,
+        "pre_mask_invalid_probability": 0.9999130964279175,
+        "predicted_value": 19.172895431518555
+      },
+      "final_infeasible": false,
+      "graph_version_after": 5,
+      "graph_version_before": 3,
+      "invalid_action": false,
+      "mask_rate": 0.8823529411764706,
+      "new_events_after": [
+        "atomic_triple_shock-C05-E03"
+      ],
+      "pending_regions_after": [],
+      "raw_action": 14,
+      "repaired_action": 14,
+      "reward": 6.7010744349011215,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.17677669529663687,
+          "load_gap": 0.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 0.42677669529663687,
+          "uncovered": 0.0,
+          "weighted": {
+            "distance": 0.17677669529663687,
+            "load_gap": 0.0,
+            "recovery_delay": 0.0,
+            "switches": 0.25,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 1.0,
+          "recovery_delay": 2.0,
+          "switches": 0.0,
+          "total": 7.127851130197758,
+          "uncovered": 1.002,
+          "weighted": {
+            "distance": 0.1178511301977579,
+            "load_gap": 1.0,
+            "recovery_delay": 1.0,
+            "switches": 0.0,
+            "uncovered": 5.01
+          }
+        },
+        "constraint_term_included": false,
+        "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "reward": 6.7010744349011215,
+        "reward_components": {
+          "distance": -0.05892556509887896,
+          "load_gap": 1.0,
+          "recovery_delay": 1.0,
+          "switches": -0.25,
+          "uncovered": 5.01
+        }
+      },
+      "simulation_time_after": 14.5,
+      "simulation_time_before": 13.0,
+      "stale_submission_retries": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [],
+      "affected_event_ids": [],
+      "algorithm": "GPPO-Adaptive seed=1101",
+      "decision_index": 4,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.3249310255050659,
+          "layer0/target": 0.5782652497291565,
+          "layer0/uav": 0.4940092861652374,
+          "layer1/region": 0.4252627193927765,
+          "layer1/target": 0.1856885403394699,
+          "layer1/uav": 0.45252716541290283
+        },
+        "inference_latency_ms": 12.2575,
+        "log_probability": 0.0,
+        "pre_mask_invalid_probability": 0.9989333748817444,
+        "predicted_value": 13.533100128173828
+      },
+      "final_infeasible": false,
+      "graph_version_after": 7,
+      "graph_version_before": 5,
+      "invalid_action": false,
+      "mask_rate": 0.9411764705882353,
+      "new_events_after": [
+        "atomic_triple_shock-C05-E04"
+      ],
+      "pending_regions_after": [
+        3
+      ],
+      "raw_action": 16,
+      "repaired_action": 16,
+      "reward": 0.0,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.17677669529663687,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 2.176776695296637,
+          "uncovered": 0.0,
+          "weighted": {
+            "distance": 0.17677669529663687,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.17677669529663687,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 2.176776695296637,
+          "uncovered": 0.0,
+          "weighted": {
+            "distance": 0.17677669529663687,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 0.0
+          }
+        },
+        "constraint_term_included": false,
+        "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "reward": 0.0,
+        "reward_components": {
+          "distance": 0.0,
+          "load_gap": 0.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "uncovered": 0.0
+        }
+      },
+      "simulation_time_after": 16.5,
+      "simulation_time_before": 14.5,
+      "stale_submission_retries": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false
+    },
+    {
+      "active_events_before": [
+        "atomic_triple_shock-C05-E04"
+      ],
+      "affected_event_ids": [
+        "atomic_triple_shock-C05-E04"
+      ],
+      "algorithm": "GPPO-Adaptive seed=1101",
+      "decision_index": 5,
+      "diagnostics": {
+        "gate_mean": {
+          "layer0/region": 0.3848951756954193,
+          "layer0/target": 0.5745676159858704,
+          "layer0/uav": 0.5215340256690979,
+          "layer1/region": 0.4636302590370178,
+          "layer1/target": 0.21593885123729706,
+          "layer1/uav": 0.46429315209388733
+        },
+        "inference_latency_ms": 13.6992,
+        "log_probability": -0.004784107208251953,
+        "pre_mask_invalid_probability": 0.8947912454605103,
+        "predicted_value": 13.171865463256836
+      },
+      "final_infeasible": false,
+      "graph_version_after": 8,
+      "graph_version_before": 7,
+      "invalid_action": false,
+      "mask_rate": 0.8235294117647058,
+      "new_events_after": [],
+      "pending_regions_after": [],
+      "raw_action": 7,
+      "repaired_action": 7,
+      "reward": 5.77946278254944,
+      "reward_trace": {
+        "after": {
+          "constraint_violation": 0.0,
+          "distance": 0.08838834764831843,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": 1.0,
+          "total": 1.3383883476483185,
+          "uncovered": 0.0,
+          "weighted": {
+            "distance": 0.08838834764831843,
+            "load_gap": 1.0,
+            "recovery_delay": 0.0,
+            "switches": 0.25,
+            "uncovered": 0.0
+          }
+        },
+        "before": {
+          "constraint_violation": 0.0,
+          "distance": 0.1178511301977579,
+          "load_gap": 2.0,
+          "recovery_delay": 0.0,
+          "switches": 0.0,
+          "total": 7.117851130197758,
+          "uncovered": 1.0,
+          "weighted": {
+            "distance": 0.1178511301977579,
+            "load_gap": 2.0,
+            "recovery_delay": 0.0,
+            "switches": 0.0,
+            "uncovered": 5.0
+          }
+        },
+        "constraint_term_included": false,
+        "definition": "J(before)-J(after)",
+        "formula": "alpha*weighted_uncovered_regions+beta*normalized_distance+gamma*load_gap+delta*switch_count+eta*recovery_delay",
+        "reward": 5.77946278254944,
+        "reward_components": {
+          "distance": 0.029462782549439473,
+          "load_gap": 1.0,
+          "recovery_delay": 0.0,
+          "switches": -0.25,
+          "uncovered": 5.0
+        }
+      },
+      "simulation_time_after": 17.5,
+      "simulation_time_before": 16.5,
+      "stale_submission_retries": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false
+    }
+  ],
+  "episode": {
+    "algorithm": "GPPO-Adaptive seed=1101",
+    "avg_reward": 2.9789551553218288,
+    "communication_bytes": 2321,
+    "communication_opportunities": 7,
+    "communication_suppressed": 3,
+    "communication_suppression_rate": 0.42857142857142855,
+    "communication_trigger_count": 4,
+    "cumulative_uncovered_time": 8.009999999999998,
+    "cumulative_weighted_vacancy": 8.009999999999998,
+    "decision_count": 7,
+    "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+    "episode_return": 20.852686087252803,
+    "event_count": 5,
+    "event_success_count": 5,
+    "event_success_rate": 1.0,
+    "event_to_action_latency_ms": 0.0,
+    "final_infeasible_count": 0,
+    "final_infeasible_rate": 0.0,
+    "fixed_j": 123.43724486889364,
+    "gate_mean": 0.5596870095247315,
+    "gate_variance": 0.007632751870567297,
+    "inference_latency_ms": 13.664328571428571,
+    "legal_coverage_rate": 1.0,
+    "load_gap": 0.4583333333333333,
+    "mask_rate": 0.7394957983193277,
+    "normalized_distance": 0.06138079697799891,
+    "pre_mask_invalid_probability": 0.918400228023529,
+    "recovery_delay": 1.4,
+    "recovery_delay_observed_count": 5,
+    "repair_count": 0,
+    "switch_count": 7,
+    "tape_id": "atomic_triple_shock-C05",
+    "temporary_infeasible_count": 0,
+    "temporary_infeasible_rate": 0.0,
+    "value_error": 15.547011132931166,
+    "value_squared_error": 256.2319181284202,
+    "weighted_uncovered": 0.0
+  },
+  "episode_return_check": 20.852686087252803,
+  "event_runtime": {
+    "atomic_triple_shock-C05-E00": {
+      "actual_affected_regions": [
+        2
+      ],
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "application_note": "confirmed-via-bridge",
+      "applied_at": 11.0,
+      "event_id": "atomic_triple_shock-C05-E00",
+      "event_seed": 9102519,
+      "observed_at": 11.0,
+      "occurred_at": 10.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "released_regions": [
+          2
+        ],
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ]
+      },
+      "recovery_delay": 3.0,
+      "resolved_at": 14.0,
+      "severity": 0.483595,
+      "source_event": "external_random_scheduler",
+      "state_version": 0,
+      "status": "resolved",
+      "type": "UAV_DAMAGE"
+    },
+    "atomic_triple_shock-C05-E01": {
+      "actual_affected_regions": [
+        1
+      ],
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "application_note": "confirmed-via-bridge",
+      "applied_at": 11.0,
+      "event_id": "atomic_triple_shock-C05-E01",
+      "event_seed": 9102520,
+      "observed_at": 11.0,
+      "occurred_at": 10.03,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "generated_region_vacancy": [
+          1
+        ],
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "recovery_delay": 2.0,
+      "resolved_at": 13.0,
+      "severity": 0.841212,
+      "source_event": "target_sensor_detection",
+      "state_version": 1,
+      "status": "resolved",
+      "type": "TARGET_DISCOVERED"
+    },
+    "atomic_triple_shock-C05-E02": {
+      "actual_affected_regions": [
+        0
+      ],
+      "affected_regions": [
+        0
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "application_note": "confirmed-via-bridge",
+      "applied_at": 11.0,
+      "event_id": "atomic_triple_shock-C05-E02",
+      "event_seed": 9102521,
+      "observed_at": 11.0,
+      "occurred_at": 10.06,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DESTROYED": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "atomic_triple_shock",
+        "previous_uav": 0,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "vacant_region": 0
+      },
+      "recovery_delay": 1.0,
+      "resolved_at": 12.0,
+      "severity": 0.401395,
+      "source_event": "direct_region_vacancy",
+      "state_version": 2,
+      "status": "resolved",
+      "type": "REGION_VACANCY"
+    },
+    "atomic_triple_shock-C05-E03": {
+      "actual_affected_regions": [],
+      "affected_regions": [],
+      "affected_targets": [
+        2
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "application_note": "confirmed-via-bridge",
+      "applied_at": 14.5,
+      "event_id": "atomic_triple_shock-C05-E03",
+      "event_seed": 9102522,
+      "observed_at": 14.5,
+      "occurred_at": 14.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 2,
+        "exploratory_scenario": "atomic_triple_shock",
+        "released_uav": 1,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ]
+      },
+      "recovery_delay": 0.0,
+      "resolved_at": 14.5,
+      "severity": 0.996385,
+      "source_event": "target_status_update",
+      "state_version": 3,
+      "status": "resolved",
+      "type": "TARGET_DESTROYED"
+    },
+    "atomic_triple_shock-C05-E04": {
+      "actual_affected_regions": [
+        3
+      ],
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "application_note": "confirmed-via-bridge",
+      "applied_at": 16.5,
+      "event_id": "atomic_triple_shock-C05-E04",
+      "event_seed": 9102523,
+      "observed_at": 16.5,
+      "occurred_at": 16.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "atomic_triple_shock",
+        "previous_uav": 3,
+        "stressors": [
+          "atomic_batch",
+          "coupled_reallocation",
+          "task_release"
+        ],
+        "vacant_region": 3
+      },
+      "recovery_delay": 1.0,
+      "resolved_at": 17.5,
+      "severity": 0.963152,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "status": "resolved",
+      "type": "REGION_VACANCY"
+    }
+  },
+  "event_seed": 9102519,
+  "event_tape": {
+    "event_seed": 9102519,
+    "events": [
+      {
+        "affected_regions": [
+          2
+        ],
+        "affected_targets": [],
+        "affected_uavs": [
+          2
+        ],
+        "event_id": "atomic_triple_shock-C05-E00",
+        "event_seed": 9102519,
+        "observed_at": 11.0,
+        "occurred_at": 10.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.0,
+            "TARGET_DISCOVERED": 0.0,
+            "UAV_DAMAGE": 1.0
+          },
+          "damaged_uav": 2,
+          "exploratory_scenario": "atomic_triple_shock",
+          "released_regions": [
+            2
+          ],
+          "stressors": [
+            "atomic_batch",
+            "coupled_reallocation",
+            "task_release"
+          ]
+        },
+        "severity": 0.483595,
+        "source_event": "external_random_scheduler",
+        "state_version": 0,
+        "type": "UAV_DAMAGE"
+      },
+      {
+        "affected_regions": [
+          1
+        ],
+        "affected_targets": [
+          2
+        ],
+        "affected_uavs": [
+          1
+        ],
+        "event_id": "atomic_triple_shock-C05-E01",
+        "event_seed": 9102520,
+        "observed_at": 11.0,
+        "occurred_at": 10.03,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.0,
+            "TARGET_DISCOVERED": 1.0,
+            "UAV_DAMAGE": 0.0
+          },
+          "discovered_target": 2,
+          "exploratory_scenario": "atomic_triple_shock",
+          "generated_region_vacancy": [
+            1
+          ],
+          "stressors": [
+            "atomic_batch",
+            "coupled_reallocation",
+            "task_release"
+          ],
+          "target_region": 1,
+          "tracker_uav": 1
+        },
+        "severity": 0.841212,
+        "source_event": "target_sensor_detection",
+        "state_version": 1,
+        "type": "TARGET_DISCOVERED"
+      },
+      {
+        "affected_regions": [
+          0
+        ],
+        "affected_targets": [],
+        "affected_uavs": [
+          0
+        ],
+        "event_id": "atomic_triple_shock-C05-E02",
+        "event_seed": 9102521,
+        "observed_at": 11.0,
+        "occurred_at": 10.06,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 1.0,
+            "TARGET_DESTROYED": 0.0,
+            "TARGET_DISCOVERED": 0.0,
+            "UAV_DAMAGE": 0.0
+          },
+          "exploratory_scenario": "atomic_triple_shock",
+          "previous_uav": 0,
+          "stressors": [
+            "atomic_batch",
+            "coupled_reallocation",
+            "task_release"
+          ],
+          "vacant_region": 0
+        },
+        "severity": 0.401395,
+        "source_event": "direct_region_vacancy",
+        "state_version": 2,
+        "type": "REGION_VACANCY"
+      },
+      {
+        "affected_regions": [],
+        "affected_targets": [
+          2
+        ],
+        "affected_uavs": [
+          1
+        ],
+        "event_id": "atomic_triple_shock-C05-E03",
+        "event_seed": 9102522,
+        "observed_at": 14.5,
+        "occurred_at": 14.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 0.0,
+            "TARGET_DESTROYED": 1.0,
+            "TARGET_DISCOVERED": 0.0,
+            "UAV_DAMAGE": 0.0
+          },
+          "destroyed_target": 2,
+          "exploratory_scenario": "atomic_triple_shock",
+          "released_uav": 1,
+          "stressors": [
+            "atomic_batch",
+            "coupled_reallocation",
+            "task_release"
+          ]
+        },
+        "severity": 0.996385,
+        "source_event": "target_status_update",
+        "state_version": 3,
+        "type": "TARGET_DESTROYED"
+      },
+      {
+        "affected_regions": [
+          3
+        ],
+        "affected_targets": [],
+        "affected_uavs": [
+          3
+        ],
+        "event_id": "atomic_triple_shock-C05-E04",
+        "event_seed": 9102523,
+        "observed_at": 16.5,
+        "occurred_at": 16.0,
+        "payload": {
+          "conditional_probabilities": {
+            "REGION_VACANCY": 1.0,
+            "TARGET_DISCOVERED": 0.0,
+            "UAV_DAMAGE": 0.0
+          },
+          "exploratory_scenario": "atomic_triple_shock",
+          "previous_uav": 3,
+          "stressors": [
+            "atomic_batch",
+            "coupled_reallocation",
+            "task_release"
+          ],
+          "vacant_region": 3
+        },
+        "severity": 0.963152,
+        "source_event": "direct_region_vacancy",
+        "state_version": 4,
+        "type": "REGION_VACANCY"
+      }
+    ],
+    "initial_seed": 880006,
+    "mode": "extreme/atomic_triple_shock",
+    "schema_version": 1
+  },
+  "events": [
+    {
+      "avg_reward": 5.024407768234455,
+      "communication_bytes": 561,
+      "communication_opportunities": 3,
+      "communication_suppressed": 2,
+      "communication_suppression_rate": 0.6666666666666666,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 3.0039999999999996,
+      "decision_count": 3,
+      "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+      "event_id": "atomic_triple_shock-C05-E00",
+      "event_index": 0,
+      "event_return": 15.073223304703363,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "UAV_DAMAGE",
+      "final_infeasible": false,
+      "fixed_j": 2.6815426084981313,
+      "gate_mean": 0.5652855800257789,
+      "gate_variance": 0.004527964761796001,
+      "inference_latency_ms": 13.486066666666666,
+      "inference_latency_p95_ms": 14.27163,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 0.3333333333333333,
+      "mask_rate": 0.7647058823529411,
+      "normalized_distance": 0.09820927516479826,
+      "pre_mask_invalid_probability": 0.9481850266456604,
+      "recovery_delay": 3.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 3,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false,
+      "value_error": 16.061436907465414,
+      "value_squared_error": 264.47915340330377,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": null,
+      "communication_bytes": 620,
+      "communication_opportunities": 2,
+      "communication_suppressed": 1,
+      "communication_suppression_rate": 0.5,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 3.0039999999999996,
+      "decision_count": 2,
+      "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+      "event_id": "atomic_triple_shock-C05-E01",
+      "event_index": 1,
+      "event_return": 0.0,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "TARGET_DISCOVERED",
+      "final_infeasible": false,
+      "fixed_j": 7.068925565098879,
+      "gate_mean": 0.5908553848663965,
+      "gate_variance": 0.002909494584322338,
+      "inference_latency_ms": 13.5589,
+      "inference_latency_p95_ms": 14.293479999999999,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 0.5,
+      "mask_rate": 0.7058823529411764,
+      "normalized_distance": 0.05892556509887895,
+      "pre_mask_invalid_probability": 0.9223209917545319,
+      "recovery_delay": 2.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 2,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false,
+      "value_error": 17.856244862889405,
+      "value_squared_error": 318.94557061912195,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": null,
+      "communication_bytes": 583,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 2.002,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+      "event_id": "atomic_triple_shock-C05-E02",
+      "event_index": 2,
+      "event_return": 0.0,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "REGION_VACANCY",
+      "final_infeasible": false,
+      "fixed_j": 10.759999999999998,
+      "gate_mean": 0.6027650435765585,
+      "gate_variance": 0.0020138701584993474,
+      "inference_latency_ms": 14.3751,
+      "inference_latency_p95_ms": 14.3751,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 0.0,
+      "mask_rate": 0.6470588235294117,
+      "normalized_distance": 0.0,
+      "pre_mask_invalid_probability": 0.8448132872581482,
+      "recovery_delay": 1.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false,
+      "value_error": 17.53987480163574,
+      "value_squared_error": 307.6472080570564,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": null,
+      "communication_bytes": 0,
+      "communication_opportunities": 0,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": null,
+      "communication_trigger_count": 0,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 0,
+      "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+      "event_id": "atomic_triple_shock-C05-E03",
+      "event_index": 3,
+      "event_return": 0.0,
+      "event_to_action_latency_ms": null,
+      "event_type": "TARGET_DESTROYED",
+      "final_infeasible": false,
+      "fixed_j": 101.08838834764832,
+      "gate_mean": null,
+      "gate_variance": null,
+      "inference_latency_ms": null,
+      "inference_latency_p95_ms": null,
+      "legal_coverage_rate": 1.0,
+      "load_gap": null,
+      "mask_rate": null,
+      "normalized_distance": null,
+      "pre_mask_invalid_probability": null,
+      "recovery_delay": 0.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 0,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false,
+      "value_error": null,
+      "value_squared_error": null,
+      "weighted_uncovered": 0.0
+    },
+    {
+      "avg_reward": 5.77946278254944,
+      "communication_bytes": 557,
+      "communication_opportunities": 1,
+      "communication_suppressed": 0,
+      "communication_suppression_rate": 0.0,
+      "communication_trigger_count": 1,
+      "cumulative_uncovered_time": 0.0,
+      "decision_count": 1,
+      "episode_id": "GPPO-Adaptive seed=1101/atomic_triple_shock-C05",
+      "event_id": "atomic_triple_shock-C05-E04",
+      "event_index": 4,
+      "event_return": 5.77946278254944,
+      "event_to_action_latency_ms": 0.0,
+      "event_type": "REGION_VACANCY",
+      "final_infeasible": false,
+      "fixed_j": 1.8383883476483185,
+      "gate_mean": 0.4374765132864316,
+      "gate_variance": 0.013184419855013759,
+      "inference_latency_ms": 13.6992,
+      "inference_latency_p95_ms": 13.6992,
+      "legal_coverage_rate": 1.0,
+      "load_gap": 1.0,
+      "mask_rate": 0.8235294117647058,
+      "normalized_distance": 0.08838834764831843,
+      "pre_mask_invalid_probability": 0.8947912454605103,
+      "recovery_delay": 1.0,
+      "repair_count": 0,
+      "success": true,
+      "switch_count": 1,
+      "tape_id": "atomic_triple_shock-C05",
+      "temporary_infeasible": false,
+      "value_error": 7.392402680707396,
+      "value_squared_error": 54.647617393729895,
+      "weighted_uncovered": 0.0
+    }
+  ],
+  "final_snapshot": {
+    "event": {
+      "affected_regions": [
+        3
+      ],
+      "damaged_uav": -1,
+      "description": "REGION_VACANCY",
+      "event_type": 0,
+      "released_uav": -1,
+      "weather_disabled_uav": -1
+    },
+    "random_event": {
+      "current_time": 17.5,
+      "decision_version": 5,
+      "event_queue": [],
+      "event_records": {
+        "atomic_triple_shock-C05-E00": {
+          "actual_affected_regions": [
+            2
+          ],
+          "affected_regions": [
+            2
+          ],
+          "affected_targets": [],
+          "affected_uavs": [
+            2
+          ],
+          "application_note": "confirmed-via-bridge",
+          "applied_at": 11.0,
+          "event_id": "atomic_triple_shock-C05-E00",
+          "event_seed": 9102519,
+          "observed_at": 11.0,
+          "occurred_at": 10.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.0,
+              "TARGET_DISCOVERED": 0.0,
+              "UAV_DAMAGE": 1.0
+            },
+            "damaged_uav": 2,
+            "exploratory_scenario": "atomic_triple_shock",
+            "released_regions": [
+              2
+            ],
+            "stressors": [
+              "atomic_batch",
+              "coupled_reallocation",
+              "task_release"
+            ]
+          },
+          "recovery_delay": 3.0,
+          "resolved_at": 14.0,
+          "severity": 0.483595,
+          "source_event": "external_random_scheduler",
+          "state_version": 0,
+          "status": "resolved",
+          "type": "UAV_DAMAGE"
+        },
+        "atomic_triple_shock-C05-E01": {
+          "actual_affected_regions": [
+            1
+          ],
+          "affected_regions": [
+            1
+          ],
+          "affected_targets": [
+            2
+          ],
+          "affected_uavs": [
+            1
+          ],
+          "application_note": "confirmed-via-bridge",
+          "applied_at": 11.0,
+          "event_id": "atomic_triple_shock-C05-E01",
+          "event_seed": 9102520,
+          "observed_at": 11.0,
+          "occurred_at": 10.03,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.0,
+              "TARGET_DISCOVERED": 1.0,
+              "UAV_DAMAGE": 0.0
+            },
+            "discovered_target": 2,
+            "exploratory_scenario": "atomic_triple_shock",
+            "generated_region_vacancy": [
+              1
+            ],
+            "stressors": [
+              "atomic_batch",
+              "coupled_reallocation",
+              "task_release"
+            ],
+            "target_region": 1,
+            "tracker_uav": 1
+          },
+          "recovery_delay": 2.0,
+          "resolved_at": 13.0,
+          "severity": 0.841212,
+          "source_event": "target_sensor_detection",
+          "state_version": 1,
+          "status": "resolved",
+          "type": "TARGET_DISCOVERED"
+        },
+        "atomic_triple_shock-C05-E02": {
+          "actual_affected_regions": [
+            0
+          ],
+          "affected_regions": [
+            0
+          ],
+          "affected_targets": [],
+          "affected_uavs": [
+            0
+          ],
+          "application_note": "confirmed-via-bridge",
+          "applied_at": 11.0,
+          "event_id": "atomic_triple_shock-C05-E02",
+          "event_seed": 9102521,
+          "observed_at": 11.0,
+          "occurred_at": 10.06,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 1.0,
+              "TARGET_DESTROYED": 0.0,
+              "TARGET_DISCOVERED": 0.0,
+              "UAV_DAMAGE": 0.0
+            },
+            "exploratory_scenario": "atomic_triple_shock",
+            "previous_uav": 0,
+            "stressors": [
+              "atomic_batch",
+              "coupled_reallocation",
+              "task_release"
+            ],
+            "vacant_region": 0
+          },
+          "recovery_delay": 1.0,
+          "resolved_at": 12.0,
+          "severity": 0.401395,
+          "source_event": "direct_region_vacancy",
+          "state_version": 2,
+          "status": "resolved",
+          "type": "REGION_VACANCY"
+        },
+        "atomic_triple_shock-C05-E03": {
+          "actual_affected_regions": [],
+          "affected_regions": [],
+          "affected_targets": [
+            2
+          ],
+          "affected_uavs": [
+            1
+          ],
+          "application_note": "confirmed-via-bridge",
+          "applied_at": 14.5,
+          "event_id": "atomic_triple_shock-C05-E03",
+          "event_seed": 9102522,
+          "observed_at": 14.5,
+          "occurred_at": 14.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 0.0,
+              "TARGET_DESTROYED": 1.0,
+              "TARGET_DISCOVERED": 0.0,
+              "UAV_DAMAGE": 0.0
+            },
+            "destroyed_target": 2,
+            "exploratory_scenario": "atomic_triple_shock",
+            "released_uav": 1,
+            "stressors": [
+              "atomic_batch",
+              "coupled_reallocation",
+              "task_release"
+            ]
+          },
+          "recovery_delay": 0.0,
+          "resolved_at": 14.5,
+          "severity": 0.996385,
+          "source_event": "target_status_update",
+          "state_version": 3,
+          "status": "resolved",
+          "type": "TARGET_DESTROYED"
+        },
+        "atomic_triple_shock-C05-E04": {
+          "actual_affected_regions": [
+            3
+          ],
+          "affected_regions": [
+            3
+          ],
+          "affected_targets": [],
+          "affected_uavs": [
+            3
+          ],
+          "application_note": "confirmed-via-bridge",
+          "applied_at": 16.5,
+          "event_id": "atomic_triple_shock-C05-E04",
+          "event_seed": 9102523,
+          "observed_at": 16.5,
+          "occurred_at": 16.0,
+          "payload": {
+            "conditional_probabilities": {
+              "REGION_VACANCY": 1.0,
+              "TARGET_DISCOVERED": 0.0,
+              "UAV_DAMAGE": 0.0
+            },
+            "exploratory_scenario": "atomic_triple_shock",
+            "previous_uav": 3,
+            "stressors": [
+              "atomic_batch",
+              "coupled_reallocation",
+              "task_release"
+            ],
+            "vacant_region": 3
+          },
+          "recovery_delay": 1.0,
+          "resolved_at": 17.5,
+          "severity": 0.963152,
+          "source_event": "direct_region_vacancy",
+          "state_version": 4,
+          "status": "resolved",
+          "type": "REGION_VACANCY"
+        }
+      },
+      "event_tape": {
+        "event_seed": 9102519,
+        "events": [
+          {
+            "affected_regions": [
+              2
+            ],
+            "affected_targets": [],
+            "affected_uavs": [
+              2
+            ],
+            "event_id": "atomic_triple_shock-C05-E00",
+            "event_seed": 9102519,
+            "observed_at": 11.0,
+            "occurred_at": 10.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.0,
+                "TARGET_DISCOVERED": 0.0,
+                "UAV_DAMAGE": 1.0
+              },
+              "damaged_uav": 2,
+              "exploratory_scenario": "atomic_triple_shock",
+              "released_regions": [
+                2
+              ],
+              "stressors": [
+                "atomic_batch",
+                "coupled_reallocation",
+                "task_release"
+              ]
+            },
+            "severity": 0.483595,
+            "source_event": "external_random_scheduler",
+            "state_version": 0,
+            "type": "UAV_DAMAGE"
+          },
+          {
+            "affected_regions": [
+              1
+            ],
+            "affected_targets": [
+              2
+            ],
+            "affected_uavs": [
+              1
+            ],
+            "event_id": "atomic_triple_shock-C05-E01",
+            "event_seed": 9102520,
+            "observed_at": 11.0,
+            "occurred_at": 10.03,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.0,
+                "TARGET_DISCOVERED": 1.0,
+                "UAV_DAMAGE": 0.0
+              },
+              "discovered_target": 2,
+              "exploratory_scenario": "atomic_triple_shock",
+              "generated_region_vacancy": [
+                1
+              ],
+              "stressors": [
+                "atomic_batch",
+                "coupled_reallocation",
+                "task_release"
+              ],
+              "target_region": 1,
+              "tracker_uav": 1
+            },
+            "severity": 0.841212,
+            "source_event": "target_sensor_detection",
+            "state_version": 1,
+            "type": "TARGET_DISCOVERED"
+          },
+          {
+            "affected_regions": [
+              0
+            ],
+            "affected_targets": [],
+            "affected_uavs": [
+              0
+            ],
+            "event_id": "atomic_triple_shock-C05-E02",
+            "event_seed": 9102521,
+            "observed_at": 11.0,
+            "occurred_at": 10.06,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 1.0,
+                "TARGET_DESTROYED": 0.0,
+                "TARGET_DISCOVERED": 0.0,
+                "UAV_DAMAGE": 0.0
+              },
+              "exploratory_scenario": "atomic_triple_shock",
+              "previous_uav": 0,
+              "stressors": [
+                "atomic_batch",
+                "coupled_reallocation",
+                "task_release"
+              ],
+              "vacant_region": 0
+            },
+            "severity": 0.401395,
+            "source_event": "direct_region_vacancy",
+            "state_version": 2,
+            "type": "REGION_VACANCY"
+          },
+          {
+            "affected_regions": [],
+            "affected_targets": [
+              2
+            ],
+            "affected_uavs": [
+              1
+            ],
+            "event_id": "atomic_triple_shock-C05-E03",
+            "event_seed": 9102522,
+            "observed_at": 14.5,
+            "occurred_at": 14.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 0.0,
+                "TARGET_DESTROYED": 1.0,
+                "TARGET_DISCOVERED": 0.0,
+                "UAV_DAMAGE": 0.0
+              },
+              "destroyed_target": 2,
+              "exploratory_scenario": "atomic_triple_shock",
+              "released_uav": 1,
+              "stressors": [
+                "atomic_batch",
+                "coupled_reallocation",
+                "task_release"
+              ]
+            },
+            "severity": 0.996385,
+            "source_event": "target_status_update",
+            "state_version": 3,
+            "type": "TARGET_DESTROYED"
+          },
+          {
+            "affected_regions": [
+              3
+            ],
+            "affected_targets": [],
+            "affected_uavs": [
+              3
+            ],
+            "event_id": "atomic_triple_shock-C05-E04",
+            "event_seed": 9102523,
+            "observed_at": 16.5,
+            "occurred_at": 16.0,
+            "payload": {
+              "conditional_probabilities": {
+                "REGION_VACANCY": 1.0,
+                "TARGET_DISCOVERED": 0.0,
+                "UAV_DAMAGE": 0.0
+              },
+              "exploratory_scenario": "atomic_triple_shock",
+              "previous_uav": 3,
+              "stressors": [
+                "atomic_batch",
+                "coupled_reallocation",
+                "task_release"
+              ],
+              "vacant_region": 3
+            },
+            "severity": 0.963152,
+            "source_event": "direct_region_vacancy",
+            "state_version": 4,
+            "type": "REGION_VACANCY"
+          }
+        ],
+        "initial_seed": 880006,
+        "mode": "extreme/atomic_triple_shock",
+        "schema_version": 1
+      },
+      "graph_version": 8,
+      "pending_regions": []
+    },
+    "regions": {
+      "0": {
+        "assigned_uav": 0,
+        "center_x": 12.5,
+        "center_y": 37.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "1": {
+        "assigned_uav": 0,
+        "center_x": 37.5,
+        "center_y": 37.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "2": {
+        "assigned_uav": 3,
+        "center_x": 12.5,
+        "center_y": 12.5,
+        "need_reassign": false,
+        "weather": 0
+      },
+      "3": {
+        "assigned_uav": 1,
+        "center_x": 37.5,
+        "center_y": 12.5,
+        "need_reassign": false,
+        "weather": 0
+      }
+    },
+    "targets": {
+      "0": {
+        "destroyed": false,
+        "discovered": false,
+        "movable": true,
+        "region": 3,
+        "target_type": 0,
+        "tracked": false,
+        "tracker_id": -1,
+        "x": 38.12834846254735,
+        "y": 16.07150889984845
+      },
+      "1": {
+        "destroyed": false,
+        "discovered": false,
+        "movable": true,
+        "region": 1,
+        "target_type": 0,
+        "tracked": false,
+        "tracker_id": -1,
+        "x": 36.04366336423256,
+        "y": 33.231076606820245
+      },
+      "2": {
+        "destroyed": true,
+        "discovered": true,
+        "movable": false,
+        "region": 1,
+        "target_type": 1,
+        "tracked": false,
+        "tracker_id": -1,
+        "x": 35.90180073348995,
+        "y": 36.124887977464056
+      }
+    },
+    "uavs": {
+      "0": {
+        "alive": true,
+        "regions": [
+          0,
+          1
+        ],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 0,
+        "x": 12.5,
+        "y": 37.5
+      },
+      "1": {
+        "alive": true,
+        "regions": [
+          3
+        ],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 0,
+        "x": 37.5,
+        "y": 12.5
+      },
+      "2": {
+        "alive": false,
+        "regions": [],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 2,
+        "x": 12.5,
+        "y": 12.5
+      },
+      "3": {
+        "alive": true,
+        "regions": [
+          2
+        ],
+        "sensor": 1,
+        "sensor_failed": false,
+        "target_id": -1,
+        "task": 0,
+        "x": 12.5,
+        "y": 12.5
+      }
+    }
+  },
+  "initial_seed": 880006,
+  "mode": "extreme/atomic_triple_shock",
+  "reward_invariant": true,
+  "schema_version": 1,
+  "stale_submission_retry_count": 0,
+  "tape_id": "atomic_triple_shock-C05",
+  "tape_sha256": "b82f4b6092b6aa8dd2d19a0ded173cc1e1587b427f5935ce72c791f88349492f",
+  "terminated": true,
+  "total_reward_check": 20.852686087252803,
+  "truncated": false
+}

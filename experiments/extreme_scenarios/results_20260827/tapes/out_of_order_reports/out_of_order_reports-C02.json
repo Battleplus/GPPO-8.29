@@ -1,0 +1,187 @@
+{
+  "event_seed": 9102365,
+  "events": [
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "out_of_order_reports-C02-E00",
+      "event_seed": 9102365,
+      "observed_at": 12.0,
+      "occurred_at": 1.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 1,
+        "exploratory_scenario": "out_of_order_reports",
+        "generated_region_vacancy": [
+          1
+        ],
+        "stressors": [
+          "partial_observation",
+          "out_of_order",
+          "causal_inversion"
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "severity": 0.929228,
+      "source_event": "target_sensor_detection",
+      "state_version": 0,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "out_of_order_reports-C02-E01",
+      "event_seed": 9102366,
+      "observed_at": 6.0,
+      "occurred_at": 2.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 1,
+        "exploratory_scenario": "out_of_order_reports",
+        "released_uav": 1,
+        "stressors": [
+          "partial_observation",
+          "out_of_order",
+          "causal_inversion"
+        ]
+      },
+      "severity": 0.835358,
+      "source_event": "target_status_update",
+      "state_version": 1,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        0,
+        1
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        0
+      ],
+      "event_id": "out_of_order_reports-C02-E02",
+      "event_seed": 9102367,
+      "observed_at": 10.0,
+      "occurred_at": 3.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 0,
+        "exploratory_scenario": "out_of_order_reports",
+        "released_regions": [
+          0,
+          1
+        ],
+        "stressors": [
+          "partial_observation",
+          "out_of_order",
+          "causal_inversion"
+        ]
+      },
+      "severity": 0.430515,
+      "source_event": "external_random_scheduler",
+      "state_version": 2,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        0
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "out_of_order_reports-C02-E03",
+      "event_seed": 9102368,
+      "observed_at": 8.0,
+      "occurred_at": 4.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "out_of_order_reports",
+        "previous_uav": 1,
+        "stressors": [
+          "partial_observation",
+          "out_of_order",
+          "causal_inversion"
+        ],
+        "vacant_region": 0
+      },
+      "severity": 0.642062,
+      "source_event": "direct_region_vacancy",
+      "state_version": 3,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [
+        0,
+        1
+      ],
+      "affected_targets": [
+        0
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "out_of_order_reports-C02-E04",
+      "event_seed": 9102369,
+      "observed_at": 11.0,
+      "occurred_at": 5.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 0,
+        "exploratory_scenario": "out_of_order_reports",
+        "generated_region_vacancy": [
+          0,
+          1
+        ],
+        "stressors": [
+          "partial_observation",
+          "out_of_order",
+          "causal_inversion"
+        ],
+        "target_region": 0,
+        "tracker_uav": 1
+      },
+      "severity": 0.368391,
+      "source_event": "target_sensor_detection",
+      "state_version": 4,
+      "type": "TARGET_DISCOVERED"
+    }
+  ],
+  "initial_seed": 880003,
+  "mode": "extreme/out_of_order_reports",
+  "schema_version": 1
+}

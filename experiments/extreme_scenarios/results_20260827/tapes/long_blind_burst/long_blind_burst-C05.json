@@ -1,0 +1,178 @@
+{
+  "event_seed": 9102203,
+  "events": [
+    {
+      "affected_regions": [
+        2
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        2
+      ],
+      "event_id": "long_blind_burst-C05-E00",
+      "event_seed": 9102203,
+      "observed_at": 30.0,
+      "occurred_at": 1.0,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 1.0
+        },
+        "damaged_uav": 2,
+        "exploratory_scenario": "long_blind_burst",
+        "released_regions": [
+          2
+        ],
+        "stressors": [
+          "long_information_gap",
+          "atomic_batch",
+          "stale_world_model"
+        ]
+      },
+      "severity": 0.880958,
+      "source_event": "external_random_scheduler",
+      "state_version": 0,
+      "type": "UAV_DAMAGE"
+    },
+    {
+      "affected_regions": [
+        1
+      ],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "long_blind_burst-C05-E01",
+      "event_seed": 9102204,
+      "observed_at": 30.0,
+      "occurred_at": 1.02,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DISCOVERED": 1.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "discovered_target": 1,
+        "exploratory_scenario": "long_blind_burst",
+        "generated_region_vacancy": [
+          1
+        ],
+        "stressors": [
+          "long_information_gap",
+          "atomic_batch",
+          "stale_world_model"
+        ],
+        "target_region": 1,
+        "tracker_uav": 1
+      },
+      "severity": 0.725965,
+      "source_event": "target_sensor_detection",
+      "state_version": 1,
+      "type": "TARGET_DISCOVERED"
+    },
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "long_blind_burst-C05-E02",
+      "event_seed": 9102205,
+      "observed_at": 30.0,
+      "occurred_at": 1.04,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DESTROYED": 0.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "long_blind_burst",
+        "previous_uav": 3,
+        "stressors": [
+          "long_information_gap",
+          "atomic_batch",
+          "stale_world_model"
+        ],
+        "vacant_region": 3
+      },
+      "severity": 0.623912,
+      "source_event": "direct_region_vacancy",
+      "state_version": 2,
+      "type": "REGION_VACANCY"
+    },
+    {
+      "affected_regions": [],
+      "affected_targets": [
+        1
+      ],
+      "affected_uavs": [
+        1
+      ],
+      "event_id": "long_blind_burst-C05-E03",
+      "event_seed": 9102206,
+      "observed_at": 30.0,
+      "occurred_at": 1.06,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 0.0,
+          "TARGET_DESTROYED": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "destroyed_target": 1,
+        "exploratory_scenario": "long_blind_burst",
+        "released_uav": 1,
+        "stressors": [
+          "long_information_gap",
+          "atomic_batch",
+          "stale_world_model"
+        ]
+      },
+      "severity": 0.506911,
+      "source_event": "target_status_update",
+      "state_version": 3,
+      "type": "TARGET_DESTROYED"
+    },
+    {
+      "affected_regions": [
+        3
+      ],
+      "affected_targets": [],
+      "affected_uavs": [
+        3
+      ],
+      "event_id": "long_blind_burst-C05-E04",
+      "event_seed": 9102207,
+      "observed_at": 30.0,
+      "occurred_at": 1.08,
+      "payload": {
+        "conditional_probabilities": {
+          "REGION_VACANCY": 1.0,
+          "TARGET_DISCOVERED": 0.0,
+          "UAV_DAMAGE": 0.0
+        },
+        "exploratory_scenario": "long_blind_burst",
+        "previous_uav": 3,
+        "stressors": [
+          "long_information_gap",
+          "atomic_batch",
+          "stale_world_model"
+        ],
+        "vacant_region": 3
+      },
+      "severity": 0.753105,
+      "source_event": "direct_region_vacancy",
+      "state_version": 4,
+      "type": "REGION_VACANCY"
+    }
+  ],
+  "initial_seed": 880006,
+  "mode": "extreme/long_blind_burst",
+  "schema_version": 1
+}
