@@ -237,4 +237,5 @@ python scripts\audit_stale_decision_race.py `
 - [Execution-Preemption V1 机器可读合同](configs/execution_preemption_v1.json)
 - [Execution-Preemption V1 算法分配边界](docs/ALLOCATION_BOUNDARY_V1_ZH.md)
 - [Execution-Preemption V1 Reward、指标与训练合同](docs/EXECUTION_TRAINING_CONTRACT_V1_ZH.md)
+- [Execution-Preemption V1 PPO/GPPO/Planner 统一适配器](docs/POLICY_ADAPTER_V1_ZH.md)
 - [Dynamic-Preemption-Dev 10×20 开发事件带](experiments/dynamic_preemption/README.md)

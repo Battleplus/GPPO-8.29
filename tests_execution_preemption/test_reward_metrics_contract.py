@@ -180,6 +180,17 @@ class TrainingContractTests(unittest.TestCase):
         self.assertIn("ppo_mlp_rule_arbiter_v1", LEARNED_METHODS)
         self.assertIn("gppo_adaptive_rule_arbiter_v1", LEARNED_METHODS)
 
+    def test_training_contract_binds_policy_adapter_layout(self) -> None:
+        value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(
+            value["adapter"]["layout_sha256"],
+            "f903860f4ede2ffd8a0ac79fdaf90486c06232169211d9d81e993b41ef9ec544",
+        )
+        self.assertEqual(value["adapter"]["flat_observation_dimension"], 37976)
+        self.assertEqual(value["adapter"]["action_capacity"], 3073)
+        self.assertTrue(value["adapter"]["flat_and_hetero_share_action_space"])
+        self.assertFalse(value["adapter"]["framework_tensor_conversion_complete"])
+
     def test_contract_rejects_training_or_checkpoint_drift(self) -> None:
         value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
         value["training"]["accepted_decision_steps_per_run"] = 50_001
@@ -205,4 +216,3 @@ class TrainingContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
