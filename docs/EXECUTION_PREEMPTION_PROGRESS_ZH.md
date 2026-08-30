@@ -8,11 +8,11 @@
 PROJECT: Execution-Preemption V1
 SOURCE_BRANCH: research/execution-preemption-v1
 ISOLATED_WORKTREE: E:\Z博士\26日\execution_preemption_v1
-LATEST_ARCHIVED_REMOTE_STAGE: deterministic_baselines
+LATEST_ARCHIVED_REMOTE_STAGE: final_source_freeze
 LATEST_ARCHIVED_REMOTE_COMMIT: resolve refs/heads/research/execution-preemption-v1
-CURRENT_STAGE: deterministic_baselines
+CURRENT_STAGE: final_source_freeze
 CURRENT_STAGE_STATUS: COMPLETE_AND_ARCHIVED_BY_THIS_COMMIT
-NEXT_STAGE: final_source_and_evidence_launch_gate
+NEXT_STAGE: source_bound_evidence_launch_gate
 FORMAL_TRAINING_STARTED: false
 VALIDATION_STARTED: false
 FREEZE_STARTED: false
@@ -28,7 +28,8 @@ HIDDEN_V1_GENERATED: false
 | 2 | 五节点图、policy adapter、Gym/Torch framework rollout | `1185e1ed334e5a15735666d94582d01bcfe71f12` |
 | 3 | 独立 source-bound Launch Gate 机制 | `e0aadb9bdde0b633325e78f5529aadbf4add8464` |
 | 4 | 36-run 正式训练执行器、checkpoint/RNG/provenance 封装和 micro smoke | `35398d9bf430b8f866a21d21c712b82e9187250a` |
-| 5 | 学姐旧方法适配、Greedy Priority、Beam-MPC 和 600 次开发带安全回放 | 当前 `research/execution-preemption-v1` HEAD |
+| 5 | 学姐旧方法适配、Greedy Priority、Beam-MPC 和 600 次开发带安全回放 | `d5787f718fd0d41c8a98265f9c6da21f9820ce29` |
+| 6 | 最终 source 合同状态冻结与 source attestation 前复验 | 当前 `research/execution-preemption-v1` HEAD |
 
 ## 当前阶段验证
 
@@ -48,10 +49,10 @@ model_effectiveness_evaluated: false
 
 ## 下一步唯一动作
 
-1. 从 GitHub 重新读取分支 HEAD、tree 和本文件，确认主分支仍为 `a420752…`；
-2. 在新 clean source worktree 将合同状态冻结为 `FROZEN_FOR_SOURCE_ATTESTATION`；
-3. 重新运行旧 130 项、新专项测试和全部 smoke；
-4. 生成 source-bound Launch Gate，完成 source HEAD 与 clean evidence HEAD 的 formal check；
+1. 从 GitHub 重新读取 final source 分支 HEAD、tree 和本文件，确认主分支仍为 `a420752…`；
+2. 从 final source 新建 clean Gate source worktree，重新运行旧 130 项、新专项测试和全部 smoke；
+3. 生成唯一 source-bound Launch Gate JSON，先在 source HEAD 实际调用 formal checker；
+4. 创建 evidence-only commit，并在全新 clean evidence worktree 再次通过 formal checker；
 5. Gate 闭环前禁止正式训练；Gate 闭环后才能创建独立 training worktree。
 
 ## 禁止事项

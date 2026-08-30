@@ -87,7 +87,7 @@ def validate_training_contract(
 ) -> ValidatedTrainingContract:
     _expect(value.get("contract_id") == TRAINING_CONTRACT_ID, "contract_id drift")
     _expect(value.get("schema_version") == 1, "schema_version must equal 1")
-    _expect(value.get("status") == "FROZEN_FOR_BASELINE_IMPLEMENTATION", "status drift")
+    _expect(value.get("status") == "FROZEN_FOR_SOURCE_ATTESTATION", "status drift")
 
     compatibility = value.get("compatibility", {})
     _expect(compatibility.get("legacy_checkpoint_compatible") is False,

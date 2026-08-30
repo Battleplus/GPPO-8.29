@@ -1,6 +1,6 @@
 # Execution-Preemption V1 确定性基线冻结说明
 
-> 状态：`FROZEN_FOR_BASELINE_IMPLEMENTATION`
+> 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
 >
 > 证据性质：接口、确定性与安全回放；不是模型效果证据。
 

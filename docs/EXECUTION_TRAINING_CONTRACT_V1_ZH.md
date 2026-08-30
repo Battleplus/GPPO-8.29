@@ -1,7 +1,7 @@
 # Execution-Preemption V1：Reward、指标与训练合同
 
 > 合同 ID：`execution-preemption-training-v1`
-> 状态：`FROZEN_FOR_BASELINE_IMPLEMENTATION`
+> 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
 > 当前训练许可：`false`
 
 ## 1. 目的与边界
