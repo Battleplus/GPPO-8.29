@@ -207,6 +207,59 @@ def _validate_allocator_replay() -> dict[str, object]:
     })
 
 
+def _validate_baseline_smoke() -> dict[str, object]:
+    path = DEV_ROOT / "baseline_replay_smoke.json"
+    value = _load_json(path)
+    results = value.get("results", [])
+    expected = {
+        "senior_legacy_method_v1",
+        "greedy_priority_v1",
+        "beam_mpc_v1",
+    }
+    method_ids = {
+        str(item.get("allocator_id")) for item in results
+        if isinstance(item, Mapping)
+    } if isinstance(results, list) else set()
+    tape_hashes = [
+        _canonical_sha256(_load_json(path))
+        for path in sorted((DEV_ROOT / "tapes").rglob("*.json"))
+    ]
+    actual_bank_sha = hashlib.sha256("\n".join(tape_hashes).encode("ascii")).hexdigest()
+    semantics = value.get("method_semantics", {})
+    passed = all((
+        value.get("status") == "PASS",
+        value.get("bank") == "Dynamic-Preemption-Dev",
+        value.get("classification")
+        == "baseline_interface_and_safety_smoke_not_effectiveness_evidence",
+        value.get("allocator_count") == 3,
+        value.get("tape_count") == 200,
+        value.get("allocator_tape_runs") == 600,
+        value.get("bank_canonical_sha256") == actual_bank_sha,
+        method_ids == expected,
+        isinstance(semantics, Mapping) and set(semantics) == expected,
+        isinstance(results, list) and len(results) == 3,
+        all(item.get("status") == "PASS" for item in results),
+        all(item.get("tape_count") == 200 for item in results),
+        all(item.get("decision_count") == 280 for item in results),
+        all(item.get("invariant_failures") == 0 for item in results),
+        all(len(str(item.get("replay_sha256", ""))) == 64 for item in results),
+        _all_false(value, (
+            "training_started", "validation_started", "freeze_started",
+            "test_started", "hidden_evaluation_started",
+            "model_effectiveness_evaluated", "checkpoint_selection",
+        )),
+    ))
+    return _artifact_record(path, passed, {
+        "allocator_ids": sorted(method_ids),
+        "allocator_tape_runs": value.get("allocator_tape_runs"),
+        "bank_canonical_sha256_verified": value.get("bank_canonical_sha256") == actual_bank_sha,
+        "invariant_failures": sum(
+            int(item.get("invariant_failures", -1)) for item in results
+        ) if isinstance(results, list) else -1,
+        "effectiveness_claimed": value.get("model_effectiveness_evaluated"),
+    })
+
+
 def _validate_graph_smoke() -> dict[str, object]:
     path = DEV_ROOT / "graph_schema_smoke.json"
     value = _load_json(path)
@@ -282,6 +335,9 @@ def _validate_training_contract_smoke() -> dict[str, object]:
     path = DEV_ROOT / "training_contract_smoke.json"
     value = _load_json(path)
     contract = value.get("contract", {})
+    current_contract = load_training_contract(
+        ROOT / "configs" / "execution_training_contract_v1.json"
+    )
     passed = all((
         value.get("status") == "PASS",
         value.get("classification") == "training_precondition_contract_smoke_not_model_evidence",
@@ -295,6 +351,7 @@ def _validate_training_contract_smoke() -> dict[str, object]:
         )),
         isinstance(contract, Mapping),
         contract.get("contract_id") == "execution-preemption-training-v1",
+        contract.get("canonical_sha256") == current_contract.canonical_sha256,
         contract.get("training_allowed") is False,
         contract.get("learned_run_count") == 36,
         contract.get("checkpoint_count") == 72,
@@ -401,11 +458,12 @@ def build_gate() -> dict[str, object]:
         "execution_preemption_required",
         ROOT,
         "tests_execution_preemption",
-        111,
+        120,
     )
     artifact_builders: dict[str, Callable[[], dict[str, object]]] = {
         "development_bank_10x20": _validate_dev_manifest,
         "allocator_replay_400": _validate_allocator_replay,
+        "frozen_baselines_replay_600": _validate_baseline_smoke,
         "graph_schema_4_8_16_32": _validate_graph_smoke,
         "policy_adapter_4_8_16_32": _validate_adapter_smoke,
         "deferred_transaction_parity_400": _validate_deferred_parity,

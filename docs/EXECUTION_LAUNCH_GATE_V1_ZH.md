@@ -44,7 +44,8 @@ Gate 同时验证：
 - source SHA 等于 GitHub 研究分支 HEAD；
 - source tree SHA 与新实验 protected-file SHA-256 inventory；
 - 原 minimum-validation required tests 至少 130 项；
-- Execution-Preemption 专项测试至少 111 项（最终 source 冻结时随新增测试更新）；
+- Execution-Preemption 专项测试至少 120 项；
+- 学姐旧方法适配、Greedy Priority、Beam-MPC 在固定 200 条开发带上的 600 次安全回放全部 PASS；
 - 10 类 × 20 条开发 tapes 的文件 SHA、canonical SHA、seed 与场景基数；
 - 400 allocator-tape runs 和零 invariant failure；
 - 4/8/16/32 图与 adapter smoke；

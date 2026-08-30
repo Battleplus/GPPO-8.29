@@ -145,6 +145,26 @@ def validate_training_contract(
             "learned method set drift")
     _expect(comparison.get("safety_shell_mandatory_for_all_methods") is True,
             "safety shell must be mandatory")
+    baseline_semantics = comparison.get("baseline_semantics", {})
+    _expect(
+        baseline_semantics.get("senior_legacy_method_v1")
+        == "adapted_legacy_first_legal_lexical_not_implementation_equivalence",
+        "senior legacy adapter semantics drift",
+    )
+    _expect(
+        baseline_semantics.get("greedy_priority_v1")
+        == "rule_priority_then_energy_margin_freshness_greedy",
+        "greedy baseline semantics drift",
+    )
+    beam = baseline_semantics.get("beam_mpc_v1", {})
+    _expect(beam.get("search") == "deterministic_safe_candidate_beam",
+            "Beam-MPC search semantics drift")
+    _expect(beam.get("horizon") == 3 and beam.get("beam_width") == 8,
+            "Beam-MPC horizon/width drift")
+    _expect(beam.get("forecast") == "public_pending_tasks_only",
+            "Beam-MPC forecast boundary drift")
+    _expect(beam.get("safety_decision_control") is False,
+            "Beam-MPC must not control safety arbitration")
 
     training = value.get("training", {})
     _expect(tuple(training.get("seeds", ())) == TRAINING_SEEDS, "training seeds drift")
@@ -215,9 +235,11 @@ def validate_training_contract(
             "clean training worktree is required")
     _expect(launch_gate.get("requires_framework_rollout_smoke") is True,
             "framework rollout smoke is required")
+    _expect(launch_gate.get("requires_baseline_replay_smoke") is True,
+            "frozen baseline replay smoke is required")
     _expect(launch_gate.get("requires_legacy_required_tests_min") == 130,
             "legacy required test threshold drift")
-    _expect(launch_gate.get("requires_execution_preemption_tests_min") == 111,
+    _expect(launch_gate.get("requires_execution_preemption_tests_min") == 120,
             "execution-preemption test threshold drift")
     _expect(launch_gate.get("requires_training_runner_smoke") is True,
             "training runner smoke is required")

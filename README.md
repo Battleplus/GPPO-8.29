@@ -11,6 +11,8 @@
 
 > GPPO-Adaptive 在搜索/跟踪资源强争用、需要等待未来资源释放的场景中具有研究价值；PPO-MLP 在固定小图、持续事件风暴和严格实时约束下仍是更快、更稳定的基线。
 
+Execution-Preemption V1 的三种确定性比较基线现已冻结：`senior_legacy_method_v1`、`greedy_priority_v1`、`beam_mpc_v1`。它们统一经过规则安全仲裁和候选掩码；语义与 600 次开发带安全回放见 [`docs/EXECUTION_BASELINES_V1_ZH.md`](docs/EXECUTION_BASELINES_V1_ZH.md)。该回放不是效果评估，正式训练、Validation、Freeze、Test 与 Hidden-V1 均未启动。
+
 ## 当前状态
 
 | 项目 | 状态 |

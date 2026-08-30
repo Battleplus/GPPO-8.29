@@ -12,6 +12,7 @@ from .allocation import (
     build_allocation_request,
     validate_proposal,
 )
+from .baselines import BeamMPCAllocator, GreedyPriorityAllocator, SeniorLegacyMethodAllocator
 from .models import (
     CommandStatus,
     CommunicationState,
@@ -151,6 +152,7 @@ __all__ = [
     "ActionSpaceSnapshot",
     "AdapterValidationError",
     "CallbackAllocator",
+    "BeamMPCAllocator",
     "CommunicationState",
     "CHECKPOINT_STEPS",
     "DecisionType",
@@ -170,6 +172,7 @@ __all__ = [
     "FlatPolicyObservation",
     "ExecutionGraphSnapshot",
     "FirstAvailableAllocator",
+    "GreedyPriorityAllocator",
     "FIXED_EVALUATION_CHECKPOINT",
     "GraphEdge",
     "GraphNode",
@@ -184,6 +187,7 @@ __all__ = [
     "LaunchGateValidation",
     "METRICS_SCHEMA_ID",
     "MaxEnergyMarginAllocator",
+    "SeniorLegacyMethodAllocator",
     "MethodSpec",
     "MAX_EVENTS",
     "MAX_REGIONS",

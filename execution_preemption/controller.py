@@ -101,6 +101,7 @@ class PreemptionController:
         reason: str,
         graph_version: int,
         displaced_task_id: str | None = None,
+        tasks: Mapping[str, TaskRuntime] | None = None,
     ) -> tuple[str, str, str]:
         request_id = f"alloc:{event.event_id}:{task.task_id}:{graph_version}"
         request = build_allocation_request(
@@ -112,7 +113,36 @@ class PreemptionController:
             reason=reason,
             generated_at=event.received_at,
             displaced_task_id=displaced_task_id,
-            metadata={"event_id": event.event_id},
+            metadata={
+                "event_id": event.event_id,
+                "current_task": {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type,
+                    "priority": task.priority,
+                    "deadline": task.deadline,
+                    "remaining_work": task.remaining_work,
+                },
+                "forecast_tasks": [
+                    {
+                        "task_id": item.task_id,
+                        "task_type": item.task_type,
+                        "priority": item.priority,
+                        "deadline": item.deadline,
+                        "remaining_work": item.remaining_work,
+                    }
+                    for item in sorted(
+                        (tasks or {}).values(),
+                        key=lambda value: (
+                            -value.priority,
+                            value.deadline if value.deadline is not None else float("inf"),
+                            value.task_id,
+                        ),
+                    )
+                    if item.task_id != task.task_id
+                    and item.assigned_uav is None
+                    and item.state in {TaskState.PENDING, TaskState.PAUSED, TaskState.PREEMPTED}
+                ],
+            },
         )
         proposal = validate_proposal(
             request,
@@ -151,6 +181,7 @@ class PreemptionController:
                     decision_type=DecisionType.CONTINUE,
                     reason=reason,
                     graph_version=graph_version,
+                    tasks=tasks,
                 )
             else:
                 candidates = sorted(
@@ -222,6 +253,7 @@ class PreemptionController:
                         reason=reason,
                         graph_version=graph_version,
                         displaced_task_id=active.task_id,
+                        tasks=tasks,
                     )
                 else:
                     decision = DecisionType.PAUSE
@@ -255,6 +287,7 @@ class PreemptionController:
                     reason=reason,
                     graph_version=graph_version,
                     displaced_task_id=failed_task.task_id,
+                    tasks=tasks,
                 )
             else:
                 decision = DecisionType.ABORT

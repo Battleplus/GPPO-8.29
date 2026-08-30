@@ -31,6 +31,7 @@ class AllocationCandidate:
     energy_ratio: float
     energy_margin: float
     last_seen_at: float
+    supported_task_types: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,7 @@ def build_allocation_request(
                 uav.energy_ratio - uav.reserve_energy - uav.estimated_rtb_energy
             ),
             last_seen_at=float(uav.last_seen_at),
+            supported_task_types=tuple(sorted(uav.supported_task_types)),
         ))
     candidates.sort(key=lambda item: item.uav_id)
     if not candidates:
