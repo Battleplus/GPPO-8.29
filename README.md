@@ -103,14 +103,11 @@ GPPO 最明确的收益出现在 `tracking_saturation_release`：相对 PPO，�
 - 推理期间新事件到达时拒绝旧动作并重新决策；
 - 命令 ACK、区域 lease、fencing token 和唯一执行者约束；
 - 42 条固定极端事件带的确定性回放。
+- 新执行抢占研究分支中的连续进度、暂停、抢占、迁移、恢复与 RTB；
+- 10 类 × 20 条开发事件带、五类节点异构图及统一 PPO/GPPO adapter；
+- Gym/PyTorch 确定性 rollout 和独立 source-bound Gate 实现。
 
-尚未完整实现：
-
-- 任务执行到一半时的显式暂停、抢占、迁移和恢复；
-- 连续任务进度、剩余工作量和进度保留；
-- 能耗不足、强制返航和任务移交；
-- 信息年龄、TTL 和报告置信度进入策略图特征；
-- 8/16/32 UAV 等动态图规模与拓扑泛化。
+尚未完成的是新合同下的正式 PPO/GPPO 重新训练、Beam-MPC 比较、32 UAV 零样本效果验证和独立 Hidden-V1 一次性评估。当前 4/8/16/32 结果只证明图与 adapter 可构建，不能当作模型效果或拓扑泛化证据。
 
 因此，当前系统能处理“决策过程中发生新事件”和“事件后局部重分配”，但还不能宣称已经闭合完整的执行中抢占式动态任务分配。
 
@@ -205,6 +202,8 @@ python scripts\audit_stale_decision_race.py `
 ## 证据与阅读入口
 
 - [Minimum-validation 主合同](MINIMUM_VALIDATION_START_HERE.md)
+- [Execution-Preemption V1 阶段结论](docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md)
+- [Execution-Preemption V1 Launch Gate 合同](docs/EXECUTION_LAUNCH_GATE_V1_ZH.md)
 - [P0 Gate 机器可读证据](handoff/P0_GATE.json)
 - [训练证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/)
 - [固定评估证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/)

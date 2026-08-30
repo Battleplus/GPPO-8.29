@@ -113,6 +113,14 @@ from .framework import (
 from .policy_models import ExecutionGPPOAdaptive, ExecutionPPOMLP
 from .signals import derive_transition_signals
 from .gym_env import ExecutionPreemptionGymEnv, runtime_event_batches
+from .gate import (
+    GATE_NAME,
+    GATE_RELATIVE_PATH,
+    LaunchGateError,
+    LaunchGateValidation,
+    _check_execution_launch_gate,
+    check_execution_launch_gate,
+)
 
 __all__ = [
     "CommandStatus",
@@ -148,10 +156,14 @@ __all__ = [
     "FIXED_EVALUATION_CHECKPOINT",
     "GraphEdge",
     "GraphNode",
+    "GATE_NAME",
+    "GATE_RELATIVE_PATH",
     "HARD_SAFETY_SIGNAL_NAMES",
     "HeteroPolicyObservation",
     "HardSafetyViolation",
     "LEARNED_METHODS",
+    "LaunchGateError",
+    "LaunchGateValidation",
     "METRICS_SCHEMA_ID",
     "MaxEnergyMarginAllocator",
     "MAX_EVENTS",
@@ -197,12 +209,14 @@ __all__ = [
     "AcceptanceResult",
     "EXPECTED_COMPARISON_METHODS",
     "build_allocation_request",
+    "_check_execution_launch_gate",
     "adapter_layout",
     "adapter_layout_sha256",
     "build_execution_graph",
     "build_flat_observation",
     "build_hetero_observation",
     "compute_transition_reward",
+    "check_execution_launch_gate",
     "decode_policy_action",
     "derive_transition_signals",
     "evaluate_acceptance",

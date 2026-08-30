@@ -215,6 +215,18 @@ class TrainingContractTests(unittest.TestCase):
         with self.assertRaisesRegex(TrainingContractError, "disabled"):
             validate_training_contract(value)
 
+    def test_launch_gate_contract_is_source_bound_and_exact(self) -> None:
+        value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+        launch_gate = value["launch_gate"]
+        self.assertEqual(launch_gate["requires_legacy_required_tests_min"], 130)
+        self.assertEqual(launch_gate["requires_execution_preemption_tests_min"], 100)
+        self.assertTrue(launch_gate["requires_framework_rollout_smoke"])
+        self.assertTrue(launch_gate["evidence_whitelist_exact"])
+        self.assertEqual(
+            launch_gate["gate_evidence_path"],
+            "experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

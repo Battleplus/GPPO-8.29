@@ -113,7 +113,7 @@ remaining_work = 1 - progress
 
 | 检查项 | 结果 |
 |---|---:|
-| Execution-Preemption 专项测试 | 92/92 PASS |
+| Execution-Preemption 专项测试 | 101/101 PASS |
 | 原 minimum-validation required tests | 130/130 PASS |
 | 规则开发事件带 | 200/200 PASS |
 | 确定性 allocator-tape runs | 400/400 PASS |
@@ -122,6 +122,7 @@ remaining_work = 1 - progress
 | PPO/GPPO unified adapter smoke | 4/8/16/32 PASS，training_allowed=false |
 | Direct/deferred atomic transaction parity | 400/400 PASS，state SHA parity 400/400 |
 | Gym/PyTorch framework rollout smoke | PPO/GPPO × 2 场景共 4/4 PASS，optimizer steps=0 |
+| 独立 source-bound Gate | builder/formal checker 已实现；最终 source attestation 尚待生成 |
 | 正式训练 | 未启动 |
 | Validation / Freeze / Test / held-out | 未启动 |
 
@@ -217,7 +218,7 @@ P0 事件处理率 = 100%
 
 最稳妥的阶段性表述是：
 
-> 已经证明执行中抢占与动态重分配机制在十类极端事件下能够保持安全、一致和可追溯；已经冻结 PPO、GPPO 与规划器共享的图、reward、指标、训练合同和版本化动作接口，并完成 Gym/PyTorch 确定性短回放。尚未证明任何学习算法在新合同下优于 PPO，下一阶段必须完成 source-bound Gate、重新训练，并通过独立 hidden bank 才能形成最终算法结论。
+> 已经证明执行中抢占与动态重分配机制在十类极端事件下能够保持安全、一致和可追溯；已经冻结 PPO、GPPO 与规划器共享的图、reward、指标、训练合同和版本化动作接口，并完成 Gym/PyTorch 确定性短回放与独立 Gate 实现。尚未证明任何学习算法在新合同下优于 PPO，下一步必须从最终远端 source SHA 生成 evidence-only Gate，再重新训练并通过独立 hidden bank，才能形成最终算法结论。
 
 ## 10. 向学姐汇报的建议口径
 
@@ -225,7 +226,7 @@ P0 事件处理率 = 100%
 
 1. **机制进展：** 系统已经从事件后重分配扩展到任务执行中的暂停、抢占、迁移、恢复和返航，并用版本、ACK、lease 和 fencing 防止旧命令复活。
 2. **证据进展：** 十类场景、200 条开发事件带全部通过规则回放；两个确定性分配器共 400 次同带回放，没有资源冲突或事务不变量失败；4/8/16/32 UAV 图构建 smoke 已跑通。
-3. **结论边界：** 目前完成的是机制、接口、训练合同和框架短回放验证，不是模型胜负。下一阶段会完成 source-bound Gate，重新训练 PPO/GPPO，并加入 Beam-MPC；只有独立 hidden 结果出来后才讨论谁超过 PPO。
+3. **结论边界：** 目前完成的是机制、接口、训练合同、框架短回放和 Gate 实现，不是模型胜负。下一阶段会先生成 source-bound evidence，再重新训练 PPO/GPPO 并加入 Beam-MPC；只有独立 hidden 结果出来后才讨论谁超过 PPO。
 
 ## 11. 证据入口
 
@@ -242,3 +243,4 @@ P0 事件处理率 = 100%
 - Adapter smoke：[`policy_adapter_smoke.json`](../experiments/dynamic_preemption/dev_v1/policy_adapter_smoke.json)
 - 延迟原子事务 parity：[`deferred_transaction_parity.json`](../experiments/dynamic_preemption/dev_v1/deferred_transaction_parity.json)
 - Framework rollout smoke：[`framework_rollout_smoke.json`](../experiments/dynamic_preemption/dev_v1/framework_rollout_smoke.json)
+- Launch Gate 合同：[Execution Launch Gate V1](EXECUTION_LAUNCH_GATE_V1_ZH.md)

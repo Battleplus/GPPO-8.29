@@ -171,6 +171,7 @@ P0 事件处理率 = 100%
 | V1-E2b | PPO/GPPO/Planner observation/action adapter | 已实现，4/8/16/32 smoke PASS |
 | V1-E2c | 多请求原子批次延迟提交 | 已实现，400/400 direct/deferred parity PASS |
 | V1-E2d | Gym/PyTorch 环境接线与 rollout smoke | 已实现，PPO/GPPO 4 次确定性 rollout PASS；PyG 为非必需可选依赖且本机导入失败已记录 |
+| V1-E2e | 独立 source-bound launch Gate | builder、formal checker 与 fail-closed 测试已实现；等待从最终远端 source SHA 生成 evidence-only 后继 |
 | V1-F | 重新训练与 4/8/16 UAV 比较 | 未开始 |
 | V1-G | Hidden-V1 一次性验证与 evidence 分支 | 未开始 |
 

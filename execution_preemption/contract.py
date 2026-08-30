@@ -87,7 +87,7 @@ def validate_training_contract(
 ) -> ValidatedTrainingContract:
     _expect(value.get("contract_id") == TRAINING_CONTRACT_ID, "contract_id drift")
     _expect(value.get("schema_version") == 1, "schema_version must equal 1")
-    _expect(value.get("status") == "FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION", "status drift")
+    _expect(value.get("status") == "FROZEN_FOR_SOURCE_ATTESTATION", "status drift")
 
     compatibility = value.get("compatibility", {})
     _expect(compatibility.get("legacy_checkpoint_compatible") is False,
@@ -186,6 +186,19 @@ def validate_training_contract(
             "source-bound launch gate is required")
     _expect(launch_gate.get("requires_clean_training_worktree") is True,
             "clean training worktree is required")
+    _expect(launch_gate.get("requires_framework_rollout_smoke") is True,
+            "framework rollout smoke is required")
+    _expect(launch_gate.get("requires_legacy_required_tests_min") == 130,
+            "legacy required test threshold drift")
+    _expect(launch_gate.get("requires_execution_preemption_tests_min") == 100,
+            "execution-preemption test threshold drift")
+    _expect(
+        launch_gate.get("gate_evidence_path")
+        == "experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json",
+        "launch gate evidence path drift",
+    )
+    _expect(launch_gate.get("evidence_whitelist_exact") is True,
+            "launch gate evidence whitelist must be exact")
 
     learned_run_count = len(LEARNED_METHODS) * len(TRAINING_SEEDS) * len(TRAINING_SCALES)
     checkpoint_count = learned_run_count * len(CHECKPOINT_STEPS)
