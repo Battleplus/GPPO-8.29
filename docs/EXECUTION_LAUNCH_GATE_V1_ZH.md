@@ -1,15 +1,15 @@
 # Execution-Preemption V1：Source-bound 训练前 Gate
 
-> Gate：`EXECUTION_PREEMPTION_V1_LAUNCH_GATE`  
-> Source 状态：`FROZEN_FOR_SOURCE_ATTESTATION`  
+> Gate：`EXECUTION_PREEMPTION_V1_LAUNCH_GATE`
+> Source 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
 > 当前正式训练：未启动
 
 ## 1. 目的
 
 执行中抢占引入了新的状态、图、动作、reward 和事务语义，因此不能复用旧 minimum-validation 的 `handoff/P0_GATE.json`、smoke 或 checkpoint。本 Gate 是新实验唯一的训练前授权记录：只有机器检查全部 PASS 时，生成文件中的 `training_allowed` 才可能为 `true`。
 
-生成器：`scripts/build_execution_launch_gate.py`  
-正式入口检查：`execution_preemption.gate._check_execution_launch_gate()`  
+生成器：`scripts/build_execution_launch_gate.py`
+正式入口检查：`execution_preemption.gate._check_execution_launch_gate()`
 唯一 evidence 文件：
 
 ```text
