@@ -1,7 +1,7 @@
 # Execution-Preemption V1：PPO/GPPO/Planner 统一适配器
 
 > Adapter ID：`execution-preemption-policy-adapter-v1`
-> 状态：`FROZEN_FOR_LAUNCH_GATE_IMPLEMENTATION`
+> 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
 > 当前训练许可：`false`
 
 ## 1. 结论
