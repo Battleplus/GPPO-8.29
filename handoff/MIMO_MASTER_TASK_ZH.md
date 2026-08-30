@@ -10,7 +10,7 @@
 
 `E:\Z博士\8.20\54_20-master`
 
-开始前按 `MIMO_START_HERE.md` 和 `handoff/LOCAL_CONTEXT_INDEX.md` 的固定顺序读取本地资料。不要去其他路径搜索。
+开始前按历史入口 `docs/archive/MIMO_START_HERE_LEGACY.md` 和 `handoff/LOCAL_CONTEXT_INDEX.md` 的固定顺序读取本地资料。不要去其他路径搜索。
 
 ## 2. 不可违反的边界
 

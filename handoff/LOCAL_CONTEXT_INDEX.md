@@ -10,7 +10,7 @@
 
 | 顺序 | 本地文件 | 用途 |
 |---:|---|---|
-| 1 | `MIMO_START_HERE.md` | 安全边界和入口 |
+| 1 | `docs/archive/MIMO_START_HERE_LEGACY.md` | 历史安全边界和入口 |
 | 2 | `handoff/MIMO_MASTER_TASK_ZH.md` | 完整执行任务书 |
 | 3 | `handoff/COPY_PROVENANCE.json` | 复制来源、Git 状态、文件和参考资料哈希 |
 | 4 | `references/REAL_EVENT_DETECTION_AND_CONCURRENCY_DESIGN_ZH.md` | Truth/Observation/ConfirmedEvent、ACK、lease、fencing 设计依据 |

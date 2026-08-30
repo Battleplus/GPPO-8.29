@@ -995,7 +995,7 @@ STOP → fix → rerun validation
 
 接手本规划的 AI 应遵循：
 
-1. 先读 `MIMO_START_HERE.md`。
+1. 先读历史入口 `docs/archive/MIMO_START_HERE_LEGACY.md`。
 2. 再读本文件。
 3. 再读 `handoff/MIMO_MASTER_TASK_ZH.md`。
 4. 不推倒重写已有 `event_runtime/` 和 `random_event/`。

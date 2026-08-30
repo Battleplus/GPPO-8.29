@@ -28,12 +28,13 @@ reports, a long blind burst, rapid task churn, and an eight-event storm.
 - [Aggregate metrics](results_20260827/aggregate_results.csv)
 - [Paired GPPO-minus-PPO effects](results_20260827/paired_effects_gppo_minus_ppo.csv)
 - [In-flight stale-decision audit](results_20260827/stale_decision_race_audit.json)
-- [SHA-256 inventory](results_20260827/sha256_inventory.json)
 - [Chinese briefing for the senior researcher](SENIOR_BRIEFING_ZH.md)
 
-The archive includes all 42 immutable tapes and all 420 raw episode traces.
-Every trace satisfies the reward invariant; all episodes terminated normally,
-with no invalid or repaired actions.
+The branch keeps all 42 immutable tapes, aggregate metrics and the audit
+summary. The 420 generated raw episode traces were removed from the branch
+tip during repository cleanup; they remain recoverable from Git commit
+`524d3a4`. The preserved aggregate evidence records that every episode
+terminated normally and the reward invariant passed.
 
 ## Reproduction
 

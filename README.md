@@ -1,243 +1,99 @@
-# GPPO-8.29：动态扰动下的多无人机任务分配
+# GPPO-8.29：执行中动态扰动与多无人机任务重分配
 
-本项目研究随机事件、资源失效和弱通信条件下的多无人机动态任务分配，对比两种共享同一训练与评估合同的策略：
+当前研究分支的主线是 **Execution-Preemption V1**：无人机正在执行任务时，如果再次发生紧急任务、UAV 损毁、能量不足或通信异常，系统能够确认事件、判断优先级、安全中断，并重新分配任务。
 
-- **PPO-MLP**：将规范化图状态展平后输入 MLP；
-- **GPPO-Adaptive**：使用异构图消息传递和自适应门控进行关系感知决策。
+> 分支：`research/execution-preemption-v1`<br>
+> 基线：`main@a4207527f713e6f15dcdbc538134aeaca28a03ac`（只读，未修改）<br>
+> 当前结论：机制、接口、三种确定性基线和开发回放已完成；正式训练已在独立证据工作区启动，但完整 campaign 与 Hidden-V1 尚未完成。
 
-项目已经完成两模型 minimum-validation 的训练与证据闭环，并增加了面向多任务变化、连续事件、突发失效、临时变更和信息不完整的探索性极端压力测试。
+## 当前进度
 
-当前证据不支持“GPPO 在所有场景全面优于 PPO”。更准确的结论是：
+| 模块 | 状态 | 能说明什么 |
+|---|---|---|
+| 执行进度、暂停、抢占、迁移、恢复、RTB | 已实现 | 已具备执行中再分配的运行时语义 |
+| 四类核心扰动 | 已实现 | 新任务、UAV 失败、能量不足、通信异常可进入统一流程 |
+| 五节点异构图 | 已实现 | UAV、Task、Region、Target、Event 信息可显式建模 |
+| 事件证据确认 | 已有框架 | 支持来源、时效、重复/迟到过滤和确认状态机；真实 IC 数据尚未接入 |
+| 安全仲裁与原子提交 | 已实现 | 推理期间再来事件时，旧方案作废并基于新版本重算 |
+| 三种确定性比较基线 | 已实现 | `senior_legacy_method_v1`、`greedy_priority_v1`、`beam_mpc_v1` |
+| 开发事件带 | 已完成 | 10 类 × 20 条，三基线共 600 次安全回放通过 |
+| 专项测试 | 120/120 PASS | 证明工程合同与安全不变量通过，不代表学习效果 |
+| 正式新训练 | 进行中 | UAV4/seed1101 阶段已封存，seed2202 正在独立工作区运行；完整 campaign 尚未完成 |
+| Validation / Hidden-V1 | 未开始 | 目前不能宣称 GPPO 优于 PPO |
 
-> GPPO-Adaptive 在搜索/跟踪资源强争用、需要等待未来资源释放的场景中具有研究价值；PPO-MLP 在固定小图、持续事件风暴和严格实时约束下仍是更快、更稳定的基线。
-
-Execution-Preemption V1 的三种确定性比较基线现已冻结：`senior_legacy_method_v1`、`greedy_priority_v1`、`beam_mpc_v1`。它们统一经过规则安全仲裁和候选掩码；语义与 600 次开发带安全回放见 [`docs/EXECUTION_BASELINES_V1_ZH.md`](docs/EXECUTION_BASELINES_V1_ZH.md)。该回放不是效果评估，正式训练、Validation、Freeze、Test 与 Hidden-V1 均未启动。
-
-## 当前状态
-
-| 项目 | 状态 |
-|---|---|
-| 正式模型 | PPO-MLP、GPPO-Adaptive |
-| 训练 seeds | 1101、2202、3303 |
-| 训练预算 | 每个 run 50,000 accepted decision steps |
-| 正式训练 | 6/6 runs，共 300,000 steps |
-| Checkpoints | 12/12，每个 run 固定保存 25k、50k |
-| 正式评估 | 固定使用六个 50k checkpoints，不做 checkpoint selection |
-| Held-out bank | 100 cases：Single、Sequential、Overlap、Burst、Unseen 各 20 |
-| Required tests | 130/130 PASS |
-| P0 Gate 证据 | `training_allowed=true`、`violations=[]` |
-| 极端压力测试 | 7 类场景、42 条事件带、420 个回合 |
-| 极端回合完整性 | 420/420 正常结束，reward invariant 全部通过 |
-
-> 说明：仓库包含训练、评估和压力测试的机器可读证据，但不提交模型 checkpoint 二进制文件。复跑 checkpoint 相关实验时，需要另外提供与 manifest 中 SHA-256 匹配的六个 50k checkpoint。
-
-## 系统流程
+## 突发事件处理链
 
 ```text
-Truth Event
-    ↓
-弱通信 Observation（延迟、丢包、乱序、重复）
-    ↓
-Confirmation State Machine
-    ↓
-Belief / 异构任务图更新
-    ↓
-PPO-MLP 或 GPPO-Adaptive 推理
-    ↓
-graph/action version 检查
-    ↓
-Command → ACK → Lease → Fencing
-    ↓
-局部重新分配与事件恢复
+IC/仿真原始数据
+  → Observation（来源、序列号、时间戳、置信度）
+  → 去重、乱序与过期过滤
+  → ConfirmedEvent（任务级确认事件）
+  → P0-P4 确定性安全仲裁
+  → 保存进度、暂停/抢占/迁移/RTB
+  → 生成安全候选 UAV-Task 集
+  → PPO / GPPO / Greedy / Beam-MPC 提案
+  → request/version/SHA/mask 校验
+  → 原子提交；若期间再来事件则整批作废并重算
+  → ACK、执行与恢复验证
 ```
 
-当前事件类型包括：
+PPO/GPPO 只在安全层筛选后的候选中决定“哪架 UAV 执行哪个任务”，不能绕过能量、通信、唯一所有权、不可抢占任务和版本约束。
 
-- `UAV_DAMAGE`：UAV 损毁并释放其原搜索任务；
-- `TARGET_DISCOVERED`：搜索 UAV 转入跟踪，原区域进入待分配；
-- `TARGET_DESTROYED`：跟踪资源释放；
-- `REGION_VACANCY`：搜索区域产生空缺。
+## 主要阅读入口
 
-系统支持 Single、Sequential、Overlap 和 Burst 四类事件到达模式，并通过 graph/action version、ACK、lease 和 fencing token 防止过期动作、重复持有者和旧 ACK 复活。
+- [工程总说明：事件检测、五节点图、抢占机制、PPO/GPPO 区别与汇报结论](docs/EXECUTION_PREEMPTION_ENGINEERING_README_ZH.md)
+- [当前可恢复进度](docs/EXECUTION_PREEMPTION_PROGRESS_ZH.md)
+- [Execution-Preemption V1 协议](docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
+- [算法与安全层边界](docs/ALLOCATION_BOUNDARY_V1_ZH.md)
+- [三种确定性比较基线](docs/EXECUTION_BASELINES_V1_ZH.md)
+- [训练、奖励与指标合同](docs/EXECUTION_TRAINING_CONTRACT_V1_ZH.md)
+- [PPO/GPPO 统一适配器](docs/POLICY_ADAPTER_V1_ZH.md)
+- [文档分类索引](docs/README.md)
 
-## 主要实验结果
-
-### 正式 minimum-validation
-
-- PPO 与 GPPO 的总体成功率、合法覆盖率和 episode return 接近，没有形成稳定的全面胜负；
-- PPO-MLP 平均推理约 `2.51 ms`，归一化距离更低；
-- GPPO-Adaptive 平均推理约 `17.07 ms`，计算代价明显更高；
-- GPPO 在 Sequential、Overlap、Burst 中出现部分正向趋势，但三个训练 seed 不足以支持普遍优越性声明；
-- Test-Unseen 没有证明前馈图策略能够自动解决信息延迟或部分可观测问题。
-
-### 极端多事件压力测试
-
-七类探索性场景包括：
-
-1. `atomic_triple_shock`：多个扰动同时到达；
-2. `resource_collapse`：多 UAV/资源连续失效；
-3. `tracking_saturation_release`：跟踪资源饱和并等待未来释放；
-4. `out_of_order_reports`：因果报告乱序；
-5. `long_blind_burst`：长时间信息盲区；
-6. `task_churn`：任务新增、取消和重新出现；
-7. `event_storm_8`：连续八事件风暴。
-
-GPPO 最明确的收益出现在 `tracking_saturation_release`：相对 PPO，平均恢复延迟减少约 `0.678`，累计空缺减少约 `12.817`，episode return 增加约 `0.610`。代价是归一化距离增加约 `0.024`，推理慢约 `12.37 ms`。
-
-在 `event_storm_8` 和 `task_churn` 中，GPPO 没有稳定超过 PPO。乱序报告下两个前馈模型基本打平，说明信息不完整需要循环记忆、belief state 或显式状态估计。
-
-详细材料：
-
-- [中文研究结论](experiments/extreme_scenarios/CONCLUSION_ZH.md)
-- [向学姐汇报文档](experiments/extreme_scenarios/SENIOR_BRIEFING_ZH.md)
-- [极端场景结果解读](experiments/extreme_scenarios/results_20260827/INTERPRETATION.md)
-- [完整场景报告](experiments/extreme_scenarios/results_20260827/REPORT.md)
-- [机器可读运行摘要](experiments/extreme_scenarios/results_20260827/run_summary.json)
-- [SHA-256 inventory](experiments/extreme_scenarios/results_20260827/sha256_inventory.json)
-
-## 动态扰动能力边界
-
-当前已经实现：
-
-- 连续多事件和原子 burst；
-- 弱通信延迟、乱序、重复和确认流程；
-- UAV 损毁后的节点/边更新与局部重分配；
-- 推理期间新事件到达时拒绝旧动作并重新决策；
-- 命令 ACK、区域 lease、fencing token 和唯一执行者约束；
-- 42 条固定极端事件带的确定性回放。
-- 新执行抢占研究分支中的连续进度、暂停、抢占、迁移、恢复与 RTB；
-- 10 类 × 20 条开发事件带、五类节点异构图及统一 PPO/GPPO adapter；
-- Gym/PyTorch 确定性 rollout 和独立 source-bound Gate 实现。
-
-尚未完成的是新合同下的正式 PPO/GPPO 重新训练、Beam-MPC 比较、32 UAV 零样本效果验证和独立 Hidden-V1 一次性评估。当前 4/8/16/32 结果只证明图与 adapter 可构建，不能当作模型效果或拓扑泛化证据。
-
-因此，当前系统能处理“决策过程中发生新事件”和“事件后局部重分配”，但还不能宣称已经闭合完整的执行中抢占式动态任务分配。
-
-## 项目结构
+## 当前代码结构
 
 ```text
-GPPO-8.29/
-├─ ppo_allocation/       PPO/GPPO 环境、图构造、训练、评估与 Phase J
-├─ event_runtime/        事件观测、确认、队列、并发、ACK/lease/fencing
-├─ brain/                任务编排、Mission FSM 与执行适配器
-├─ milp/                 任务分配优化模块
-├─ mppi/                 航迹/运动规划模块
-├─ search_planner/       搜索规划与任务演示
-├─ scenes/               Isaac Sim 场景与平台模型
-├─ sensors/              EO/SAR/跟踪与天气影响模型
-├─ weapons/              武器与打击行为模型
-├─ experiments/          独立实验、结论和机器可读证据
-├─ configs/              冻结协议和场景配置
-├─ handoff/              Gate、provenance、决策记录与复现资料
-└─ scripts/              Gate、压力测试和审计脚本
+execution_preemption/           当前主线：执行状态、抢占控制、图、策略适配与训练框架
+tests_execution_preemption/     当前主线专项测试
+experiments/dynamic_preemption/ 当前 10×20 开发事件带与回放证据
+configs/execution_preemption_v1.json
+docs/EXECUTION_*.md              当前合同、进度、结论和汇报说明
+
+ppo_allocation/                 旧随机事件 PPO/GPPO 基线与封存结果
+event_runtime/                  旧事件观测/确认/ACK/lease/fencing 运行时
+experiments/extreme_scenarios/  旧极端场景聚合结果
+handoff/                        历史 Gate、provenance 和复现记录
 ```
 
-## 环境安装
-
-minimum-validation 的复现环境：
-
-- Python `3.11.5`；
-- NumPy `1.26.4`；
-- PyTorch `2.7.1`；
-- Gymnasium `1.2.3`；
-- Stable-Baselines3 / sb3-contrib `2.8.0`。
-
-Windows PowerShell 示例：
-
-```powershell
-git clone https://github.com/Battleplus/GPPO-8.29.git
-Set-Location GPPO-8.29
-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-python -m pip install --upgrade pip
-python -m pip install -r ppo_allocation\requirements-random-event-lock.txt
-```
-
-若需要 MILP、Perch 或完整任务编排模块，再安装根目录依赖：
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-Isaac Sim 场景需要单独安装与当前机器匹配的 NVIDIA Isaac Sim，不能仅通过上述 pip 依赖完成配置。
+旧模块仍保留，是因为新方法需要与学姐旧方法和 PPO 基线做同合同对照；它们不是当前开发入口。历史材料说明见 [旧随机事件研究索引](docs/archive/LEGACY_RANDOM_EVENT_INDEX_ZH.md)。
 
 ## 快速验证
 
-运行随机事件核心测试：
+在仓库根目录运行当前专项测试：
 
 ```powershell
-Set-Location ppo_allocation
-python -m unittest discover -s tests_random_event -v
+python -m unittest discover -s tests_execution_preemption -v
 ```
 
-从仓库根目录只读查看已封存的 P0 Gate 状态：
+生成开发事件带并执行三种确定性基线安全回放：
 
 ```powershell
-Set-Location ..
-python -c "import json; d=json.load(open('handoff/P0_GATE.json', encoding='utf-8')); print(d.get('training_allowed'), d.get('violations'))"
+python scripts\generate_dynamic_preemption_tapes.py
+python scripts\run_execution_baselines.py
 ```
 
-`handoff/P0_GATE.json` 是原 minimum-validation source/evidence 链生成的归档证据。当前仓库首页 README 的发布提交不是新的正式训练 source，不应重新运行 Gate builder，也不应据此启动或重做正式训练。
+这些命令用于验证机制，不等同于正式训练或模型效果评估。
 
-## 复跑极端场景
+## 仓库保留策略
 
-需要一个包含冻结 manifest 和六个已验证 50k checkpoints 的本地 artifact 根目录：
+- 保留：当前源代码、合同、测试、固定事件带、聚合表、结论图和最小可复现实证；
+- 不保留在分支最新版本：可再生成的逐回合原始日志、逐步轨迹、过期 smoke/dry-run 输出和无关大文件；
+- 旧实验的完整原始文件仍可从 Git 历史提交 `524d3a4` 恢复；
+- 模型 checkpoint 二进制不进入仓库，正式实验必须按 manifest 与 SHA-256 单独封存。
 
-```powershell
-python scripts\run_extreme_scenarios.py `
-  --checkpoint-root E:\path\to\ppo_allocation `
-  --output-dir E:\new\empty\extreme_results
-```
+## 研究边界
 
-脚本会拒绝复用非空输出目录，并在回放前校验六个 checkpoint 的 SHA-256。
-
-审计“推理完成后、动作提交前发生新事件”时的旧动作拒绝：
-
-```powershell
-python scripts\audit_stale_decision_race.py `
-  --checkpoint-root E:\path\to\ppo_allocation `
-  --result-root E:\path\to\extreme_results
-```
-
-## 证据与阅读入口
-
-- [Minimum-validation 主合同](MINIMUM_VALIDATION_START_HERE.md)
-- [Execution-Preemption V1 阶段结论](docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md)
-- [Execution-Preemption V1 Launch Gate 合同](docs/EXECUTION_LAUNCH_GATE_V1_ZH.md)
-- [Execution-Preemption V1 Training Runner 合同](docs/EXECUTION_TRAINING_RUNNER_V1_ZH.md)
-- [P0 Gate 机器可读证据](handoff/P0_GATE.json)
-- [训练证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/)
-- [固定评估证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/)
-- [极端压力测试说明](experiments/extreme_scenarios/README.md)
-- [中文最终结论](experiments/extreme_scenarios/CONCLUSION_ZH.md)
-
-历史 handoff 文档中可能保留旧的 300k、GPPO-NoGate 或 GPPO-8.20 方案，它们仅用于追溯设计过程。当前有效的 minimum-validation 合同以本 README、`MINIMUM_VALIDATION_START_HERE.md` 中的两模型 50k 方案，以及对应机器可读 evidence 为准。
-
-## 研究与解释边界
-
-- 极端场景是在查看正式结果后设计的 post-hoc development bank，不是新的正式 held-out test；
-- 不应声称 GPPO 已全面超过 PPO；
-- 成功率在当前 action mask 与恢复机制下接近天花板，应同时报告累计空缺、恢复延迟、距离、负载和端到端时延；
-- 新算法在这批极端场景上开发后，必须使用新冻结、未见过的 `Extreme-V2` hidden bank 做一次性验证；
-- 本仓库用于研究与仿真验证，不代表真实无人系统部署安全认证。
-
-## 下一步研究方向
-
-1. 增加任务运行时状态机与执行中抢占事务；
-2. 增加能耗、RTB、任务移交和切换成本；
-3. 将信息年龄、置信度和通信可靠性编码进异构图；
-4. 实现 Beam-MPC / Rolling-Horizon Planner；
-5. 将规划器蒸馏为低时延 MLP，并研究 Recurrent QR-DQN / R2D2；
-6. 在动态规模和全新 Extreme-V2 hidden bank 上比较 PPO、GPPO 与规划方法。
-
-执行中抢占与动态重分配已在独立研究合同中启动，详见：
-
-- [Execution-Preemption V1 中文协议](docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
-- [Execution-Preemption V1 阶段性研究结论](docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md)
-- [Execution-Preemption V1 机器可读合同](configs/execution_preemption_v1.json)
-- [Execution-Preemption V1 算法分配边界](docs/ALLOCATION_BOUNDARY_V1_ZH.md)
-- [Execution-Preemption V1 Reward、指标与训练合同](docs/EXECUTION_TRAINING_CONTRACT_V1_ZH.md)
-- [Execution-Preemption V1 PPO/GPPO/Planner 统一适配器](docs/POLICY_ADAPTER_V1_ZH.md)
-- [Dynamic-Preemption-Dev 10×20 开发事件带](experiments/dynamic_preemption/README.md)
+- 当前 600 次开发回放证明的是安全机制和接口能运行，不是 PPO/GPPO 效果；
+- 旧实验中的 100% 事件成功率只代表最终恢复到合法分配状态，不代表检测率、deadline 达成率或最优性；
+- 五节点图提高表达能力，也增加消息传递和推理开销，后续必须与两节点消融比较；
+- 正式结论必须来自冻结合同下的多 seed 训练、Validation、一次性 Hidden-V1，以及 PPO、GPPO、学姐旧方法和 Beam-MPC 的同条件对照。

@@ -43,7 +43,7 @@
 - `ppo_allocation/results/random_event/preliminary_eval/grouped_analysis.json`
 - `ppo_allocation/results/random_event/tapes/preliminary_test200/manifest.json`
 - `ppo_allocation/results/random_event/tapes/smoke/manifest.json`
-- `ppo_allocation/results/random_event/preliminary_eval/raw_trace_index.json`
+- 逐回合原始日志与索引已从分支最新版本清理；需要审计时从 `524d3a4` 恢复。
 
 ## 2. 两种不确定性不能混为一谈
 
