@@ -75,6 +75,7 @@ class ExecutionPreemptionGymEnv(gym.Env):
         *,
         allocator_id: str = "framework_rollout_v1",
         controller: PreemptionController | None = None,
+        expose_rule_context: bool = True,
     ) -> None:
         super().__init__()
         validate_tape(tape)
@@ -83,6 +84,7 @@ class ExecutionPreemptionGymEnv(gym.Env):
         if not self.allocator_id:
             raise ValueError("allocator_id is required")
         self.controller = controller or PreemptionController()
+        self.expose_rule_context = bool(expose_rule_context)
         self.action_space = spaces.Discrete(ACTION_CAPACITY)
         self.observation_space = spaces.Box(
             low=0.0,
@@ -128,12 +130,12 @@ class ExecutionPreemptionGymEnv(gym.Env):
         self._flat = build_flat_observation(
             graph,
             request=self._pending.allocation_request,
-            decision=self._pending.decision,
+            decision=self._pending.decision if self.expose_rule_context else None,
         )
         self._hetero = build_hetero_observation(
             graph,
             request=self._pending.allocation_request,
-            decision=self._pending.decision,
+            decision=self._pending.decision if self.expose_rule_context else None,
         )
 
     def _advance_until_request_or_terminal(self) -> None:
@@ -310,8 +312,10 @@ class ExecutionPreemptionGymEnv(gym.Env):
             "hetero_observation": self._hetero,
             "action_mask": self.action_masks(),
             "policy_action_count": self._policy_action_count,
+            "rule_context_exposed": self.expose_rule_context,
             "batch_index": self._batch_index,
             "batch_count": len(self._batches),
+            "episode_terminated": self._terminated,
             "live_runtime_sha256": self.runtime.state_sha256(),
             "training_allowed": False,
             "training_started": False,

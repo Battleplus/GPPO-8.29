@@ -345,6 +345,39 @@ def _validate_framework_smoke() -> dict[str, object]:
     })
 
 
+def _validate_training_runner_smoke() -> dict[str, object]:
+    path = DEV_ROOT / "training_runner_smoke.json"
+    value = _load_json(path)
+    methods = value.get("methods", [])
+    passed = all((
+        value.get("status") == "PASS",
+        value.get("classification")
+        == "tiny_training_runner_smoke_not_model_effectiveness_evidence",
+        value.get("learned_method_count") == 4,
+        value.get("accepted_decision_steps_per_smoke_run") == 2,
+        value.get("checkpoint_steps_per_smoke_run") == [1, 2],
+        value.get("real_optimizer_updates") is True,
+        value.get("fresh_temporary_output_per_run") is True,
+        value.get("legacy_checkpoint_loaded") is False,
+        value.get("old_campaign_reused") is False,
+        value.get("formal_training_allowed") is False,
+        _all_false(value, (
+            "formal_training_started", "validation_started", "freeze_started",
+            "test_started", "hidden_evaluation_started", "checkpoint_selection",
+        )),
+        isinstance(methods, list) and len(methods) == 4,
+        all(item.get("status") == "PASS" for item in methods),
+        all(item.get("optimizer_step_count") == 2 for item in methods),
+        all(item.get("checkpoint_file_sha_verified") is True for item in methods),
+        all(item.get("same_seed_state_determinism") is True for item in methods),
+    ))
+    return _artifact_record(path, passed, {
+        "learned_method_count": value.get("learned_method_count"),
+        "real_optimizer_updates": value.get("real_optimizer_updates"),
+        "formal_training_started": value.get("formal_training_started"),
+    })
+
+
 def _check(status: bool, details: Mapping[str, Any]) -> dict[str, object]:
     return {"status": "PASS" if status else "FAIL", "details": dict(details)}
 
@@ -368,7 +401,7 @@ def build_gate() -> dict[str, object]:
         "execution_preemption_required",
         ROOT,
         "tests_execution_preemption",
-        100,
+        111,
     )
     artifact_builders: dict[str, Callable[[], dict[str, object]]] = {
         "development_bank_10x20": _validate_dev_manifest,
@@ -378,6 +411,7 @@ def build_gate() -> dict[str, object]:
         "deferred_transaction_parity_400": _validate_deferred_parity,
         "training_contract_smoke": _validate_training_contract_smoke,
         "framework_rollout_smoke": _validate_framework_smoke,
+        "training_runner_smoke": _validate_training_runner_smoke,
     }
     artifact_checks = {name: builder() for name, builder in artifact_builders.items()}
 
@@ -402,12 +436,14 @@ def build_gate() -> dict[str, object]:
             "legacy_checkpoint_read": False,
         }),
         "training_contract_frozen": _check(
-            contract.training_allowed is False
+            contract.status == "FROZEN_FOR_SOURCE_ATTESTATION"
+            and contract.training_allowed is False
             and contract.learned_run_count == 36
             and contract.checkpoint_count == 72,
             {
                 "contract_id": contract.contract_id,
                 "contract_sha256": contract.canonical_sha256,
+                "contract_status": contract.status,
                 "training_allowed_in_static_contract": contract.training_allowed,
                 "learned_run_count": contract.learned_run_count,
                 "checkpoint_count": contract.checkpoint_count,
