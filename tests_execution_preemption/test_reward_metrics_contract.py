@@ -219,13 +219,28 @@ class TrainingContractTests(unittest.TestCase):
         value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
         launch_gate = value["launch_gate"]
         self.assertEqual(launch_gate["requires_legacy_required_tests_min"], 130)
-        self.assertEqual(launch_gate["requires_execution_preemption_tests_min"], 100)
+        self.assertEqual(launch_gate["requires_execution_preemption_tests_min"], 111)
         self.assertTrue(launch_gate["requires_framework_rollout_smoke"])
+        self.assertTrue(launch_gate["requires_training_runner_smoke"])
         self.assertTrue(launch_gate["evidence_whitelist_exact"])
         self.assertEqual(
             launch_gate["gate_evidence_path"],
             "experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json",
         )
+
+    def test_training_hyperparameters_and_tape_namespace_are_frozen(self) -> None:
+        value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+        training = value["training"]
+        self.assertEqual(training["training_tape_namespace"], "execution_preemption_v1/train")
+        self.assertFalse(training["development_tape_reuse"])
+        self.assertFalse(training["hidden_tape_reuse"])
+        self.assertEqual(training["optimizer"], "Adam")
+        self.assertEqual(training["learning_rate"], 0.0003)
+        self.assertEqual(training["rollout_accepted_decision_steps"], 64)
+        self.assertEqual(training["update_epochs"], 4)
+        self.assertTrue(training["fresh_output_required"])
+        self.assertFalse(training["resume_supported"])
+        self.assertTrue(training["checkpoint_includes_optimizer_rng_provenance"])
 
 
 if __name__ == "__main__":

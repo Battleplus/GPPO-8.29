@@ -1,0 +1,113 @@
+{
+  "accepted_decision_steps_per_smoke_run": 2,
+  "checkpoint_selection": false,
+  "checkpoint_steps_per_smoke_run": [
+    1,
+    2
+  ],
+  "classification": "tiny_training_runner_smoke_not_model_effectiveness_evidence",
+  "formal_training_allowed": false,
+  "formal_training_started": false,
+  "freeze_started": false,
+  "fresh_temporary_output_per_run": true,
+  "hidden_evaluation_started": false,
+  "learned_method_count": 4,
+  "legacy_checkpoint_loaded": false,
+  "methods": [
+    {
+      "accepted_decision_steps": 2,
+      "checkpoint_file_sha_verified": true,
+      "checkpoint_steps": [
+        1,
+        2
+      ],
+      "method_id": "ppo_mlp_reactive_v1",
+      "model_family": "ppo_mlp",
+      "model_state_sha256": [
+        "753df2a02cad1966df9b0de469bd00a9ede845e3ade1296c5dc43235d01aed80",
+        "b82abafb28ad1a1cf14a5a712b186cdf4f68019906af24ab298806f7e2a92e0d"
+      ],
+      "optimizer_step_count": 2,
+      "rng_state_sha256": [
+        "ea9dc88ac7cff19f3068dfc4b5833186a3543c1474b7558cfc61e0b547453823",
+        "89a769e2adcfaed5eb9f2fff9a13d83cc1ba09564b7b11c073b5269f927717ec"
+      ],
+      "rule_context_exposed": false,
+      "same_seed_state_determinism": true,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_steps": 2,
+      "checkpoint_file_sha_verified": true,
+      "checkpoint_steps": [
+        1,
+        2
+      ],
+      "method_id": "gppo_adaptive_reactive_v1",
+      "model_family": "gppo_adaptive",
+      "model_state_sha256": [
+        "73d46093015ad9f461b07baf5296f76193af2cd563210f135a0a2b66d5d8e90c",
+        "f386a6488f87bf0fd640bff854696ee82ed02c9f5b04c7bc28595ff83c677747"
+      ],
+      "optimizer_step_count": 2,
+      "rng_state_sha256": [
+        "b611bcd8654cdaa14237e1f26e4f3722cc464d7833fe3597eff20f96afc48412",
+        "87b86cba166283b52047f1112291bc3a5ea96ad71e6ef53f1de8b9c83c24d254"
+      ],
+      "rule_context_exposed": false,
+      "same_seed_state_determinism": true,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_steps": 2,
+      "checkpoint_file_sha_verified": true,
+      "checkpoint_steps": [
+        1,
+        2
+      ],
+      "method_id": "ppo_mlp_rule_arbiter_v1",
+      "model_family": "ppo_mlp",
+      "model_state_sha256": [
+        "dee3238ab492958d163394cc3483107a4779e9359efaf170c410ba8e57a4467d",
+        "00f9c21cd3e418d77a2245c11e6433b1282918b00e4ddfbc1a9a6c3a2dbf59e0"
+      ],
+      "optimizer_step_count": 2,
+      "rng_state_sha256": [
+        "ea9dc88ac7cff19f3068dfc4b5833186a3543c1474b7558cfc61e0b547453823",
+        "89a769e2adcfaed5eb9f2fff9a13d83cc1ba09564b7b11c073b5269f927717ec"
+      ],
+      "rule_context_exposed": true,
+      "same_seed_state_determinism": true,
+      "status": "PASS"
+    },
+    {
+      "accepted_decision_steps": 2,
+      "checkpoint_file_sha_verified": true,
+      "checkpoint_steps": [
+        1,
+        2
+      ],
+      "method_id": "gppo_adaptive_rule_arbiter_v1",
+      "model_family": "gppo_adaptive",
+      "model_state_sha256": [
+        "a073ff0eb35478f115f9a6d95f65f3cde56f96067a2becbb32a00104360f3272",
+        "3b1a3ae2e06ad138010ba2df128618a67d5d6059f0529e5a1d075e5b31ea18c0"
+      ],
+      "optimizer_step_count": 2,
+      "rng_state_sha256": [
+        "b611bcd8654cdaa14237e1f26e4f3722cc464d7833fe3597eff20f96afc48412",
+        "87b86cba166283b52047f1112291bc3a5ea96ad71e6ef53f1de8b9c83c24d254"
+      ],
+      "rule_context_exposed": true,
+      "same_seed_state_determinism": true,
+      "status": "PASS"
+    }
+  ],
+  "model_effectiveness_evaluated": false,
+  "old_campaign_reused": false,
+  "real_optimizer_updates": true,
+  "schema_version": 1,
+  "status": "PASS",
+  "test_started": false,
+  "validation_started": false
+}

@@ -1,7 +1,7 @@
 # Execution-Preemption V1：Source-bound 训练前 Gate
 
 > Gate：`EXECUTION_PREEMPTION_V1_LAUNCH_GATE`
-> Source 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
+> Source 状态：`FROZEN_FOR_BASELINE_IMPLEMENTATION`
 > 当前正式训练：未启动
 
 ## 1. 目的
@@ -44,7 +44,7 @@ Gate 同时验证：
 - source SHA 等于 GitHub 研究分支 HEAD；
 - source tree SHA 与新实验 protected-file SHA-256 inventory；
 - 原 minimum-validation required tests 至少 130 项；
-- Execution-Preemption 专项测试至少 100 项；
+- Execution-Preemption 专项测试至少 111 项（最终 source 冻结时随新增测试更新）；
 - 10 类 × 20 条开发 tapes 的文件 SHA、canonical SHA、seed 与场景基数；
 - 400 allocator-tape runs 和零 invariant failure；
 - 4/8/16/32 图与 adapter smoke；
@@ -70,4 +70,4 @@ Source HEAD 允许仅有刚生成、尚未提交的 Gate JSON，以便先实际�
 
 ## 5. 当前结论边界
 
-Gate PASS 只说明“源码、合同、接口、测试和训练前 smoke 足以允许下一阶段创建新的训练运行器/训练产物”，不说明模型有效，也不代表任何 50k run 已完成。Gate evidence 生成前，静态合同中的 `training_allowed` 继续保持 `false`；不得通过手改配置绕过生成器。
+Gate PASS 只说明“源码、合同、接口、测试和训练前 smoke 足以允许生成新的训练产物”，不说明模型有效，也不代表任何 50k run 已完成。当前训练器已实现，但 Greedy、学姐旧方法适配与 Beam-MPC 尚未冻结，因此 Gate builder 会通过合同状态主动保持 RED。最终 evidence 生成前，静态合同中的 `training_allowed` 继续保持 `false`；不得通过手改配置绕过生成器。

@@ -204,6 +204,7 @@ python scripts\audit_stale_decision_race.py `
 - [Minimum-validation 主合同](MINIMUM_VALIDATION_START_HERE.md)
 - [Execution-Preemption V1 阶段结论](docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md)
 - [Execution-Preemption V1 Launch Gate 合同](docs/EXECUTION_LAUNCH_GATE_V1_ZH.md)
+- [Execution-Preemption V1 Training Runner 合同](docs/EXECUTION_TRAINING_RUNNER_V1_ZH.md)
 - [P0 Gate 机器可读证据](handoff/P0_GATE.json)
 - [训练证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/training_evidence/)
 - [固定评估证据目录](ppo_allocation/results/random_event/minimum_validation_50k_2afa8ec/evaluation_evidence/)

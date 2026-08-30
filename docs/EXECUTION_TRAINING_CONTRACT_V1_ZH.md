@@ -1,7 +1,7 @@
 # Execution-Preemption V1：Reward、指标与训练合同
 
 > 合同 ID：`execution-preemption-training-v1`
-> 状态：`FROZEN_FOR_SOURCE_ATTESTATION`
+> 状态：`FROZEN_FOR_BASELINE_IMPLEMENTATION`
 > 当前训练许可：`false`
 
 ## 1. 目的与边界
@@ -153,7 +153,9 @@ Gymnasium 环境、PyTorch tensor 转换、实际 transition reward 接线及 PP
 
 只有 observation/action adapter、环境 reward 接线、日志 schema、训练 smoke、required tests 和 source-bound Gate 全部通过后，才能在新的 clean training worktree 中生成允许训练的 evidence。修改本配置中的 `training_allowed` 本身不能授权训练。
 
-新 Gate 与旧 minimum-validation `handoff/P0_GATE.json` 完全分离。唯一允许的 evidence 路径是 `experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json`；source 到 evidence HEAD 出现任何其他文件、任何受保护源码变更或 checkpoint 都必须 fail-closed。Gate 至少要求旧基线测试 130 项和新专项测试 100 项。
+新 Gate 与旧 minimum-validation `handoff/P0_GATE.json` 完全分离。唯一允许的 evidence 路径是 `experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json`；source 到 evidence HEAD 出现任何其他文件、任何受保护源码变更或 checkpoint 都必须 fail-closed。当前 Gate 至少要求旧基线测试 130 项和新专项测试 111 项；后续新增基线测试时该下限还会随 source 一起冻结更新。
+
+训练器已经实现 36 个 worker 的唯一目录、训练专用 tape namespace、PPO 更新、accepted-step 精确计数、25k/50k checkpoint、optimizer/RNG/provenance 封存以及只读 SHA inventory 复验。当前只运行了 2-step tiny smoke，没有启动任何 50k formal run。
 
 ## 9. 当前验证
 

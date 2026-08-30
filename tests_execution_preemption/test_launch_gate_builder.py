@@ -31,6 +31,7 @@ class LaunchGateBuilderTests(unittest.TestCase):
             builder._validate_deferred_parity,
             builder._validate_training_contract_smoke,
             builder._validate_framework_smoke,
+            builder._validate_training_runner_smoke,
         )
         results = [validator() for validator in validators]
         self.assertTrue(

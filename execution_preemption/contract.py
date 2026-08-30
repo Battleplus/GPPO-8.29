@@ -87,7 +87,7 @@ def validate_training_contract(
 ) -> ValidatedTrainingContract:
     _expect(value.get("contract_id") == TRAINING_CONTRACT_ID, "contract_id drift")
     _expect(value.get("schema_version") == 1, "schema_version must equal 1")
-    _expect(value.get("status") == "FROZEN_FOR_SOURCE_ATTESTATION", "status drift")
+    _expect(value.get("status") == "FROZEN_FOR_BASELINE_IMPLEMENTATION", "status drift")
 
     compatibility = value.get("compatibility", {})
     _expect(compatibility.get("legacy_checkpoint_compatible") is False,
@@ -164,6 +164,33 @@ def validate_training_contract(
             "zero-shot checkpoint source scale drift")
     _expect(training.get("reuse_old_campaign") is False, "old campaign reuse is forbidden")
     _expect(training.get("resume_old_checkpoint") is False, "old checkpoint resume is forbidden")
+    _expect(training.get("training_tape_namespace") == "execution_preemption_v1/train",
+            "training tape namespace drift")
+    _expect(training.get("development_tape_reuse") is False,
+            "development tapes must not be used for training")
+    _expect(training.get("hidden_tape_reuse") is False,
+            "hidden tapes must not be used for training")
+    _expect(training.get("optimizer") == "Adam", "optimizer drift")
+    _expect(training.get("learning_rate") == 0.0003, "learning rate drift")
+    _expect(training.get("gamma") == 0.99, "gamma drift")
+    _expect(training.get("gae_lambda") == 0.95, "GAE lambda drift")
+    _expect(training.get("clip_range") == 0.2, "PPO clip range drift")
+    _expect(training.get("value_coefficient") == 0.5, "value coefficient drift")
+    _expect(training.get("entropy_coefficient") == 0.01, "entropy coefficient drift")
+    _expect(training.get("max_gradient_norm") == 0.5, "gradient norm drift")
+    _expect(training.get("rollout_accepted_decision_steps") == 64,
+            "rollout size drift")
+    _expect(training.get("update_epochs") == 4, "update epoch drift")
+    _expect(training.get("model_hidden_dimension") == 64,
+            "model hidden dimension drift")
+    _expect(training.get("gppo_relation_layers") == 2,
+            "GPPO relation layer drift")
+    _expect(training.get("fresh_output_required") is True,
+            "fresh training output is required")
+    _expect(training.get("resume_supported") is False,
+            "training resume must remain disabled")
+    _expect(training.get("checkpoint_includes_optimizer_rng_provenance") is True,
+            "checkpoint evidence fields are required")
 
     seed_partition = value.get("seed_partition", {})
     _expect(seed_partition.get("identity_rule") == "contract_id/namespace/integer",
@@ -190,8 +217,10 @@ def validate_training_contract(
             "framework rollout smoke is required")
     _expect(launch_gate.get("requires_legacy_required_tests_min") == 130,
             "legacy required test threshold drift")
-    _expect(launch_gate.get("requires_execution_preemption_tests_min") == 100,
+    _expect(launch_gate.get("requires_execution_preemption_tests_min") == 111,
             "execution-preemption test threshold drift")
+    _expect(launch_gate.get("requires_training_runner_smoke") is True,
+            "training runner smoke is required")
     _expect(
         launch_gate.get("gate_evidence_path")
         == "experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json",
