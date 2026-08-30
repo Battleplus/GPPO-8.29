@@ -219,7 +219,8 @@ class TrainingContractTests(unittest.TestCase):
         value = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
         launch_gate = value["launch_gate"]
         self.assertEqual(launch_gate["requires_legacy_required_tests_min"], 130)
-        self.assertEqual(launch_gate["requires_execution_preemption_tests_min"], 111)
+        self.assertEqual(launch_gate["requires_execution_preemption_tests_min"], 120)
+        self.assertTrue(launch_gate["requires_baseline_replay_smoke"])
         self.assertTrue(launch_gate["requires_framework_rollout_smoke"])
         self.assertTrue(launch_gate["requires_training_runner_smoke"])
         self.assertTrue(launch_gate["evidence_whitelist_exact"])

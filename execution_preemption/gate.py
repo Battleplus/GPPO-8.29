@@ -35,7 +35,9 @@ PROTECTED_EXACT_PATHS = frozenset({
     "configs/execution_training_contract_v1.json",
     "docs/ALLOCATION_BOUNDARY_V1_ZH.md",
     "docs/EXECUTION_PREEMPTION_CONCLUSION_ZH.md",
+    "docs/EXECUTION_PREEMPTION_PROGRESS_ZH.md",
     "docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md",
+    "docs/EXECUTION_BASELINES_V1_ZH.md",
     "docs/EXECUTION_TRAINING_CONTRACT_V1_ZH.md",
     "docs/POLICY_ADAPTER_V1_ZH.md",
 })

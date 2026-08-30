@@ -113,7 +113,7 @@ remaining_work = 1 - progress
 
 | 检查项 | 结果 |
 |---|---:|
-| Execution-Preemption 专项测试 | 111/111 PASS |
+| Execution-Preemption 专项测试 | 120/120 PASS |
 | 原 minimum-validation required tests | 130/130 PASS |
 | 规则开发事件带 | 200/200 PASS |
 | 确定性 allocator-tape runs | 400/400 PASS |
@@ -247,3 +247,4 @@ P0 事件处理率 = 100%
 - Launch Gate 合同：[Execution Launch Gate V1](EXECUTION_LAUNCH_GATE_V1_ZH.md)
 - Training runner 合同：[Execution Training Runner V1](EXECUTION_TRAINING_RUNNER_V1_ZH.md)
 - Training runner smoke：[`training_runner_smoke.json`](../experiments/dynamic_preemption/dev_v1/training_runner_smoke.json)
+- 三基线 600 次安全回放：[`baseline_replay_smoke.json`](../experiments/dynamic_preemption/dev_v1/baseline_replay_smoke.json)

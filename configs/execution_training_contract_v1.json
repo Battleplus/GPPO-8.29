@@ -104,7 +104,19 @@
     "rule_arbiter_variant_semantics": "safe_masked_allocator_with_frozen_EventDecision_context",
     "p0_or_rtb_policy_control_allowed": false,
     "shared_event_tapes": true,
-    "shared_action_mask": true
+    "shared_action_mask": true,
+    "baseline_semantics": {
+      "senior_legacy_method_v1": "adapted_legacy_first_legal_lexical_not_implementation_equivalence",
+      "greedy_priority_v1": "rule_priority_then_energy_margin_freshness_greedy",
+      "beam_mpc_v1": {
+        "search": "deterministic_safe_candidate_beam",
+        "horizon": 3,
+        "beam_width": 8,
+        "forecast": "public_pending_tasks_only",
+        "current_task_energy_cost": "0.05 + 0.15 * remaining_work",
+        "safety_decision_control": false
+      }
+    }
   },
   "training": {
     "namespace": "execution_preemption_v1",
@@ -194,7 +206,8 @@
     "requires_adapter_smoke": true,
     "requires_framework_rollout_smoke": true,
     "requires_legacy_required_tests_min": 130,
-    "requires_execution_preemption_tests_min": 111,
+    "requires_execution_preemption_tests_min": 120,
+    "requires_baseline_replay_smoke": true,
     "requires_training_runner_smoke": true,
     "gate_evidence_path": "experiments/dynamic_preemption/evidence_v1/EXECUTION_PREEMPTION_V1_GATE.json",
     "evidence_whitelist_exact": true,

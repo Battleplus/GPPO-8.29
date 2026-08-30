@@ -26,6 +26,7 @@ class LaunchGateBuilderTests(unittest.TestCase):
         validators = (
             builder._validate_dev_manifest,
             builder._validate_allocator_replay,
+            builder._validate_baseline_smoke,
             builder._validate_graph_smoke,
             builder._validate_adapter_smoke,
             builder._validate_deferred_parity,
