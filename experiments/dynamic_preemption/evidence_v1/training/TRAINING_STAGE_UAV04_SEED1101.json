@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "evidence_id": "execution-preemption-v1-training-uav04-seed1101",
+  "recorded_at": "2026-08-30T19:59:31+08:00",
+  "status": "PASS",
+  "classification": "formal_training_stage_evidence_no_model_evaluation",
+  "scope": {
+    "uav_count": 4,
+    "policy_seed": 1101,
+    "methods": [
+      "ppo_mlp_reactive_v1",
+      "gppo_adaptive_reactive_v1",
+      "ppo_mlp_rule_arbiter_v1",
+      "gppo_adaptive_rule_arbiter_v1"
+    ],
+    "completed_runs": 4,
+    "planned_campaign_runs": 36,
+    "completed_decision_steps": 200000,
+    "checkpoint_count": 8,
+    "planned_campaign_checkpoints": 72,
+    "checkpoint_grid": [25000, 50000]
+  },
+  "provenance": {
+    "attested_source_commit_sha": "62c001d83d9df4663aaf73af9401bc07ebb1e776",
+    "runtime_evidence_head_sha": "6d2b343489efc547b87ccfa9acce7963c31481ba",
+    "runtime_tree_sha": "450acd70278ba7a47ad2aa47924b0802e470e259",
+    "training_contract_sha256": "31dec25b47790cc68194a8e4fdd27f33a22a39c86869275e2e27ee4471b3e776",
+    "training_namespace": "execution_preemption_v1/train",
+    "source_is_runtime_ancestor": true,
+    "evidence_only_descendant": true,
+    "protected_diff": [],
+    "gate_status": "PASS",
+    "worktree_clean_at_training_and_revalidation": true,
+    "legacy_checkpoint_loaded": false,
+    "old_campaign_reused": false,
+    "resume_used": false
+  },
+  "runs": [
+    {
+      "method_id": "ppo_mlp_reactive_v1",
+      "artifact_namespace": "primary",
+      "accepted_decision_steps": 50000,
+      "optimizer_step_count": 3128,
+      "episode_count": 124999,
+      "updates_rows": 782,
+      "updates_sha256": "c63bb7a89edb9c534d1ad5b9cb09242b59ddcd742fd2cd30beb1fe9fa6b0884e",
+      "manifest_sha256": "bf8f23149044dc57c161127889e039640dccd3f93bd0f4e696f2735318768de7",
+      "inventory_sha256": "ae87eb3392a556f4716298beba6746b5a12fdeaa49111e0c08d49fc75a4be44a",
+      "verifier_status": "PASS",
+      "stderr_bytes": 0,
+      "checkpoints": [
+        {
+          "step": 25000,
+          "file_sha256": "8c770d8344bab65bfe804eac25be3a1eaa18202a6aaacaed5bc78bedc014fbdf",
+          "model_state_sha256": "2eae101db7d26fcbe26f60d9c21dcfa1d2f360a139944f356b54ec4b7b1517ca",
+          "rng_state_sha256": "b27c981591c062986e19a2fb2e509a1fe0578a6d27212af49b88e7a803f02ab3",
+          "size_bytes": 31632562
+        },
+        {
+          "step": 50000,
+          "file_sha256": "c28bb41a7c0b8d206d809a168d95955dd21efa7f9bf17b7d2ad0cb627acb65da",
+          "model_state_sha256": "9810461c7bdda936b2d73cc7e7f42ccfc95ccdda50b8d9a61cdfd0c1997abd88",
+          "rng_state_sha256": "dbd511e144f7d929f844578f3459361fdd5efc50bc8c5d1a2488d2c648c46689",
+          "size_bytes": 31632564
+        }
+      ]
+    },
+    {
+      "method_id": "gppo_adaptive_reactive_v1",
+      "artifact_namespace": "primary",
+      "accepted_decision_steps": 50000,
+      "optimizer_step_count": 3128,
+      "episode_count": 124999,
+      "updates_rows": 782,
+      "updates_sha256": "a46a1c0cfdee0b68b7f08c7df6ea1d975e7fb96b5decee690c08bdeb4d9378c1",
+      "manifest_sha256": "9b4fd4465b0fac3d242f6daf95c61be2e1ceebc9e8e42561ca6aa11884d10d1b",
+      "inventory_sha256": "0618cbb097e1ed6dff01a70192fa1a0b555f255cb79d15730d49946c62f45883",
+      "verifier_status": "PASS",
+      "stderr_bytes": 0,
+      "checkpoints": [
+        {
+          "step": 25000,
+          "file_sha256": "cf5e7d1535c54e2d940c771203abd5510c33042bb2c46ae141e7699d495c4882",
+          "model_state_sha256": "931f4c38cc3379185c4cbd29b2887908e915da2711e1df73314b23d01a3ca094",
+          "rng_state_sha256": "20073a10cbecc588149e43b2efdc9435ab6a3fd926d54fd74585affab4834341",
+          "size_bytes": 2789087
+        },
+        {
+          "step": 50000,
+          "file_sha256": "0f0556763ee9e4a7b67b8ab4adfd31fcb3bf75e1911914676cf544aa428305a1",
+          "model_state_sha256": "71038f0aebb5b92751522c38ec0d3d7872d74a57d66f1445529c6c18c09bb467",
+          "rng_state_sha256": "fbe8c1f7eb5347b01ab981098be9bda9223b4cca5fbccb5f841a642334c3d3e4",
+          "size_bytes": 2789089
+        }
+      ]
+    },
+    {
+      "method_id": "ppo_mlp_rule_arbiter_v1",
+      "artifact_namespace": "retry1_fresh_replacement",
+      "accepted_decision_steps": 50000,
+      "optimizer_step_count": 3128,
+      "episode_count": 124999,
+      "updates_rows": 782,
+      "updates_sha256": "e5a60aa2b85022df56505fc0ad0de63a927e6919df34b17d75809882bea613c1",
+      "manifest_sha256": "4784fe42f45dc6d52828d52c14941e6a216a114f8dd646935e3a1a7712583e98",
+      "inventory_sha256": "d612acf024bedc496ee75d0a18c194177ebaca691987c772c372e8d3a29af4c3",
+      "verifier_status": "PASS",
+      "stderr_bytes": 0,
+      "checkpoints": [
+        {
+          "step": 25000,
+          "file_sha256": "db62fcb7485896864c0392a8b90e221faa9a7f68123114b2563edeacec9d37a1",
+          "model_state_sha256": "b7bd7d35c5c87894ccca8beca4484ab9bcc8d591d214e2034a0fd8d28cb97bb9",
+          "rng_state_sha256": "b27c981591c062986e19a2fb2e509a1fe0578a6d27212af49b88e7a803f02ab3",
+          "size_bytes": 31632566
+        },
+        {
+          "step": 50000,
+          "file_sha256": "da8de999ae32eae0ed4ab66fa50b414d164d2cf44a0b8d3deae69517a09f2639",
+          "model_state_sha256": "8e2f0392fe8f24f07e26caffc1962d38ca333fbbd25a44b5d8d31a3d1b93a4fd",
+          "rng_state_sha256": "dbd511e144f7d929f844578f3459361fdd5efc50bc8c5d1a2488d2c648c46689",
+          "size_bytes": 31632568
+        }
+      ]
+    },
+    {
+      "method_id": "gppo_adaptive_rule_arbiter_v1",
+      "artifact_namespace": "retry1_fresh_replacement",
+      "accepted_decision_steps": 50000,
+      "optimizer_step_count": 3128,
+      "episode_count": 124999,
+      "updates_rows": 782,
+      "updates_sha256": "df6b45d1f1bc2b3f7f94be1060d7864adcca93cefdc01051704a66e1d40a9722",
+      "manifest_sha256": "cc08834fb32c3b558341c3f29cbff7f9683205984ba2546b036425ea8a1f3497",
+      "inventory_sha256": "94015461948bbe17912b16fb15d7140a72fea35e65c17f0b2f21688a5ab8c2a1",
+      "verifier_status": "PASS",
+      "stderr_bytes": 0,
+      "checkpoints": [
+        {
+          "step": 25000,
+          "file_sha256": "f50c810a5d62e980722ec0995f527119ed2e1827db6be410d1fdada12a644f91",
+          "model_state_sha256": "3a89885b2a8c12151496b06322f10734cd8d6fcda2052a08b4717994ae4cddca",
+          "rng_state_sha256": "20073a10cbecc588149e43b2efdc9435ab6a3fd926d54fd74585affab4834341",
+          "size_bytes": 2789091
+        },
+        {
+          "step": 50000,
+          "file_sha256": "d0dbdcb8d4b8314cc640df416a52d952726084b1521126896addeca5fea1f9eb",
+          "model_state_sha256": "8fc3e66c9efd8d46135b4de0bc1f20b8304f656b918e510f113ca1a751a34bc7",
+          "rng_state_sha256": "fbe8c1f7eb5347b01ab981098be9bda9223b4cca5fbccb5f841a642334c3d3e4",
+          "size_bytes": 2789093
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "runs_exactly_complete": true,
+    "total_steps_exact": true,
+    "checkpoint_cardinality_and_grid": true,
+    "checkpoint_file_sha256_verified": true,
+    "run_inventory_verified": true,
+    "update_steps_strictly_monotonic_and_exact": true,
+    "provenance_consistent": true,
+    "worker_stderr_empty": true,
+    "checkpoint_selection_performed": false,
+    "validation_started": false,
+    "freeze_started": false,
+    "test_started": false,
+    "hidden_evaluation_started": false
+  },
+  "incident_disposition": {
+    "original_partial_rule_arbiter_outputs_preserved": true,
+    "original_partial_outputs_used_as_training_evidence": false,
+    "replacement_runs_started_fresh": true,
+    "replacement_runs_resumed": false
+  },
+  "campaign_status": {
+    "stage_complete": true,
+    "campaign_complete": false,
+    "completed_runs": 4,
+    "remaining_runs": 32,
+    "next_allowed_training_batch": {
+      "uav_count": 4,
+      "policy_seed": 2202,
+      "methods": 4
+    },
+    "post_training_evaluation_allowed": false
+  }
+}
