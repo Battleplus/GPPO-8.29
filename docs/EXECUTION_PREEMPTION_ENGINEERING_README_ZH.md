@@ -327,6 +327,8 @@ Event  -> affects  -> Target
 
 ## 9. 当前验证证据
 
+本节图表由仓库中的 JSON/CSV 证据文件生成。除“旧极端场景探索实验”小节外，全部属于 `execution-preemption-v1` 的开发回放、接口、原子事务和 smoke 验证。**它们证明的是机制和工程链路，不是模型效果。**
+
 | 项目 | 当前证据 | 能说明什么 | 不能说明什么 |
 |---|---|---|---|
 | Execution-Preemption 专项测试 | 120/120 PASS | 协议、接口和不变量测试通过 | 不能证明模型效果 |
@@ -335,6 +337,73 @@ Event  -> affects  -> Target
 | 直接/延迟事务 parity | 400/400 PASS | 原子延迟提交与直接回放一致 | 不评价算法质量 |
 | PPO/GPPO adapter smoke | 4/8/16/32 PASS | 统一观察、动作、mask 和校验链路可运行 | 不是实时性或泛化结论 |
 | tiny training smoke | 四种学习方法 2-step PASS | 训练器和 evidence seal 能运行 | 不是正式训练 |
+
+### 9.1 当前验证全部通过，但各项分母不同
+
+![执行中动态重分配当前验证证据概览](assets/execution_preemption_results/01_validation_evidence.png)
+
+图中所有检查均为 100% 通过。需要注意，条末的 `n/n` 分别代表测试用例、allocator-tape 组合、规模配置、框架运行或学习方法，不能把不同分母直接相加成“总准确率”，也不能由 100% PASS 推导出 GPPO 的任务收益优于 PPO。
+
+对应证据：[`allocator_replay_summary.json`](../experiments/dynamic_preemption/dev_v1/allocator_replay_summary.json)、[`baseline_replay_smoke.json`](../experiments/dynamic_preemption/dev_v1/baseline_replay_smoke.json)、[`deferred_transaction_parity.json`](../experiments/dynamic_preemption/dev_v1/deferred_transaction_parity.json)、[`policy_adapter_smoke.json`](../experiments/dynamic_preemption/dev_v1/policy_adapter_smoke.json)、[`framework_rollout_smoke.json`](../experiments/dynamic_preemption/dev_v1/framework_rollout_smoke.json) 和 [`training_runner_smoke.json`](../experiments/dynamic_preemption/dev_v1/training_runner_smoke.json)。
+
+### 9.2 开发场景确实触发了多种执行中决策
+
+![开发事件带仲裁决策分布](assets/execution_preemption_results/02_decision_distribution.png)
+
+每个规则分配器在 200 条开发 tapes 中产生 280 个仲裁决策：继续执行 120 次，抢占、排队和返航各 40 次，迁移和终止各 20 次。这说明开发集不只是“扰动后进入下一轮”，而是实际覆盖了继续、打断、等待、安全返航、迁移和终止等执行中分支。两种分配器的分布一致，是因为这些动作主要由共同的 P0-P4 安全仲裁决定；该图不用于区分分配器优劣。
+
+### 9.3 原子提交和安全外壳在开发 smoke 中未发现违规
+
+![PPO GPPO 框架回放安全约束检查](assets/execution_preemption_results/03_atomicity_and_safety.png)
+
+PPO/GPPO 在 UAV 损毁和两个 P1 并发场景的 4 次框架 smoke 中，动作 mask 违规、资源冲突、旧命令复活和能源安全违规均为 0。直接提交与延迟事务回放进一步取得 400/400 决策一致和 400/400 最终状态哈希一致，并确认提交前没有修改 live runtime。这支持“先暂存、校验、再原子提交”的实现正确性，但样本量仍不足以估计真实运行中的低概率故障率。
+
+### 9.4 图结构已经适配 4/8/16/32 架规模，但还没有时延曲线
+
+![五类节点图结构规模测试](assets/execution_preemption_results/04_graph_scaling.png)
+
+五类节点图在 4、8、16、32 架 UAV 配置下均通过 schema smoke。当前测试按每架 UAV 配置 2 个 Task，因此 UAV-Task 动作候选从 32 增长到 2,048，表现为确定性的二次增长；总边数从 64 增长到 2,192。该结果证明构图和动作映射能够生成，不证明 32 架场景已经满足实时性，正式实验仍需测量构图、推理、校验和端到端 P50/P95/P99。
+
+### 9.5 GPPO 当前参数更少，但不能据此得出效果或时延优势
+
+![PPO 与 GPPO 当前框架参数量](assets/execution_preemption_results/05_policy_parameter_count.png)
+
+当前 smoke 配置中，GPPO-Adaptive 为 12,243 个参数，PPO-MLP 为 660,162 个参数，PPO 参数量约为 GPPO 的 53.9 倍。差异主要来自 PPO 需要接收 37,976 维定长平坦输入，而 GPPO 对实际存在的节点和边进行关系消息传递。参数量是结构事实，不等同于推理速度、收敛速度或最终任务收益；尤其 GPPO 还包含图构建和消息传递开销。
+
+### 9.6 当前阶段可以和不可以得出的结论
+
+| 结论层级 | 当前结论 | 状态 |
+|---|---|---|
+| 机制正确性 | 执行中事件能够触发继续、抢占、排队、返航、迁移和终止 | 已有开发证据 |
+| 安全与一致性 | 当前回放未发现资源冲突、旧命令复活、mask 或能源违规，延迟事务与直接回放一致 | 已有开发证据 |
+| 规模接口 | 五类节点图和统一动作接口可构造 4/8/16/32 架配置 | 已有 smoke 证据 |
+| 训练工程 | 四种学习方法各完成 2 个真实 optimizer step，检查点哈希和同 seed 状态确定性通过 | 仅链路 smoke |
+| IC 事件检测 | 真实心跳、飞控、电池、任务和 probe 接口下的检出率、误报率和确认时延 | 未验证 |
+| 模型效果 | GPPO 相对 PPO、Greedy、Beam-MPC 和师姐真实旧方法的 deadline、空缺、恢复率优势 | 未评估 |
+| 实时性 | 当前合同下不同规模的构图、推理、校验及端到端尾部时延 | 未评估 |
+| 泛化 | 冻结模型在独立 Hidden-V1 和未见扰动组合上的表现 | 未开始 |
+
+因此，当前最稳妥的阶段性结论是：**执行中动态扰动处理的工程闭环和训练入口已经打通，正式算法比较尚未开始。**
+
+### 9.7 旧极端场景探索实验：可以参考趋势，不能替代本次正式实验
+
+仓库另有一套 2026-08-27 的旧 post-hoc 极端场景结果：7 个场景、42 条 tapes、420 个策略 episodes，评估固定在 50k checkpoint；该 campaign 没有重新启动训练，并绑定于旧 source/runtime。它与当前 `execution-preemption-v1` 的事件确认、执行中原子重分配合同不同，以下图表只能作为补充观察。
+
+![旧极端场景探索实验推理时延](assets/execution_preemption_results/06_legacy_exploratory_latency.png)
+
+旧数据中，GPPO 的平均推理时延约为 10.5–15.0 ms，PPO 约为 1.4–2.8 ms，GPPO 在全部 7 个场景中更慢。这与“GPPO 参数更少”并不矛盾：图消息传递和图数据准备也会产生运行开销。由于执行合同、代码版本和计时路径均不是当前正式实验，本结果不能直接外推为当前系统的时延结论。
+
+![旧极端场景探索实验累计任务空缺差值](assets/execution_preemption_results/07_legacy_exploratory_vacancy_delta.png)
+
+旧数据的累计任务空缺表现方向混合：GPPO 在长盲区突发、任务高频变化和跟踪饱和释放中空缺更少，在三重原子冲击、8 事件风暴和资源坍缩中空缺更多，乱序报告基本持平。GPPO 与 PPO 在这 7 个场景中的事件成功率和合法覆盖率均为 100%，因此旧结果既没有显示安全失败，也不能支持 GPPO 的普遍性能优越性。
+
+旧数据来源：[`run_summary.json`](../experiments/extreme_scenarios/results_20260827/run_summary.json)、[`aggregate_results.csv`](../experiments/extreme_scenarios/results_20260827/aggregate_results.csv) 和 [`paired_effects_gppo_minus_ppo.csv`](../experiments/extreme_scenarios/results_20260827/paired_effects_gppo_minus_ppo.csv)。
+
+图表可通过以下命令从仓库证据重新生成：
+
+```powershell
+python scripts/generate_execution_preemption_readme_figures.py
+```
 
 当前明确状态：
 
