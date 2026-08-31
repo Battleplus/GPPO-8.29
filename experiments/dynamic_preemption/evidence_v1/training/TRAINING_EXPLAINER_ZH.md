@@ -256,6 +256,7 @@ checkpoint SHA-256、run inventory、Gate、provenance、stderr 全部复验 PAS
 - [冻结 reward](../../../../execution_preemption/reward.py)
 - [训练 tapes](../../../../execution_preemption/training_tapes.py)
 - [UAV4/seed1101 机器可读训练证据](TRAINING_STAGE_UAV04_SEED1101.json)
+- [GPPO 动态任务规划：能力边界、决策过程与效果观察](GPPO_PLANNING_PROCESS_ZH.md)
 
 最重要的汇报口径是：
 
