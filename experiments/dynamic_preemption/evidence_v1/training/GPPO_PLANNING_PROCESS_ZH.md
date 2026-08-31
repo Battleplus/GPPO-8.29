@@ -198,6 +198,7 @@ Validation / Freeze / Test / held-out 均未启动
 - [正式训练合同](../../../../configs/execution_training_contract_v1.json)
 - [Execution-Preemption V1 协议](../../../../docs/EXECUTION_PREEMPTION_V1_PROTOCOL_ZH.md)
 - [当前正式训练说明](TRAINING_EXPLAINER_ZH.md)
+- [当前训练进度与中断边界](CURRENT_TRAINING_PROGRESS_ZH.md)
 - [UAV4/seed1101 机器可读训练证据](TRAINING_STAGE_UAV04_SEED1101.json)
 
 适合向导师或学姐汇报的一句话是：

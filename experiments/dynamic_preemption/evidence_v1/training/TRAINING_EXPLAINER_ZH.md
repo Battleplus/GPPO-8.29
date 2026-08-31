@@ -230,7 +230,7 @@ checkpoint SHA-256、run inventory、Gate、provenance、stderr 全部复验 PAS
 
 机器可读证据见 [`TRAINING_STAGE_UAV04_SEED1101.json`](TRAINING_STAGE_UAV04_SEED1101.json)，对应 evidence commit 为 `0488166f40ccbeb83ea46a9d0c9551f975ddf4ee`。
 
-当前已进入 `UAV=4、seed=2202` 的四方法顺序训练。该批次在完整达到 4/4 runs、8/8 checkpoints 并通过只读复验之前，不计入已封存进度。
+`UAV=4、seed=2202` 批次中，PPO-Reactive 已完成 50k；GPPO-Reactive 因 Windows 正常关机中断在 39,656/50,000 steps，stderr 为 0，后续两个 Rule-Arbiter workers 未启动。当前没有训练 worker 运行，也没有自动续训。该批次在全新 namespace 中完成必要重跑、达到 4/4 runs、8/8 checkpoints 并通过只读复验之前，不计入已封存进度。详细状态见 [`CURRENT_TRAINING_PROGRESS_ZH.md`](CURRENT_TRAINING_PROGRESS_ZH.md)。
 
 当前可以得出的结论只有：
 
@@ -257,6 +257,7 @@ checkpoint SHA-256、run inventory、Gate、provenance、stderr 全部复验 PAS
 - [训练 tapes](../../../../execution_preemption/training_tapes.py)
 - [UAV4/seed1101 机器可读训练证据](TRAINING_STAGE_UAV04_SEED1101.json)
 - [GPPO 动态任务规划：能力边界、决策过程与效果观察](GPPO_PLANNING_PROCESS_ZH.md)
+- [当前训练进度与中断边界](CURRENT_TRAINING_PROGRESS_ZH.md)
 
 最重要的汇报口径是：
 
