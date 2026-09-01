@@ -25,13 +25,17 @@ GPPO：在 UAV-Region 候选边与 NOOP 中选择动作
 
 ## 推荐阅读顺序
 
-1. [`research/GPPO-8.29研究笔记.md`](research/GPPO-8.29研究笔记.md)
+1. [`acceptance/2026-09-10_世界模型最小闭环验收目标.md`](acceptance/2026-09-10_世界模型最小闭环验收目标.md)
+   - 9 月 10 日验收范围、量化门槛、倒排日期和 GPPO checkpoint 前置条件。
+2. [`source/世界模型整合实施计划_2026-08-30.docx`](source/世界模型整合实施计划_2026-08-30.docx)
+   - 12 页原始实施计划，供核对完整表格、职责、风险和证据清单。
+3. [`research/GPPO-8.29研究笔记.md`](research/GPPO-8.29研究笔记.md)
    - 了解当前仓库结构、GPPO 已有能力和限制。
-2. [`current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md`](current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md)
+4. [`current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md`](current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md)
    - 对照 EAWM 论文，查看世界模型数据合同、自动事件、GES 和 GPPO 接口。
-3. [`current/EAWM官方仓库迁移评估与事件偏好设计.md`](current/EAWM官方仓库迁移评估与事件偏好设计.md)
+5. [`current/EAWM官方仓库迁移评估与事件偏好设计.md`](current/EAWM官方仓库迁移评估与事件偏好设计.md)
    - 查看官方仓库哪些部分可借鉴、哪些不适合直接迁移，以及事件偏好/PbRL 的独立设计。
-4. [`archive/世界模型与GPPO输入设计及实施规划_9.1.md`](archive/世界模型与GPPO输入设计及实施规划_9.1.md)
+6. [`archive/世界模型与GPPO输入设计及实施规划_9.1.md`](archive/世界模型与GPPO输入设计及实施规划_9.1.md)
    - 早期方案，仅保留设计演进记录；以 `current/` 中的论文对齐版本为准。
 
 ## 目录结构
@@ -39,6 +43,10 @@ GPPO：在 UAV-Region 候选边与 NOOP 中选择动作
 ```text
 docs/world-model/
 ├── README.md
+├── acceptance/
+│   └── 2026-09-10_世界模型最小闭环验收目标.md
+├── source/
+│   └── 世界模型整合实施计划_2026-08-30.docx
 ├── current/
 │   ├── EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md
 │   └── EAWM官方仓库迁移评估与事件偏好设计.md
@@ -86,6 +94,8 @@ EAWM-PbGPPO
 
 - 当前 GPPO 可以作为反应式动态图任务分配器运行。
 - 当前 GPPO 并不等同于多步世界模型预测规划器。
+- 归档训练证据记录了三个 GPPO-Adaptive 50k seed，但公开仓库未提交 checkpoint 二进制文件；没有取得匹配权重前，不能表述为“仓库内已有可直接加载的训练模型”。
+- README 中的 300,000 steps 是 PPO 与 GPPO 六个 run 的合计；GPPO 部分是 3 × 50,000 = 150,000 steps，不是单个 GPPO 训练了 300,000 steps。
 - 本目录文档已经给出 Graph-EAWM 输入、损失、事件类型、实验矩阵和实施顺序。
 - 世界模型代码接入、完整训练和正式对照实验仍需按文档中的里程碑执行。
 
