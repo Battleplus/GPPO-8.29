@@ -25,17 +25,19 @@ GPPO：在 UAV-Region 候选边与 NOOP 中选择动作
 
 ## 推荐阅读顺序
 
-1. [`acceptance/2026-09-10_世界模型最小闭环验收目标.md`](acceptance/2026-09-10_世界模型最小闭环验收目标.md)
+1. [`current/世界模型任务目标与改进目标.md`](current/世界模型任务目标与改进目标.md)
+   - 将世界模型训练、GPPO 强化学习训练、动作条件图动力学、实施任务和完成定义汇总为当前任务基线。
+2. [`acceptance/2026-09-10_世界模型最小闭环验收目标.md`](acceptance/2026-09-10_世界模型最小闭环验收目标.md)
    - 9 月 10 日验收范围、量化门槛、倒排日期和 GPPO checkpoint 前置条件。
-2. [`source/世界模型整合实施计划_2026-08-30.docx`](source/世界模型整合实施计划_2026-08-30.docx)
+3. [`source/世界模型整合实施计划_2026-08-30.docx`](source/世界模型整合实施计划_2026-08-30.docx)
    - 12 页原始实施计划，供核对完整表格、职责、风险和证据清单。
-3. [`research/GPPO-8.29研究笔记.md`](research/GPPO-8.29研究笔记.md)
+4. [`research/GPPO-8.29研究笔记.md`](research/GPPO-8.29研究笔记.md)
    - 了解当前仓库结构、GPPO 已有能力和限制。
-4. [`current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md`](current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md)
+5. [`current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md`](current/EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md)
    - 对照 EAWM 论文，查看世界模型数据合同、自动事件、GES 和 GPPO 接口。
-5. [`current/EAWM官方仓库迁移评估与事件偏好设计.md`](current/EAWM官方仓库迁移评估与事件偏好设计.md)
+6. [`current/EAWM官方仓库迁移评估与事件偏好设计.md`](current/EAWM官方仓库迁移评估与事件偏好设计.md)
    - 查看官方仓库哪些部分可借鉴、哪些不适合直接迁移，以及事件偏好/PbRL 的独立设计。
-6. [`archive/世界模型与GPPO输入设计及实施规划_9.1.md`](archive/世界模型与GPPO输入设计及实施规划_9.1.md)
+7. [`archive/世界模型与GPPO输入设计及实施规划_9.1.md`](archive/世界模型与GPPO输入设计及实施规划_9.1.md)
    - 早期方案，仅保留设计演进记录；以 `current/` 中的论文对齐版本为准。
 
 ## 目录结构
@@ -48,6 +50,7 @@ docs/world-model/
 ├── source/
 │   └── 世界模型整合实施计划_2026-08-30.docx
 ├── current/
+│   ├── 世界模型任务目标与改进目标.md
 │   ├── EAWM论文对齐版_世界模型与GPPO输入设计_9.1.md
 │   └── EAWM官方仓库迁移评估与事件偏好设计.md
 ├── research/
