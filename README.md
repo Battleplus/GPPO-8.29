@@ -89,6 +89,7 @@ GPPO 最明确的收益出现在 `tracking_saturation_release`：相对 PPO，�
 
 - [中文研究结论](experiments/extreme_scenarios/CONCLUSION_ZH.md)
 - [向学姐汇报文档](experiments/extreme_scenarios/SENIOR_BRIEFING_ZH.md)
+- [世界模型与 GPPO 输入整合实施规划](docs/WORLD_MODEL_GPPO_INTEGRATION_PLAN_ZH.md)
 - [极端场景结果解读](experiments/extreme_scenarios/results_20260827/INTERPRETATION.md)
 - [完整场景报告](experiments/extreme_scenarios/results_20260827/REPORT.md)
 - [机器可读运行摘要](experiments/extreme_scenarios/results_20260827/run_summary.json)
